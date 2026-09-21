@@ -234,7 +234,7 @@ Digital Scam Investigator is engineered under strict privacy constraints:
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/Digital-Scam-Investigator.git
+git clone https://github.com/jainils278/Digital-Scam-Investigator.git
 cd Digital-Scam-Investigator
 
 # Install workspace dependencies
