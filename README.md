@@ -1,4 +1,4 @@
-﻿# Digital Scam Investigator
+# Digital Scam Investigator
 
 A privacy-preserving, evidence-first cybersecurity workstation for analyzing suspicious messages, emails, and URLs for scam indicators.
 
@@ -71,7 +71,7 @@ Digital Scam Investigator enforces an **Evidence-First Architecture**:
 
 ### Deterministic Scam Detection
 
-- Scans messages across 20+ specialized scam categories, including bank impersonation, advance-fee fraud (419), package delivery smishing, urgent credential harvesting, crypto giveaway scams, and fake tech support.
+- Scans messages across multiple specialized scam categories, including bank impersonation, advance-fee fraud (419), package delivery smishing, urgent credential harvesting, crypto giveaway scams, and fake tech support.
 - Automatically maps exact character spans to identified indicators for direct visual inspection.
 - Normalizes unicode variations, homoglyphs, and obfuscated text to counter basic evasion tactics.
 
@@ -83,7 +83,7 @@ Digital Scam Investigator enforces an **Evidence-First Architecture**:
 
 ### Passive URL Investigation
 
-- Evaluates URL structure, domain age indicators, top-level domain risk, punycode spoofing, and IP-based host patterns.
+- Evaluates URL structure, suspicious top-level domains, punycode/homoglyph patterns, IP-based hosts, subdomain stacking, brand-squatting patterns, and other structural indicators.
 - Performs exclusively passive structural analysis.
 - Arbitrary outbound URL fetching and redirect following are strictly not performed by the investigation engine, keeping users safe from malicious payloads or token logging.
 
@@ -100,8 +100,8 @@ Digital Scam Investigator enforces an **Evidence-First Architecture**:
 
 ### Threat Intelligence
 
-- Cross-references extracted indicators against known scam signatures, high-risk domains, and common fraudulent phone schemes.
-- Flags known malicious infrastructure patterns to assist with threat correlation.
+- Cross-references extracted indicators against available threat-intelligence signatures and configured scam patterns.
+- Correlates observed indicators with known fraudulent tactics and risk indicators.
 
 ### Scam Education
 
@@ -188,7 +188,7 @@ Digital-Scam-Investigator/
 │   │   ├── fixtures/
 │   │   ├── run_45_validation_run.ts
 │   │   └── validation_dataset.test.ts
-│   ├── *.test.ts (14 test suites)
+│   ├── *.test.ts
 │   └── tsconfig.json
 ├── .env.example
 ├── .gitignore
@@ -221,7 +221,7 @@ Digital Scam Investigator is engineered under strict privacy constraints:
 - Client-Side History: Investigation history is stored exclusively in the user's browser localStorage. The server remains completely stateless.
 - Server-Side Secret Management: OpenAI API keys and configuration values remain strictly on the backend and are never sent or exposed to the client browser.
 - Passive Analysis Only: Arbitrary outbound URL fetching and redirect following are not performed, preventing tracking pixels or CSRF/SSRF attacks.
-- Robust Fallback: When AI credentials are not supplied, the system automatically uses local heuristics, preserving 100% offline detection privacy.
+- Robust Fallback: When AI credentials are not supplied, detection falls back to local heuristics without requiring an external AI provider.
 
 ## Quick Start
 
