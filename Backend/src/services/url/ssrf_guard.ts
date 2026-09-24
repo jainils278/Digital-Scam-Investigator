@@ -274,7 +274,7 @@ export async function validateUrlForSafeFetch(rawUrl: string): Promise<SsrfValid
       };
     }
 
-    const resolvedIps = lookupResults.map((r) => r.address);
+    const resolvedIps = lookupResults.map((r: { address: string }) => r.address);
 
     for (const record of lookupResults) {
       if (isPrivateOrBlockedIp(record.address)) {
