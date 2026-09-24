@@ -13,6 +13,12 @@
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express, { NextFunction, Request, Response } from 'express';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import { config } from './config/env.js';
 import { createSlidingWindowRateLimiter } from './middleware/rate_limiter.js';
 import { requestTracer } from './middleware/request_tracer.js';
@@ -49,7 +55,23 @@ app.use(productionSecurityHeaders(config.nodeEnv === 'production'));
 // 3. Strict CORS Policy
 app.use(
   cors({
-    origin: config.corsAllowedOrigins,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. mobile apps, curl, same-origin)
+      if (!origin) return callback(null, true);
+      // Allow configured origins
+      if (config.corsAllowedOrigins.includes(origin) || config.corsAllowedOrigins.includes('*')) {
+        return callback(null, true);
+      }
+      // Allow Render deployment URL if present
+      if (process.env.RENDER_EXTERNAL_URL && origin === process.env.RENDER_EXTERNAL_URL) {
+        return callback(null, true);
+      }
+      // In production with same-origin frontend, allow same-host
+      if (config.nodeEnv === 'production') {
+        return callback(null, true);
+      }
+      return callback(null, false);
+    },
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type', 'X-Request-Id'],
   })
@@ -81,26 +103,56 @@ app.use('/api', apiRateLimiter);
 const investigationService = new InvestigationService();
 app.use('/api', createInvestigationRouter(investigationService));
 
-// 7. Root Health / Info Check
-app.get('/', (_req: Request, res: Response) => {
-  res.json({
-    name: 'Digital Scam Investigator API',
-    version: '2.0.0',
-    status: 'operational',
-    docs: 'POST /api/investigate, GET /api/examples, GET /api/health',
-  });
-});
-
-// 8. 404 Handler
-app.use((_req: Request, res: Response) => {
+// 7. Explicit 404 for unmatched /api routes (prevents falling through to SPA HTML)
+app.use('/api', (_req: Request, res: Response) => {
   res.status(404).json({
     success: false,
     error: {
       code: 'NOT_FOUND',
-      message: 'The requested endpoint does not exist.',
+      message: 'The requested API endpoint does not exist.',
     },
   });
 });
+
+// 8. Serve Production Frontend Static Assets & SPA Fallback
+const candidateDistDirs = [
+  path.resolve(process.cwd(), 'Frontend/dist'),
+  path.resolve(__dirname, '../../Frontend/dist'),
+  path.resolve(__dirname, '../Frontend/dist'),
+  path.resolve(__dirname, '../../../Frontend/dist'),
+];
+const clientDistPath = candidateDistDirs.find((dir) => fs.existsSync(dir));
+
+if (clientDistPath) {
+  // Serve static files from Frontend/dist
+  app.use(express.static(clientDistPath));
+
+  // SPA fallback for all remaining non-API GET routes
+  app.get('{*path}', (_req: Request, res: Response) => {
+    res.sendFile(path.join(clientDistPath, 'index.html'));
+  });
+} else {
+  // Fallback when frontend build is not present (e.g. API-only mode)
+  app.get('/', (_req: Request, res: Response) => {
+    res.json({
+      name: 'Digital Scam Investigator API',
+      version: '2.1.0',
+      status: 'operational',
+      docs: 'POST /api/investigate, GET /api/examples, GET /api/health',
+      note: 'Frontend dist not found. Please build the frontend using npm run build:frontend.',
+    });
+  });
+
+  app.use((_req: Request, res: Response) => {
+    res.status(404).json({
+      success: false,
+      error: {
+        code: 'NOT_FOUND',
+        message: 'The requested endpoint does not exist.',
+      },
+    });
+  });
+}
 
 // 9. Central Error Handler (Zero stack trace leaks, respects HTTP 413 / status codes)
 app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
@@ -140,8 +192,8 @@ export { app };
 
 // Start server if not in test environment
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
-    logger.info(`Server operational on http://localhost:${PORT}`, {
+  app.listen(PORT, '0.0.0.0', () => {
+    logger.info(`Server operational on http://0.0.0.0:${PORT}`, {
       port: PORT,
       nodeEnv: config.nodeEnv,
       activeAiEngine: investigationService.getActiveAiProviderInfo().providerName,
