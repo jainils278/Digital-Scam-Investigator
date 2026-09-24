@@ -9,7 +9,6 @@
     "build": "tsc --noEmit"
   },
   "dependencies": {
-    "@types/node": "^24.13.5",
     "cors": "^2.8.6",
     "dotenv": "^18.0.0",
     "express": "^5.2.1",
@@ -18,6 +17,7 @@
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/node": "^24.13.5",
     "tsx": "^4.23.13",
     "typescript": "~6.0.2"
   }
