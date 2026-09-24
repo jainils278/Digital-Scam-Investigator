@@ -1,298 +1,241 @@
-# Digital Scam Investigator
+# Scamvera — Digital Scam Investigator
 
-A privacy-preserving, evidence-first cybersecurity workstation for analyzing suspicious messages, emails, and URLs for scam indicators.
+> An evidence-first cybersecurity workstation for investigating suspicious messages, URLs, and screenshots.
 
-![CI](https://img.shields.io/badge/CI-passing-brightgreen)
-![Tests](https://img.shields.io/badge/tests-132%20passed-brightgreen)
-![Validation](https://img.shields.io/badge/validation-45%2F45%20PASS-brightgreen)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.x%20%7C%206.x-blue)
+[**Live Demo**](https://scamvera.onrender.com/) • [**GitHub**](https://github.com/jainils278/Digital-Scam-Investigator)
 
-## Project Overview
+[![Tests](https://img.shields.io/badge/tests-132%20passed-brightgreen)](#validation)
+[![Validation](https://img.shields.io/badge/validation-45%2F45%20passed-brightgreen)](#validation)
+[![TypeScript](https://img.shields.io/badge/TypeScript-blue)](https://www.typescriptlang.org/)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-Digital Scam Investigator is an open-source defensive cybersecurity workstation engineered to evaluate suspicious communications—including SMS (smishing), email phishing, crypto schemes, extortion attempts, and imposter solicitations. Built with an evidence-first philosophy, the system isolates deterministic, verifiable signals before synthesizing contextual findings, ensuring every flagged suspicion is tied to literal source evidence.
+Scamvera helps users investigate suspicious digital communications by separating:
+- **Verified evidence** observed directly in the input
+- **AI-generated contextual interpretation** explaining attacker tactics
+- **Deterministic risk assessment** calculated as a deterministic 0–100 risk score
+- **Defensive recommendations** grounded in detected indicators
 
-The workstation serves security analysts, fraud investigators, and everyday digital citizens seeking rapid, explainable risk assessments without exposing sensitive personal communications to external cloud storage or persistent databases.
-
-## Highlights
-
-- Evidence-First Architecture: Every finding links directly to exact character offsets within the source text.
-- Separation of Concerns: Strict boundary between deterministic evidence and generative AI interpretation.
-- Zero Permanent Server Retention: Inputs are processed ephemerally in memory; no database or disk caching.
-- Deterministic Scoring: Calculated on a transparent 0–100 weighted index rather than opaque statistical probabilities.
-- Passive URL Inspection: Structural and heuristic analysis without triggering outbound web requests or following redirects.
-- Fully Resilient Offline Fallback: Operates autonomously with a built-in rule and heuristic engine when AI providers are unavailable.
-- Educational Focus: Translates raw risk telemetry into grounded defensive guidance and scam mechanism breakdowns.
-
-## What Makes It Different?
-
-Most scam detection utilities rely on one of two extremes: rigid keyword blocklists that miss evolving social engineering, or ungrounded generative AI prompts that hallucinate findings, leak user communications to cloud providers, and produce arbitrary risk percentages without verifiable backing.
-
-Digital Scam Investigator enforces an **Evidence-First Architecture**:
-
-- Grounded in Verifiable Evidence: The deterministic detection engine scans raw text for concrete lexical, syntactical, and cryptographic artifacts (e.g., urgency markers, credential harvesting phrases, suspicious domain structures, cryptocurrency addresses, and impersonation patterns). Every detected indicator records exact start and end character offsets.
-- Strict Evidence Boundaries for AI: When enabled, the AI layer acts strictly as an advisory analyst. It receives the verified indicators and input metadata, explaining why the observed tactics are dangerous and how victims are exploited. The AI cannot invent new evidence or modify deterministic findings.
-- Deterministic 0–100 Assessment: Risk scores are not black-box probability calculations. They represent a deterministic composite of indicator severities, threat weights, and corroborating factors.
-- Zero Tracking or Active Probing: The application performs purely passive structural inspection on URLs, ensuring the user is never exposed to tracking beacons, weaponized redirects, or active server-side exploits during analysis.
-
-## Four-Stage Architecture
+Scamvera is built as a defensive, educational investigation workstation—**not a generic AI chatbot**.
 
 ```text
-+-------------------------------------------------------------+
-|                         User Input                          |
-|         (SMS / Text, Email, Passive URL, Screenshot)        |
-+------------------------------+------------------------------+
-                               |
-                               v
-+-------------------------------------------------------------+
-|                      Observed Evidence                      |
-|      (Deterministic Engine, Character Offsets, Tokens)       |
-+------------------------------+------------------------------+
-                               |
-                               v
-+-------------------------------------------------------------+
-|                      AI Interpretation                      |
-|       (Contextual Reasoning Layer - Strict Evidence Fence)  |
-+------------------------------+------------------------------+
-                               |
-                               v
-+-------------------------------------------------------------+
-|                       Risk Assessment                       |
-|         (Deterministic 0–100 Score & Standard Tier)         |
-+------------------------------+------------------------------+
-                               |
-                               v
-+-------------------------------------------------------------+
-|                      Defensive Actions                      |
-|       (Actionable Mitigations, Evidence Graph, Education)    |
-+-------------------------------------------------------------+
+Verified Evidence → AI Interpretation → Deterministic Risk → Defensive Actions
 ```
 
-## Features
+---
 
-### Deterministic Scam Detection
+## What is Scamvera?
 
-- Scans messages across multiple specialized scam categories, including bank impersonation, advance-fee fraud (419), package delivery smishing, urgent credential harvesting, crypto giveaway scams, and fake tech support.
-- Automatically maps exact character spans to identified indicators for direct visual inspection.
-- Normalizes unicode variations, homoglyphs, and obfuscated text to counter basic evasion tactics.
+Modern social engineering and digital fraud target users across SMS, email, messaging channels, and deceptive web links. Traditional detection systems often present two critical weaknesses:
 
-### AI-Augmented Contextual Analysis
+1. **Keyword-only systems** rely on rigid blocklists that miss evolving phrasing and contextual manipulation.
+2. **Unconstrained AI systems** can produce explanations that are not grounded in observable evidence and output arbitrary risk percentages without verifiable backing.
 
-- Integrates optionally with OpenAI (GPT-4o) to synthesize complex social engineering narratives.
-- Operates within a hardened evidence boundary: AI is given verified indicators as ground truth and cannot alter findings.
-- Features automatic heuristic fallback when no API key is supplied or when network outages occur, maintaining uninterrupted operation.
+Scamvera solves this with a structured, phased pipeline:
 
-### Passive URL Investigation
+```text
+Observed Evidence → AI Interpretation → Deterministic Risk → Defensive Actions
+```
 
-- Evaluates URL structure, suspicious top-level domains, punycode/homoglyph patterns, IP-based hosts, subdomain stacking, brand-squatting patterns, and other structural indicators.
-- Performs exclusively passive structural analysis.
-- Arbitrary outbound URL fetching and redirect following are strictly not performed by the investigation engine, keeping users safe from malicious payloads or token logging.
+By ensuring that every finding is linked to verifiable source artifacts before contextual analysis begins, Scamvera delivers explainable assessments that empower users to make informed defensive decisions.
 
-### Screenshot / OCR Investigation
+---
 
-- Ingests image files (PNG, JPEG, WebP) directly through the workstation interface.
-- Extracts message bodies via OCR text preprocessing, feeding recognized text through the deterministic pipeline.
-- Handles synthetic text tags and embedded test payloads cleanly without server-side file leakage.
+## Why Scamvera?
 
-### Evidence Graph
+- **Evidence-First Detection**: Every flagged indicator records exact character offsets within the source text for immediate verification.
+- **Deterministic 0–100 Risk Score**: Scores are calculated through an explicit weighted formula based on corroborated indicators—not probabilistic claims.
+- **Evidence-Grounded AI**: AI contextual explanations are validated against observed evidence and do not determine the deterministic risk score.
+- **Passive URL Investigation**: Performs structural analysis of submitted URLs (domain structure, punycode, subdomain patterns) without fetching remote content or following redirects.
+- **Screenshot Investigation**: Extracts text using an OCR pipeline with a local Tesseract.js fallback when external vision services are unavailable or unconfigured.
+- **Defensive Guidance**: Generates prioritized, concrete actions (e.g., credential protection, reporting steps, blocking) tailored to the observed scam type.
+- **Privacy-Conscious Architecture**: Zero persistent database storage for user submissions; server logs never record raw investigative message content.
+- **Production-Ready**: Deployed with server-side API secret encapsulation, rate limiting, SSRF guards, and security headers.
 
-- Generates an interactive relationship diagram connecting entities, indicators, categories, and communication channels.
-- Provides analysts with a clear visual topology of how deceptive techniques converge in a single attack.
+---
 
-### Threat Intelligence
+## How It Works
 
-- Cross-references extracted indicators against available threat-intelligence signatures and configured scam patterns.
-- Correlates observed indicators with known fraudulent tactics and risk indicators.
+```mermaid
+flowchart TD
+    A[User Input] --> B[Normalization]
+    B --> C[Deterministic Evidence Detection]
+    C --> D[AI Contextual Interpretation]
+    C --> E[Deterministic Risk Engine]
+    D --> F[Investigation Report]
+    E --> F
+    F --> G[Defensive Recommendations]
+```
 
-### Scam Education
+1. **User Input**: Ingests suspicious communications via text, direct URLs, or uploaded screenshots across smishing, phishing, extortion, and impersonation categories.
+2. **Normalization**: Standardizes whitespace and resolves Unicode variants, zero-width characters, and basic homoglyphs to neutralize common evasion tricks.
+3. **Deterministic Evidence Detection**: Scans normalized content against specialized rule engines, identifying concrete indicators and cataloging exact character offsets.
+4. **AI Contextual Interpretation**: Uses OpenAI GPT-4o (or local heuristic fallback) to synthesize human-readable attacker mechanics strictly bounded by verified indicators.
+5. **Deterministic Risk Engine**: Aggregates verified indicator weights, category multipliers, and corroboration factors into a deterministic 0–100 risk score and risk tier.
+6. **Investigation Report**: Assembles findings, evidence tokens, confidence levels, and severity classifications into an executive investigation report.
+7. **Defensive Recommendations**: Delivers targeted, actionable defensive steps and educational breakdowns directly relevant to the confirmed threats.
 
-- Provides tailored learning modules based on the exact tactics identified in the investigated text.
-- Explains the psychology behind urgency cues, false authority, and emotional manipulation.
+---
 
-## Risk Assessment Framework
+## Investigation Modes
 
-The investigation score is a deterministic, non-probabilistic rating from 0 to 100 representing accumulated evidence severity:
+### 1. Text Investigation
+Investigates SMS messages, phishing emails, direct messages, and pasted text communications. Detects urgency markers, financial pressure, credential harvesting phrasing, fake job offers, package delivery lures, and impersonation patterns.
 
-| Score Range | Risk Level | Description | Recommended Defensive Action |
-| --- | --- | --- | --- |
-| 0–15 | Minimal | No significant suspicious indicators observed; standard communication patterns. | Maintain standard digital awareness; no immediate action required. |
-| 16–40 | Low | Minor anomalies or generic marketing phrasing detected; low probability of malicious intent. | Verify sender authenticity through independent channels before responding. |
-| 41–70 | Medium | Corroborating suspicious elements observed, such as unverified links or mild urgency. | Do not click links, download attachments, or share sensitive details. |
-| 71–89 | High | Multiple strong scam indicators confirmed (e.g., impersonation, financial demands). | Cease all contact; report the message to service providers and relevant authorities. |
-| 90–100 | Critical | Blatant scam signatures verified (e.g., OTP theft, active account suspension threats, known scam phrases). | Block sender immediately; secure related accounts and monitor credentials for exposure. |
+### 2. URL Investigation
+Performs passive structural analysis of submitted web addresses, inspecting domain structure, brand-spoofing patterns, subdomain stacking, IP-literal hostnames, and punycode/homoglyph signals.
 
-## Validation & Test Suite
+> **Defensive Scope Notice**: Because Scamvera does not visit submitted URLs, follow redirects, or download remote content, URL investigation remains passive.
 
-The system is validated through an extensive automated verification pipeline and an independent 45-case real-world benchmark:
+### 3. Screenshot / OCR Investigation
+Extracts visible text from supported screenshots through the OCR pipeline, using a local Tesseract.js fallback when external vision services are unavailable or unconfigured. Extracted text is fed through the same evidence-first investigation pipeline.
 
-| Metric | Result | Target Baseline | Status |
-| --- | --- | --- | --- |
-| Test Suites | 15 suites | 15 suites | PASS |
-| Automated Tests | 132 tests | >= 112 tests | PASS |
-| Failed Tests | 0 failures | 0 failures | PASS |
-| 45-Case Validation Benchmark | 45 / 45 passed | 45 / 45 passed | PASS |
-| - Scam Cases (S01–S15) | 15 / 15 passed | 15 / 15 passed | PASS |
-| - Legitimate Cases (L01–L15) | 15 / 15 passed | 15 / 15 passed | PASS |
-| - Ambiguous Cases (A01–A15) | 15 / 15 passed | 15 / 15 passed | PASS |
+---
 
-## Repository Architecture
+## Evidence-First Design
+
+Scamvera separates investigative findings into four distinct layers:
+
+- **Observed Evidence**: Deterministically observed signals directly present in the submitted content, with exact character offsets.
+- **AI Interpretation**: Contextual explanations synthesizing attacker psychology, typical scam flows, and intent. Advisory narrative validated against observed evidence.
+- **Risk Assessment**: A deterministic 0–100 composite index calculated from verified indicator severities. Presented as a deterministic score (Minimal, Low, Medium, High, Critical)—not as a probability of fraud.
+- **Defensive Actions**: Actionable, prioritized steps users can take to prevent credential theft, payment fraud, account compromise, or further engagement.
+
+For complete scoring matrices, category weights, and threshold definitions, see [Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md).
+
+---
+
+## Security & Privacy
+
+Scamvera is built with a defensive, privacy-first posture:
+
+- **No Persistent Database**: Investigation submissions are processed ephemerally in-memory. No database, disk cache, or external log stores user messages.
+- **Privacy-Safe Logging**: Application logs contain only high-level operational metadata (HTTP status, timing, IP hashes). Raw submitted text and images are never written to application logs.
+- **Client-Side History**: Past investigations are stored exclusively in the user's browser `localStorage` and can be cleared at any time.
+- **Server-Side Secret Management**: OpenAI API credentials remain strictly on the backend and are never sent or exposed to client-side code.
+- **SSRF Defensive Barrier**: Server-side URL operations validate resolved destinations against private RFC 1918 ranges, loopback addresses (`127.0.0.1`), and cloud metadata endpoints (`169.254.169.254`).
+- **Passive URL Analysis**: URLs are inspected structurally without making outbound HTTP requests or following redirects.
+- **Input Normalization**: Normalizes homoglyphs and zero-width spaces before scanning to mitigate evasion.
+- **Defense in Depth**: Features in-memory sliding-window rate limiting, request payload size caps, and hardened security headers (CSP, HSTS, X-Content-Type-Options).
+
+> *Note: Scamvera is a defensive cybersecurity and educational tool. It does not provide certified legal forensics, guarantee total anonymity, or claim 100% protection against all attacks.*
+
+---
+
+## Technical Stack
+
+- **Frontend**: React 19, TypeScript, Vite, Custom Vanilla CSS (Dark mode analytical workstation)
+- **Backend**: Node.js (>= 20), Express 5, TypeScript
+- **AI Integration**: OpenAI API (GPT-4o) with a local heuristic fallback
+- **OCR Engine**: Tesseract.js local fallback with multimodal OpenAI Vision support where configured
+- **Testing**: Vitest (132 automated tests, 45-case validation suite)
+- **Quality**: oxlint
+- **Deployment**: Render (Single-origin Express server serving API endpoints and compiled frontend)
+
+---
+
+## Validation
+
+The detection pipeline is continuously verified across comprehensive automated test suites:
+
+- **132 / 132 Automated Tests Passing** (15 Vitest test suites)
+- **45 / 45 Validation Dataset Cases Passing**:
+  - 15 / 15 Confirmed Scam Scenarios (advance-fee fraud, smishing, crypto schemes, extortion)
+  - 15 / 15 Legitimate Scenarios (order receipts, bank alerts, 2FA notifications)
+  - 15 / 15 Ambiguous Scenarios (aggressive marketing, ambiguous surveys)
+- **Evidence Offset Verification**: Flagged spans map to exact substring positions in the source input
+- **AI Boundary Integrity**: Contextual layer is validated against verified indicators
+
+---
+
+## Production Deployment
+
+Scamvera is deployed as a public production web service:
+
+- **Live URL**: [https://scamvera.onrender.com/](https://scamvera.onrender.com/)
+- **Architecture**: A single Express production service serves both the API endpoints and the compiled Vite frontend from a unified origin.
+- **Secrets**: OpenAI API keys remain strictly server-side.
+- **Health Endpoint**: Operational health and active engine status are available at `/api/health`.
+- **Safety**: URL analysis remains strictly passive in production.
+
+---
+
+## Engineering Highlights
+
+Key technical architectural highlights include:
+
+- **Strict Evidence/Interpretation Separation**: Prevents LLM hallucinations from affecting deterministic risk scores.
+- **SSRF-Resistant URL Guard**: Validates IP resolutions against CIDR blocks and cloud metadata IP ranges.
+- **Multi-Phase Text Normalizer**: Resolves Unicode confusables, Cyrillic/Greek homoglyphs, and zero-width characters with exact index mapping.
+- **Tiered OCR Architecture**: Combines cloud vision with a local Tesseract.js fallback for resilient text extraction.
+- **In-Memory Sliding-Window Rate Limiter**: Enforces IP-based request throttling without external Redis overhead.
+- **Client-Side Report Generator**: Dynamically generates downloadable investigation reports directly in the browser.
+- **Deterministic 0–100 Risk Engine**: Uses transparent, auditable weighting matrices rather than opaque statistical guesses.
+
+---
+
+## Project Structure
 
 ```text
 Digital-Scam-Investigator/
-├── .github/
-│   └── workflows/
-│       └── ci.yml
-├── Backend/
-│   ├── src/
-│   │   ├── config/
-│   │   ├── data/
-│   │   ├── middleware/
-│   │   ├── routes/
-│   │   ├── services/
-│   │   │   ├── ai/
-│   │   │   ├── ocr/
-│   │   │   ├── threat_intel/
-│   │   │   ├── detector.ts
-│   │   │   ├── education.ts
-│   │   │   ├── evidence_intelligence.ts
-│   │   │   ├── investigation.ts
-│   │   │   ├── logger.ts
-│   │   │   ├── normalizer.ts
-│   │   │   ├── risk_engine.ts
-│   │   │   ├── url_investigation.ts
-│   │   │   └── validator.ts
-│   │   ├── index.ts
-│   │   └── types.ts
-│   ├── .env.example
-│   ├── package.json
-│   └── tsconfig.json
-├── Docs/
-│   ├── ARCHITECTURE.md
-│   ├── PRIVACY.md
-│   └── VALIDATION.md
-├── Frontend/
-│   ├── public/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── App.css
-│   │   ├── App.tsx
-│   │   ├── index.css
-│   │   ├── main.tsx
-│   │   └── types.ts
-│   ├── index.html
-│   ├── package.json
-│   ├── tsconfig.json
-│   ├── tsconfig.node.json
-│   └── vite.config.ts
-├── Tests/
-│   ├── validation/
-│   │   ├── fixtures/
-│   │   ├── run_45_validation_run.ts
-│   │   └── validation_dataset.test.ts
-│   ├── *.test.ts
-│   └── tsconfig.json
-├── .env.example
-├── .gitignore
-├── .oxlintrc.json
-├── package.json
-├── README.md
-├── tsconfig.json
-└── vitest.config.ts
+├── Frontend/           # React 19 UI workstation, analytical views, graph canvas
+├── Backend/            # Express 5 API, deterministic detector, risk engine, SSRF guard
+├── Tests/              # Vitest suites, adversarial tests, 45-case validation suite
+├── Docs/               # Technical specifications, architecture docs, privacy details
+├── .github/            # GitHub configuration and workflow files
+├── package.json        # Root workspace configuration and scripts
+└── vitest.config.ts    # Test suite runner configuration
 ```
 
-## Technology Stack
+---
 
-| Layer | Component | Technology | Purpose |
-| --- | --- | --- | --- |
-| Frontend | UI Framework | React 19 + TypeScript | High-responsiveness investigation workstation interface |
-| Frontend | Bundler & Server | Vite 8 | Fast ESM-based development server and production build |
-| Frontend | Styling | Custom Vanilla CSS | Security-focused, distraction-free analytical interface |
-| Backend | Application Runtime | Node.js (>= 20) + Express 5 | Resilient HTTP API with hardened security headers |
-| Backend | Execution & Tooling | tsx + TypeScript 5.x / 6.x | Native TypeScript execution for dev and scripts |
-| AI Integration | Contextual Engine | OpenAI API (GPT-4o) | Advisory threat analysis with strict evidence grounding |
-| Testing | Test Framework | Vitest 5 | High-speed unit, integration, and adversarial test execution |
-| Quality | Linter | oxlint | High-performance Rust-based static code analysis |
-
-## Privacy & Security
-
-Digital Scam Investigator is engineered under strict privacy constraints:
-
-- Zero Server Retention: No database, file store, or cache records user-submitted message content.
-- No Raw Text Logging: System logs contain only structured metadata, timings, and cryptographic IP hashes. Raw investigative content is never printed to server stdout or files.
-- Client-Side History: Investigation history is stored exclusively in the user's browser localStorage. The server remains completely stateless.
-- Server-Side Secret Management: OpenAI API keys and configuration values remain strictly on the backend and are never sent or exposed to the client browser.
-- Passive Analysis Only: Arbitrary outbound URL fetching and redirect following are not performed, preventing tracking pixels or CSRF/SSRF attacks.
-- Robust Fallback: When AI credentials are not supplied, detection falls back to local heuristics without requiring an external AI provider.
-
-## Quick Start
+## Run Locally
 
 ### Prerequisites
+- Node.js >= 20.x
+- npm >= 10.x
 
-- Node.js >= 20
-- npm >= 10
-
-### Installation & Setup
+### Quick Start
 
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone https://github.com/jainils278/Digital-Scam-Investigator.git
 cd Digital-Scam-Investigator
 
-# Install workspace dependencies
+# 2. Install workspace dependencies
 npm install
 
-# Configure environment variables
+# 3. Configure environment variables (optional for local heuristic mode)
 cp .env.example .env
-```
 
-### Environment Configuration
-
-Configure optional settings in your .env file:
-
-```env
-PORT=3001
-NODE_ENV=development
-OPENAI_API_KEY=
-AI_PROVIDER=heuristic
-RATE_LIMIT_WINDOW_MS=60000
-RATE_LIMIT_MAX_REQUESTS=60
-```
-
-### Running the Application
-
-```bash
-# Start both backend and frontend development servers concurrently
+# 4. Start local development servers
 npm run dev
 ```
 
-The workstation interface will be accessible at http://localhost:5173 and the backend API at http://localhost:3001.
+- **Frontend Workstation**: `http://localhost:5173`
+- **Backend API**: `http://localhost:3001`
+- **Health Check**: `http://localhost:3001/api/health`
 
-## Available Commands
+*Note: If no `OPENAI_API_KEY` is configured in `.env`, Scamvera runs automatically in local heuristic mode.*
+
+### Key Scripts
 
 | Command | Description |
 | --- | --- |
-| `npm run dev` | Run backend and frontend servers concurrently for local development |
-| `npm run server` | Run backend server only using tsx watch mode |
-| `npm run client` | Run frontend development server only using Vite |
-| `npm test` | Run all 15 automated Vitest test suites (132 tests) |
-| `npm run test:watch` | Run Vitest in interactive watch mode |
-| `npm run test:validation` | Run the complete 45-case end-to-end validation benchmark |
-| `npm run build` | Compile backend and build frontend distribution package |
-| `npm run build:backend` | Validate and typecheck backend TypeScript files |
-| `npm run build:frontend` | Compile and bundle the frontend application with Vite |
-| `npm run lint` | Perform static code analysis using oxlint |
+| `npm run dev` | Launch backend and frontend development servers concurrently |
+| `npm run build` | Compile backend TypeScript and build the Vite production bundle |
+| `npm test` | Execute the complete Vitest suite |
+| `npm run test:validation` | Run the 45-case validation suite |
+| `npm run lint` | Run static code analysis with oxlint |
+| `npm start` | Run the production Express server |
 
-## Documentation
-
-For comprehensive technical documentation, refer to the following guides:
-
-- [Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md) - Full technical architecture, component lifecycle, and data flow specifications.
-- [Docs/PRIVACY.md](Docs/PRIVACY.md) - Complete privacy model, zero-retention guarantees, and logging constraints.
-- [Docs/VALIDATION.md](Docs/VALIDATION.md) - Validation methodology, test suite categorization, and benchmark details.
+---
 
 ## Important Disclaimer
 
-Digital Scam Investigator is a defensive cybersecurity and educational research tool designed to assist analysts and users in identifying common social engineering and fraud patterns. It does not provide legal, financial, or certified forensic advice. Detection assessments are heuristic and evidence-based; they do not guarantee the maliciousness or legitimacy of any specific sender or message. Users must exercise independent judgment and verify high-consequence communications through official out-of-band channels.
+Scamvera is a defensive cybersecurity and educational tool designed to assist users and analysts in identifying common digital deception, social engineering, and fraud patterns. Its assessments are evidence-based but are not legal guarantees that a message, URL, or sender is malicious or legitimate. Users must independently verify high-consequence communications through trusted, official out-of-band channels.
+
+---
 
 ## License
 
-This project is open-source software licensed under the MIT License.
+This project is licensed under the [MIT License](LICENSE).
