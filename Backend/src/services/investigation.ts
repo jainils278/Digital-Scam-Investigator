@@ -207,10 +207,12 @@ export class InvestigationService {
     const extraction = await ocrService.extractText(imageBuffer);
 
     if (!extraction.success || !extraction.text || extraction.text.trim().length < 5) {
-      throw new Error(
+      const err: any = new Error(
         extraction.warning ||
           'Could not extract sufficient readable text from the screenshot. Ensure the image is clear and contains readable text.'
       );
+      err.code = extraction.errorCode || 'LOW_CONTRAST_OR_UNREADABLE';
+      throw err;
     }
 
     const validation = validateImageBuffer(imageBuffer);

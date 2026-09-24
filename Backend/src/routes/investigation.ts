@@ -153,7 +153,7 @@ export function createInvestigationRouter(investigationService: InvestigationSer
       res.status(400).json({
         success: false,
         error: {
-          code: 'OCR_INVESTIGATION_ERROR',
+          code: err?.code || 'OCR_INVESTIGATION_ERROR',
           message: err?.message || 'Failed to analyze screenshot.',
         },
       });

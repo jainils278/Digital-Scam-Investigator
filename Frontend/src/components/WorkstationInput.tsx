@@ -3,7 +3,7 @@ import type { ExampleCase, MessageType } from '../types';
 
 interface WorkstationInputProps {
   text: string;
-  onChangeText: (newText: string) => void;
+  onChangeText: (text: string) => void;
   messageType: MessageType;
   onChangeMessageType: (type: MessageType) => void;
   onInvestigate: () => void;
@@ -44,7 +44,6 @@ export const WorkstationInput: React.FC<WorkstationInputProps> = ({
 
   const characterCount = text.length;
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
-  const estimatedTokens = Math.ceil(characterCount / 4);
 
   // PII mask preview function
   const handleToggleAnonymize = (enable: boolean) => {
@@ -72,7 +71,7 @@ export const WorkstationInput: React.FC<WorkstationInputProps> = ({
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      alert('Only image files (PNG, JPEG, WebP, GIF) are supported.');
+      alert('Only standard image files (PNG, JPEG, WebP, GIF) are supported.');
       return;
     }
 
@@ -110,82 +109,101 @@ export const WorkstationInput: React.FC<WorkstationInputProps> = ({
     if (onInvestigateUrl) {
       onInvestigateUrl(trimmed);
     } else {
-      onChangeText(`Suspicious link destination to investigate: ${trimmed}`);
+      onChangeText(`Target link to investigate: ${trimmed}`);
       onChangeMessageType('sms');
       onInvestigate();
     }
   };
 
   return (
-    <div className="panel-card">
-      {/* Terminal Title & Ingestion Mode Switcher */}
-      <div className="panel-header" style={{ flexWrap: 'wrap', gap: '10px' }}>
-        <div className="panel-title">
-          <span>🔍</span>
-          <span>INVESTIGATION TERMINAL</span>
+    <div className="panel-card workstation-card" role="region" aria-label="Investigation Input">
+      {/* Terminal Header & Mode Tabs */}
+      <div className="panel-header" style={{ flexWrap: 'wrap', gap: '12px' }}>
+        <div className="panel-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <span style={{ fontWeight: 700, letterSpacing: '0.5px' }}>INVESTIGATION WORKSPACE</span>
         </div>
 
-        <div style={{ display: 'flex', gap: '6px' }}>
+        {/* Ingestion Mode Switcher */}
+        <div className="mode-toggle-group" style={{ display: 'flex', gap: '6px' }}>
           <button
             type="button"
-            className={`btn-secondary ${ingestionMode === 'text' ? 'active' : ''}`}
+            className={`btn-tab ${ingestionMode === 'text' ? 'active' : ''}`}
             onClick={() => setIngestionMode('text')}
-            style={{
-              padding: '4px 10px',
-              fontSize: '12px',
-              backgroundColor: ingestionMode === 'text' ? 'var(--bg-secondary)' : 'transparent',
-              color: ingestionMode === 'text' ? 'var(--accent-cyan)' : 'var(--text-secondary)',
-              borderColor: ingestionMode === 'text' ? 'var(--accent-cyan)' : 'var(--border-subtle)',
-            }}
           >
-            📝 Text / Message
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+            <span>Message Text</span>
           </button>
           <button
             type="button"
-            className={`btn-secondary ${ingestionMode === 'url' ? 'active' : ''}`}
+            className={`btn-tab ${ingestionMode === 'url' ? 'active' : ''}`}
             onClick={() => setIngestionMode('url')}
-            style={{
-              padding: '4px 10px',
-              fontSize: '12px',
-              backgroundColor: ingestionMode === 'url' ? 'var(--bg-secondary)' : 'transparent',
-              color: ingestionMode === 'url' ? 'var(--accent-cyan)' : 'var(--text-secondary)',
-              borderColor: ingestionMode === 'url' ? 'var(--accent-cyan)' : 'var(--border-subtle)',
-            }}
           >
-            🔗 Direct URL Prober
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+            <span>Web Address (URL)</span>
           </button>
           <button
             type="button"
-            className={`btn-secondary ${ingestionMode === 'screenshot' ? 'active' : ''}`}
+            className={`btn-tab ${ingestionMode === 'screenshot' ? 'active' : ''}`}
             onClick={() => setIngestionMode('screenshot')}
-            style={{
-              padding: '4px 10px',
-              fontSize: '12px',
-              backgroundColor: ingestionMode === 'screenshot' ? 'var(--bg-secondary)' : 'transparent',
-              color: ingestionMode === 'screenshot' ? 'var(--accent-cyan)' : 'var(--text-secondary)',
-              borderColor: ingestionMode === 'screenshot' ? 'var(--accent-cyan)' : 'var(--border-subtle)',
-            }}
           >
-            📸 Screenshot OCR
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+            <span>Screenshot / Image</span>
           </button>
         </div>
       </div>
 
-      {/* MODE 1: RAW TEXT INGESTION */}
+      {/* MODE 1: TEXT / MESSAGE INGESTION */}
       {ingestionMode === 'text' && (
         <>
+          {/* Quick Preset Selector */}
+          <div className="preset-selector-row">
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Quick Examples:</span>
+            <select
+              className="preset-select"
+              onChange={(e) => {
+                const found = examples.find((ex) => ex.id === e.target.value);
+                if (found) onSelectExample(found);
+              }}
+              defaultValue=""
+              aria-label="Load example message"
+            >
+              <option value="" disabled>Select an example scenario...</option>
+              {examples.map((ex) => (
+                <option key={ex.id} value={ex.id}>
+                  [{ex.expectedRisk}] {ex.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Channel Selector */}
-          <div className="channel-selector">
+          <div className="channel-selector" role="group" aria-label="Message Channel">
             <span style={{ fontSize: '12px', color: 'var(--text-muted)', alignSelf: 'center', marginRight: '4px' }}>
               Channel:
             </span>
             {(
               [
-                { id: 'sms', label: '📱 SMS / Smishing' },
-                { id: 'email', label: '✉️ Email / Phishing' },
-                { id: 'social_dm', label: '💬 Social Media DM' },
-                { id: 'voice_transcript', label: '🎙️ Voice / Voicemail' },
-                { id: 'unknown', label: '📋 Paste / Unknown' },
+                { id: 'sms', label: 'SMS' },
+                { id: 'email', label: 'Email' },
+                { id: 'social_dm', label: 'Social DM' },
+                { id: 'voice_transcript', label: 'Voice Transcript' },
+                { id: 'unknown', label: 'Unknown' },
               ] as Array<{ id: MessageType; label: string }>
             ).map((item) => (
               <button
@@ -199,57 +217,34 @@ export const WorkstationInput: React.FC<WorkstationInputProps> = ({
             ))}
           </div>
 
-          {/* Educational Presets */}
-          {examples.length > 0 && (
-            <div className="presets-section">
-              <div className="presets-label">
-                <span>💡</span>
-                <span>Safe Educational Presets (Click to Load):</span>
-              </div>
-              <div className="preset-chips">
-                {examples.map((ex) => (
-                  <button
-                    key={ex.id}
-                    type="button"
-                    className="preset-chip"
-                    onClick={() => onSelectExample(ex)}
-                    title={`${ex.description} (Expected: ${ex.expectedRisk})`}
-                  >
-                    {ex.title}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Text Area */}
           <div className="input-wrapper">
             <textarea
               className="investigation-textarea"
-              placeholder="Paste suspicious text message, phishing email, social media communication, or urgent notice to investigate..."
+              placeholder="Paste suspicious text message, email, chat message, or urgent notice to investigate..."
               value={text}
               onChange={(e) => onChangeText(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={isLoading}
               rows={7}
               spellCheck={false}
+              aria-label="Suspicious text to investigate"
             />
           </div>
 
           {/* Telemetry and metadata */}
           <div className="input-telemetry">
             <div className="telemetry-counts">
-              <span>Characters: {characterCount} / 10,000</span>
-              <span>Words: {wordCount}</span>
-              <span>Est. Tokens: ~{estimatedTokens}</span>
+              <span>Characters: {characterCount.toLocaleString()} / 10,000</span>
+              <span>Words: {wordCount.toLocaleString()}</span>
             </div>
 
-            <div style={{ color: characterCount < 5 ? '#f59e0b' : '#34d399' }}>
+            <div style={{ color: characterCount < 5 ? '#f59e0b' : '#34d399', fontSize: '12px' }}>
               {characterCount === 0
-                ? 'Awaiting input'
+                ? 'Ready for input'
                 : characterCount < 5
                 ? 'Min 5 characters required'
-                : 'Ready for defensive scan (Ctrl + Enter)'}
+                : 'Ready to investigate (Ctrl + Enter)'}
             </div>
           </div>
 
@@ -271,7 +266,7 @@ export const WorkstationInput: React.FC<WorkstationInputProps> = ({
                 onClick={onClear}
                 disabled={isLoading || text.length === 0}
               >
-                Clear Text
+                Clear
               </button>
 
               <button
@@ -280,7 +275,7 @@ export const WorkstationInput: React.FC<WorkstationInputProps> = ({
                 onClick={onInvestigate}
                 disabled={isLoading || text.trim().length < 5 || text.length > 10000}
               >
-                {isLoading ? 'Scanning Threat Indicators...' : '🛡️ Run Investigation'}
+                {isLoading ? 'Investigating...' : 'Run Investigation'}
               </button>
             </div>
           </div>
@@ -289,21 +284,29 @@ export const WorkstationInput: React.FC<WorkstationInputProps> = ({
 
       {/* MODE 2: DIRECT URL PROBER */}
       {ingestionMode === 'url' && (
-        <div style={{ display: 'grid', gap: '14px', marginTop: '10px' }}>
-          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-            Submit a standalone URL or domain to inspect for lookalike brand spoofing, high-risk TLDs, Punycode tricks, and threat intelligence without visiting the page directly.
+        <div style={{ display: 'grid', gap: '16px', marginTop: '12px' }}>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+            Enter a web address or domain to analyze its structure, lookalike characters, and suspicious extensions. The analysis is passive and never visits the destination page directly.
           </p>
 
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <input
               type="text"
               className="investigation-textarea"
-              style={{ flex: 1, minWidth: '280px', height: '42px', padding: '10px 14px', fontSize: '14px', fontFamily: 'var(--font-mono)' }}
+              style={{
+                flex: 1,
+                minWidth: '280px',
+                height: '44px',
+                padding: '10px 14px',
+                fontSize: '14px',
+                fontFamily: 'var(--font-mono)',
+              }}
               placeholder="e.g. https://usps-redelivery-notice.top/track or chase-verify.com"
               value={urlInput}
               onChange={(e) => setUrlInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleRunUrlScan()}
               disabled={isLoading}
+              aria-label="URL to inspect"
             />
             <button
               type="button"
@@ -311,22 +314,24 @@ export const WorkstationInput: React.FC<WorkstationInputProps> = ({
               onClick={handleRunUrlScan}
               disabled={isLoading || urlInput.trim().length === 0}
             >
-              {isLoading ? 'Inspecting Domain...' : '🔍 Probe URL'}
+              {isLoading ? 'Analyzing...' : 'Inspect Web Address'}
             </button>
           </div>
 
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span>🛡️</span>
-            <span>Pre-resolution SSRF protection active: loopback, 127.0.0.1, private RFC-1918 subnets, and cloud metadata IPs are strictly blocked.</span>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            <span>Passive structural analysis: the system does not visit the webpage or follow redirects.</span>
           </div>
         </div>
       )}
 
       {/* MODE 3: SCREENSHOT OCR DROPZONE */}
       {ingestionMode === 'screenshot' && (
-        <div style={{ display: 'grid', gap: '14px', marginTop: '10px' }}>
-          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-            Upload or drop a screenshot of a suspicious SMS message, email alert, or chat screen. OCR extracts the text and runs it through the authoritative detection pipeline.
+        <div style={{ display: 'grid', gap: '16px', marginTop: '12px' }}>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+            Upload a screenshot of a suspicious message, email, or chat. We'll extract the visible text and check it for warning signs.
           </p>
 
           <input
@@ -349,35 +354,33 @@ export const WorkstationInput: React.FC<WorkstationInputProps> = ({
             onDragLeave={() => setIsDragOver(false)}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
-            style={{
-              border: `2px dashed ${isDragOver ? 'var(--accent-cyan)' : 'var(--border-medium)'}`,
-              borderRadius: 'var(--radius-md)',
-              padding: '28px',
-              textAlign: 'center',
-              backgroundColor: isDragOver ? 'rgba(56, 189, 248, 0.05)' : 'var(--bg-input)',
-              cursor: 'pointer',
-              transition: 'border-color 0.2s, background-color 0.2s',
-            }}
+            className={`screenshot-dropzone ${isDragOver ? 'drag-over' : ''} ${screenshotPreview ? 'has-preview' : ''}`}
           >
             {screenshotPreview ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-                <img
-                  src={screenshotPreview}
-                  alt="Screenshot preview"
-                  style={{ maxHeight: '180px', maxWidth: '100%', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}
-                />
-                <div style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: 600 }}>
-                  📷 {screenshotFile?.name} ({(screenshotFile!.size / 1024).toFixed(1)} KB)
+              <div className="preview-container">
+                <div className="preview-image-card">
+                  <img
+                    src={screenshotPreview}
+                    alt="Uploaded screenshot preview"
+                    className="preview-img-natural"
+                  />
                 </div>
-                <span style={{ fontSize: '11px', color: 'var(--accent-cyan)' }}>
-                  Click or drop to choose a different image
+                <div style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: 600, marginTop: '10px' }}>
+                  {screenshotFile?.name} ({(screenshotFile!.size / 1024).toFixed(1)} KB)
+                </div>
+                <span style={{ fontSize: '12px', color: 'var(--accent-cyan)', marginTop: '2px' }}>
+                  Click or drag to choose a different image
                 </span>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '36px' }}>📸</span>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                  <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
                 <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                  Drag & Drop Screenshot here, or click to browse
+                  Drag &amp; drop screenshot here, or click to browse
                 </div>
                 <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                   Supports PNG, JPEG, WebP, GIF (Max 5MB). Processed strictly in-memory (zero server disk storage).
@@ -407,7 +410,7 @@ export const WorkstationInput: React.FC<WorkstationInputProps> = ({
               onClick={handleRunScreenshotScan}
               disabled={isLoading || !screenshotPreview}
             >
-              {isLoading ? 'Running OCR & Threat Scan...' : '🚀 Extract OCR & Run Investigation'}
+              {isLoading ? 'Extracting & Scanning...' : 'Scan Screenshot'}
             </button>
           </div>
         </div>

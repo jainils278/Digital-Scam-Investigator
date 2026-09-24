@@ -23,6 +23,20 @@ import { logger } from './services/logger.js';
 
 dotenv.config();
 
+// Process-level safety net to protect against unhandled asynchronous worker exceptions
+process.on('uncaughtException', (err: any) => {
+  logger.error('Safety net caught uncaught exception', {
+    errorName: err?.name,
+    errorMessage: err?.message,
+  });
+});
+
+process.on('unhandledRejection', (reason: any) => {
+  logger.error('Safety net caught unhandled rejection', {
+    reason: reason?.message || String(reason),
+  });
+});
+
 const app = express();
 const PORT = config.port;
 

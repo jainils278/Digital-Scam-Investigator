@@ -6,8 +6,46 @@ import { InvestigationReportView } from './components/InvestigationReportView';
 import { ThreatReferenceModal } from './components/ThreatReferenceModal';
 import { WorkstationInput } from './components/WorkstationInput';
 import type { ExampleCase, InvestigationReport, LocalHistoryItem, MessageType } from './types';
+import { generateFullInvestigationReport } from './utils/reportGenerator';
 
 const STORAGE_KEY = 'scam_investigator_history';
+
+function formatFriendlyError(err: any, fallbackMessage: string): string {
+  const code = err?.code || '';
+  const raw = err?.message || fallbackMessage;
+
+  if (code === 'OCR_PROVIDER_ERROR' || raw.includes('OCR_PROVIDER_ERROR')) {
+    return 'The optical recognition service encountered a provider issue. Please try again or paste the text directly.';
+  }
+  if (code === 'OCR_CONFIGURATION_ERROR' || raw.includes('OCR_CONFIGURATION_ERROR')) {
+    return 'Optical character recognition is currently not configured. Please paste the message text directly.';
+  }
+  if (
+    code === 'LOW_CONTRAST_OR_UNREADABLE' ||
+    raw.includes('LOW_CONTRAST_OR_UNREADABLE') ||
+    raw.includes('No clear text could be recognized') ||
+    raw.includes('Could not extract sufficient readable text')
+  ) {
+    return "We couldn't read enough text from this image. Try uploading a clearer screenshot with the message fully visible.";
+  }
+  if (code === 'OVERSIZED_IMAGE' || raw.includes('OVERSIZED_IMAGE')) {
+    return 'The image file size exceeds the 5MB maximum limit. Please upload a smaller image.';
+  }
+  if (
+    code === 'INVALID_IMAGE' ||
+    raw.includes('UNSUPPORTED_IMAGE_FORMAT') ||
+    raw.includes('UNSAFE_FORMAT')
+  ) {
+    return 'Please upload a standard image file (PNG, JPEG, WebP, or GIF).';
+  }
+  if (code === 'EMPTY_IMAGE' || raw.includes('EMPTY_IMAGE')) {
+    return 'The selected image file contains zero bytes. Please select a valid screenshot.';
+  }
+  if (raw.includes('Failed to fetch') || raw.includes('NetworkError')) {
+    return 'Unable to connect to the investigation engine. Please verify that the server is running.';
+  }
+  return raw;
+}
 
 export const App: React.FC = () => {
   // Input State
@@ -42,7 +80,6 @@ export const App: React.FC = () => {
         }
       })
       .catch(() => {
-        // Safe fallback
         setActiveAiMode('Local Heuristic Engine');
         setIsRealAi(false);
       });
@@ -69,7 +106,7 @@ export const App: React.FC = () => {
         }
       }
     } catch {
-      // Ignore localStorage parse errors
+      // Ignore parse errors
     }
   }, []);
 
@@ -83,7 +120,7 @@ export const App: React.FC = () => {
       messageType: report.inputMeta.messageType,
       riskScore: report.riskAssessment.score,
       riskLevel: report.riskAssessment.level,
-      primaryCategory: report.riskAssessment.primaryCategories[0] || 'Unknown',
+      primaryCategory: report.riskAssessment.primaryCategories[0] || 'General Communication',
       indicatorCount: report.observedIndicators.length,
       report,
     };
@@ -109,7 +146,7 @@ export const App: React.FC = () => {
     }
   };
 
-  // 2. Investigation Action
+  // 2. Text Investigation Action
   const handleInvestigate = async () => {
     if (inputText.trim().length < 5) {
       setErrorMessage('Please enter at least 5 characters to run an investigation.');
@@ -142,7 +179,6 @@ export const App: React.FC = () => {
       setCurrentReport(report);
       saveHistoryItem(report);
 
-      // Smooth scroll to report view
       setTimeout(() => {
         const reportElem = document.getElementById('investigation-report-section');
         if (reportElem) {
@@ -150,7 +186,7 @@ export const App: React.FC = () => {
         }
       }, 100);
     } catch (err: any) {
-      setErrorMessage(err?.message || 'An error occurred while connecting to the investigation engine.');
+      setErrorMessage(formatFriendlyError(err, 'An error occurred while connecting to the investigation engine.'));
     } finally {
       setIsLoading(false);
     }
@@ -177,10 +213,15 @@ export const App: React.FC = () => {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data?.error?.message || 'Failed to analyze screenshot image.');
+        const error: any = new Error(data?.error?.message || 'Failed to analyze screenshot image.');
+        error.code = data?.error?.code;
+        throw error;
       }
 
       const report: InvestigationReport = data.report;
+      if (report.screenshotMeta) {
+        report.screenshotMeta.previewDataUrl = imageBase64;
+      }
       setInputText(report.rawText);
       setCurrentReport(report);
       saveHistoryItem(report);
@@ -192,7 +233,7 @@ export const App: React.FC = () => {
         }
       }, 100);
     } catch (err: any) {
-      setErrorMessage(err?.message || 'An error occurred during screenshot analysis.');
+      setErrorMessage(formatFriendlyError(err, 'An error occurred during screenshot analysis.'));
     } finally {
       setIsLoading(false);
     }
@@ -205,21 +246,20 @@ export const App: React.FC = () => {
     setSelectedIndicatorId(null);
 
     try {
-      // Run standard investigation on URL to generate full report with evidence graph and education
       const fullRes = await fetch('/api/investigate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          text: `Target Link URL to inspect: ${url}`,
+          text: `Target link to investigate: ${url}`,
           messageType: 'sms',
         }),
       });
 
       const fullData = await fullRes.json();
       if (!fullRes.ok || !fullData.success) {
-        throw new Error(fullData?.error?.message || 'Failed to probe target URL.');
+        throw new Error(fullData?.error?.message || 'Failed to inspect target URL.');
       }
 
       const report: InvestigationReport = fullData.report;
@@ -234,7 +274,7 @@ export const App: React.FC = () => {
         }
       }, 100);
     } catch (err: any) {
-      setErrorMessage(err?.message || 'An error occurred during URL investigation.');
+      setErrorMessage(formatFriendlyError(err, 'An error occurred during URL investigation.'));
     } finally {
       setIsLoading(false);
     }
@@ -262,45 +302,10 @@ export const App: React.FC = () => {
     setErrorMessage(null);
   };
 
-  const handleCopySummary = () => {
+  // 6. Unified Report Download Action
+  const handleDownloadReport = () => {
     if (!currentReport) return;
-    const { riskAssessment, observedIndicators, aiContext } = currentReport;
-
-    const summaryText = `DIGITAL SCAM INVESTIGATION REPORT (${currentReport.id})
-Timestamp: ${new Date(currentReport.timestamp).toLocaleString()}
-Risk Assessment: ${riskAssessment.score}/100 (${riskAssessment.level} RISK)
-Evidence Strength: ${riskAssessment.evidenceStrength}
-Primary Classifications: ${riskAssessment.primaryCategories.join(', ')}
-
-OBSERVED EVIDENCE (${observedIndicators.length} verified indicators):
-${observedIndicators
-  .map((ind) => `• [${ind.severity}] "${ind.evidence}" — ${ind.name} (offset ${ind.characterRange[0]}-${ind.characterRange[1]})`)
-  .join('\n')}
-
-CONTEXTUAL ANALYSIS:
-${aiContext.socialEngineeringTactics}
-
-DEFENSIVE MITIGATIONS:
-${currentReport.defensiveRecommendations.map((r) => `[${r.priority}] ${r.action}`).join('\n')}
-
-DISCLAIMER:
-${currentReport.disclaimer}`;
-
-    navigator.clipboard.writeText(summaryText);
-    alert('Investigation summary copied to clipboard.');
-  };
-
-  const handleExportJson = () => {
-    if (!currentReport) return;
-    const blob = new Blob([JSON.stringify(currentReport, null, 2)], {
-      type: 'application/json',
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${currentReport.id}_investigation_report.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    generateFullInvestigationReport(currentReport);
   };
 
   return (
@@ -313,6 +318,8 @@ ${currentReport.disclaimer}`;
         onOpenHistory={() => setIsHistoryOpen(true)}
         onOpenReference={() => setIsReferenceOpen(true)}
         onNewInvestigation={handleClear}
+        hasActiveReport={!!currentReport}
+        onDownloadReport={handleDownloadReport}
       />
 
       <main className="main-content">
@@ -332,29 +339,30 @@ ${currentReport.disclaimer}`;
             onInvestigateUrl={handleInvestigateUrl}
           />
 
-          {/* Error Notice */}
+          {/* Friendly Error Notice */}
           {errorMessage && (
             <div
-              className="panel-card"
-              style={{
-                borderColor: 'var(--risk-critical-border)',
-                backgroundColor: 'var(--risk-critical-bg)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
+              className="panel-card error-card"
+              role="alert"
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '20px' }}>⚠️</span>
-                <span style={{ color: '#fca5a5', fontSize: '14px' }}>{errorMessage}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <div>
+                  <div style={{ color: '#fca5a5', fontSize: '14px', fontWeight: 600 }}>Investigation Notice</div>
+                  <div style={{ color: '#f87171', fontSize: '13px', marginTop: '2px' }}>{errorMessage}</div>
+                </div>
               </div>
               <button
                 type="button"
                 className="btn-secondary"
-                onClick={handleInvestigate}
-                style={{ fontSize: '12px' }}
+                onClick={() => setErrorMessage(null)}
+                style={{ fontSize: '12px', padding: '6px 12px' }}
               >
-                Retry Scan
+                Dismiss
               </button>
             </div>
           )}
@@ -368,8 +376,7 @@ ${currentReport.disclaimer}`;
               report={currentReport}
               selectedIndicatorId={selectedIndicatorId}
               onSelectIndicator={setSelectedIndicatorId}
-              onCopySummary={handleCopySummary}
-              onExportJson={handleExportJson}
+              onDownloadReport={handleDownloadReport}
             />
           )}
         </div>

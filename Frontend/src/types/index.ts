@@ -84,6 +84,7 @@ export interface UrlAnalysisSummary {
 }
 
 export interface ScreenshotMetadata {
+  previewDataUrl?: string;
   filename?: string;
   mimeType: string;
   byteSize: number;

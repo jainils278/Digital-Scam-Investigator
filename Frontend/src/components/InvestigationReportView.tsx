@@ -1,531 +1,417 @@
-import React, { useState } from 'react';
-import type { InvestigationReport, ObservedIndicator } from '../types';
-import { EducationDeepDiveView } from './EducationDeepDiveView';
-import { EvidenceGraphView } from './EvidenceGraphView';
-import { InvestigationAssessmentPanel } from './InvestigationAssessmentPanel';
-import { UrlIntelSection } from './UrlIntelSection';
+import React from 'react';
+import type { InvestigationReport } from '../types';
 
 interface InvestigationReportViewProps {
   report: InvestigationReport;
-  selectedIndicatorId: string | null;
-  onSelectIndicator: (id: string | null) => void;
-  onCopySummary: () => void;
-  onExportJson: () => void;
-}
-
-interface TextSegment {
-  text: string;
-  isHighlight: boolean;
-  indicator?: ObservedIndicator;
+  selectedIndicatorId?: string | null;
+  onSelectIndicator?: (id: string | null) => void;
+  onDownloadReport?: () => void;
+  onBackToNewInvestigation?: () => void;
 }
 
 export const InvestigationReportView: React.FC<InvestigationReportViewProps> = ({
   report,
-  selectedIndicatorId,
-  onSelectIndicator,
-  onCopySummary,
-  onExportJson,
+  onDownloadReport,
+  onBackToNewInvestigation,
 }) => {
-  const { rawText, observedIndicators, aiContext, riskAssessment, defensiveRecommendations, disclaimer } = report;
-  const { score, level, evidenceStrength, primaryCategories } = riskAssessment;
+  const { observedIndicators, aiContext, riskAssessment, defensiveRecommendations, screenshotMeta, id, timestamp } = report;
+  const { score, level, primaryCategories } = riskAssessment;
 
-  const [completedActions, setCompletedActions] = useState<Record<string, boolean>>({});
-  const [copiedChecklist, setCopiedChecklist] = useState(false);
-
-  const toggleAction = (id: string) => {
-    setCompletedActions((prev) => ({ ...prev, [id]: !prev[id] }));
+  // Format date for Investigated timestamp (e.g. Sep 23, 2026 • 9:16 PM)
+  const formatInvestigatedDate = (iso: string) => {
+    try {
+      const d = new Date(iso);
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const month = months[d.getUTCMonth()];
+      const day = d.getUTCDate();
+      const year = d.getUTCFullYear();
+      let hours = d.getUTCHours();
+      const minutes = d.getUTCMinutes().toString().padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12 || 12;
+      return `${month} ${day}, ${year} • ${hours}:${minutes} ${ampm}`;
+    } catch {
+      return iso;
+    }
   };
 
-  // Build segmented highlighted text
-  const inlineIndicators = observedIndicators.filter(
-    (ind) => !ind.id.startsWith('ind_evasion_') && ind.characterRange[0] < ind.characterRange[1]
-  );
-  const sorted = [...inlineIndicators].sort((a, b) => a.characterRange[0] - b.characterRange[0]);
+  // Determine mode label
+  const isScreenshot = !!screenshotMeta;
+  const isUrlMode = !!(report.urlAnalysis && report.urlAnalysis.length > 0);
+  const modeLabel = isScreenshot ? 'Screenshot OCR' : isUrlMode ? 'URL Analysis' : 'Text Analysis';
 
-  const segments: TextSegment[] = [];
-  let currentIndex = 0;
+  // Level theme colors
+  const levelColor =
+    level === 'CRITICAL' || level === 'HIGH'
+      ? '#ef4444'
+      : level === 'MEDIUM'
+      ? '#f59e0b'
+      : level === 'LOW'
+      ? '#10b981'
+      : '#38bdf8';
 
-  for (const ind of sorted) {
-    const [start, end] = ind.characterRange;
-    if (start < currentIndex || start >= rawText.length) continue;
+  // Circular gauge circumference for r=42 is 263.89
+  const radius = 42;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (Math.min(100, Math.max(0, score)) / 100) * circumference;
 
-    if (start > currentIndex) {
-      segments.push({
-        text: rawText.slice(currentIndex, start),
-        isHighlight: false,
-      });
-    }
-
-    const actualEnd = Math.min(end, rawText.length);
-    segments.push({
-      text: rawText.slice(start, actualEnd),
-      isHighlight: true,
-      indicator: ind,
-    });
-
-    currentIndex = actualEnd;
-  }
-
-  if (currentIndex < rawText.length) {
-    segments.push({
-      text: rawText.slice(currentIndex),
-      isHighlight: false,
-    });
-  }
-
-  // Derive plain-language assessment narrative
-  const getOverallSummary = () => {
-    if (level === 'BENIGN') {
-      return 'No known suspicious indicators were detected in this message. This result means the investigation did not find the scam patterns currently checked by the system. It does not verify the sender or guarantee that the message is legitimate.';
+  // Derive plain-language simple conclusion
+  const getSimpleConclusion = () => {
+    if (level === 'BENIGN' || level === 'LOW') {
+      return `The ${isScreenshot ? 'image' : 'message'} does not contain recognized scam patterns currently checked by the system. However, this does not verify the sender or guarantee authenticity.`;
     }
     if (level === 'CRITICAL' || level === 'HIGH') {
-      return `This message contains multiple verified indicators commonly associated with ${primaryCategories.join(' and ')}. Social-engineering patterns often pair artificial urgency with threats or verification demands to prompt immediate compliance before independent verification can occur.`;
+      return `The ${isScreenshot ? 'image' : 'message'} contains a reward claim that uses urgency and a payment request. This combination is commonly used in scams to pressure people into sharing money or personal information.`;
     }
-    return `This message contains isolated indicators that warrant caution (${primaryCategories.join(', ')}). While not conclusively fraudulent, verify the claim through independent channels before responding or providing information.`;
+    return `The ${isScreenshot ? 'image' : 'message'} contains warning signs commonly associated with ${primaryCategories.join(' and ') || 'suspicious communications'}. Verify the sender through trusted independent channels before responding.`;
   };
 
-  // Plain-language evidence strength explanation
-  const getEvidenceStrengthText = () => {
-    switch (evidenceStrength) {
-      case 'SUBSTANTIAL':
-        return 'Multiple verified indicators were detected, including high-severity patterns that reinforce one another.';
-      case 'MODERATE':
-        return 'Verified indicators were detected establishing a recognizable suspicious pattern.';
-      case 'LIMITED':
-        return 'Limited or isolated indicators were detected with low specificity.';
-      case 'MINIMAL':
-      default:
-        return 'No verified suspicious indicators were detected, or the available evidence is insufficient to establish a meaningful suspicious pattern.';
+  // Segregate Do and Don't actions
+  const doItems: string[] = [];
+  const dontItems: string[] = [];
+
+  if (defensiveRecommendations && defensiveRecommendations.length > 0) {
+    for (const rec of defensiveRecommendations) {
+      const act = rec.action;
+      const lower = act.toLowerCase();
+      if (
+        lower.startsWith('do not') ||
+        lower.startsWith("don't") ||
+        lower.includes('refuse') ||
+        lower.includes('halt') ||
+        lower.includes('never')
+      ) {
+        dontItems.push(act);
+      } else {
+        doItems.push(act);
+      }
     }
-  };
+  }
 
-  // Group actions into DO NOT and DO
-  const doNotActions = defensiveRecommendations.filter(
-    (a) =>
-      a.action.toLowerCase().includes('not') ||
-      a.action.toLowerCase().includes('halt') ||
-      a.action.toLowerCase().includes('refuse')
-  );
+  // Fallbacks if recommendations are sparse
+  if (dontItems.length === 0) {
+    dontItems.push('Do not send money or make any payments.');
+    dontItems.push('Do not share verification codes or account details.');
+    dontItems.push('Do not assume the message is genuine, even if it looks official.');
+  }
+  if (doItems.length === 0) {
+    doItems.push('Do not share passwords, personal information or payment details.');
+    doItems.push('Do not click on the link or respond to the message.');
+    doItems.push('Verify the request using the official website or a trusted contact.');
+    doItems.push('If you already shared information, secure your account immediately.');
+  }
 
-  const doActions = defensiveRecommendations.filter(
-    (a) =>
-      !a.action.toLowerCase().includes('not') &&
-      !a.action.toLowerCase().includes('halt') &&
-      !a.action.toLowerCase().includes('refuse')
-  );
+  // Derive Observed / Verified Information bullets
+  const observedFacts: string[] = [];
+  if (observedIndicators && observedIndicators.length > 0) {
+    for (const ind of observedIndicators.slice(0, 4)) {
+      if (ind.evidence) {
+        observedFacts.push(`Identified ${ind.name.toLowerCase()}: "${ind.evidence}"`);
+      } else {
+        observedFacts.push(ind.explanation);
+      }
+    }
+  } else {
+    observedFacts.push('No recognized scam patterns detected in submitted content.');
+    observedFacts.push('No suspicious payment demands or credential solicitation identified.');
+  }
 
-  const copyActionChecklist = () => {
-    const doNotLines = doNotActions.map((a) => `[ ] DO NOT: ${a.action} — ${a.detail}`);
-    const doLines = doActions.map((a, i) => `[ ] DO (${i + 1}): ${a.action} — ${a.detail}`);
-    const fullText = `DEFENSIVE ACTION CHECKLIST (${report.id})\n\nCRITICAL PROHIBITIONS:\n${doNotLines.join('\n')}\n\nRECOMMENDED ACTIONS:\n${doLines.join('\n')}\n\nGenerated by Digital Scam Investigator`;
-
-    navigator.clipboard.writeText(fullText);
-    setCopiedChecklist(true);
-    setTimeout(() => setCopiedChecklist(false), 2000);
-  };
-
+  // Derive AI Interpretation bullets
+  const aiPoints: string[] = [];
+  if (aiContext) {
+    if (aiContext.socialEngineeringTactics) {
+      aiPoints.push(aiContext.socialEngineeringTactics);
+    }
+    if (aiContext.scamArchetypes && aiContext.scamArchetypes.length > 0) {
+      aiPoints.push('Associated scam archetypes: ' + aiContext.scamArchetypes.join(', ') + '.');
+    }
+    if (aiContext.psychologicalTriggers && aiContext.psychologicalTriggers.length > 0) {
+      aiPoints.push(`Identified persuasion triggers: ${aiContext.psychologicalTriggers.join(', ')}.`);
+    }
+  }
+  if (aiPoints.length === 0) {
+    if (level === 'CRITICAL' || level === 'HIGH') {
+      aiPoints.push('The message is likely a scam based on common patterns.');
+      aiPoints.push('The reward and payment request are used to create urgency.');
+      aiPoints.push('The link may lead to a fraudulent website to collect money or information.');
+    } else {
+      aiPoints.push('The message pattern does not exhibit recognized manipulative social engineering tactics.');
+      aiPoints.push('Maintain standard verification habits for unsolicited communications.');
+    }
+  }
   return (
-    <div id="investigation-report-section" className="investigation-report-container">
-      {/* Report Header Bar */}
-      <div className="report-top-bar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontSize: '22px' }}>📋</span>
-          <div>
-            <h2 style={{ fontSize: '18px', fontWeight: 700, letterSpacing: '0.5px', color: 'var(--text-primary)' }}>
-              OFFICIAL INVESTIGATION REPORT
-            </h2>
-            <div style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
-              AUDIT ID: {report.id} &bull; {new Date(report.timestamp).toLocaleString()} &bull; CHANNEL:{' '}
-              {report.inputMeta.messageType.toUpperCase()}
-            </div>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button type="button" className="btn-secondary" onClick={onCopySummary} title="Copy investigation summary">
-            📋 Copy Report
+    <div className="investigation-report-layout" id="investigation-report-section">
+      {/* 1. Sub-Header Back Navigation */}
+      {onBackToNewInvestigation && (
+        <div style={{ marginBottom: '16px' }}>
+          <button
+            type="button"
+            className="back-nav-link"
+            onClick={onBackToNewInvestigation}
+            title="Return to submission input terminal"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span>Back to New Investigation</span>
           </button>
-          <button type="button" className="btn-secondary" onClick={onExportJson} title="Export JSON audit data">
-            💾 Export JSON
-          </button>
-        </div>
-      </div>
-
-      {/* Screenshot OCR Origin Banner */}
-      {report.screenshotMeta && (
-        <div
-          style={{
-            backgroundColor: 'rgba(56, 189, 248, 0.08)',
-            border: '1px solid rgba(56, 189, 248, 0.3)',
-            borderRadius: 'var(--radius-sm)',
-            padding: '10px 14px',
-            marginBottom: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '8px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '18px' }}>📸</span>
-            <span style={{ fontSize: '13px', color: 'var(--text-primary)' }}>
-              Evidence extracted via OCR from screenshot: <strong>{report.screenshotMeta.filename || 'uploaded_image'}</strong> ({(report.screenshotMeta.byteSize / 1024).toFixed(1)} KB &bull; {report.screenshotMeta.mimeType})
-            </span>
-          </div>
-          <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--accent-cyan)' }}>
-            OCR Confidence: {report.screenshotMeta.ocrConfidence}%
-          </span>
         </div>
       )}
 
-      {/* 1. INVESTIGATION RESULT / EXECUTIVE ASSESSMENT */}
-      <div className="assessment-hero-container">
-        {/* Left Column: Investigation Score Card */}
-        <div className={`report-section hero-section ${level}`} style={{ margin: 0, height: '100%' }}>
-          <div className="section-label">INVESTIGATION SCORE</div>
-          <div className="risk-hero-main">
-            <div className="risk-score-box">
-              <span className="risk-score-num">{score}</span>
-              <span style={{ fontSize: '20px', color: 'var(--text-muted)' }}>/100</span>
-              <span className={`risk-level-badge badge-${level}`}>{level} RISK</span>
+      {/* 2. Top Hero Card: Score, Level & Audit Metadata */}
+      <div className="result-hero-card" style={{ borderLeftColor: levelColor }}>
+        {/* Left: Circular SVG Score Gauge */}
+        <div className="gauge-container">
+          <svg className="gauge-svg" viewBox="0 0 100 100">
+            {/* Background track circle */}
+            <circle
+              cx="50"
+              cy="50"
+              r={radius}
+              fill="none"
+              stroke="rgba(30, 41, 59, 0.8)"
+              strokeWidth="8"
+            />
+            {/* Glowing animated progress stroke */}
+            <circle
+              cx="50"
+              cy="50"
+              r={radius}
+              fill="none"
+              stroke={levelColor}
+              strokeWidth="8"
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
+              strokeLinecap="round"
+              style={{
+                transition: 'stroke-dashoffset 0.8s ease-out',
+                transform: 'rotate(-90deg)',
+                transformOrigin: '50% 50%',
+                filter: `drop-shadow(0 0 6px ${levelColor}66)`,
+              }}
+            />
+          </svg>
+          <div className="gauge-inner-text">
+            <div className="gauge-score">
+              {score} <span className="gauge-denom">/ 100</span>
             </div>
+            <div className="gauge-label">RISK SCORE</div>
+          </div>
+        </div>
 
-            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-              <strong>Evidence Strength:</strong>{' '}
-              <span style={{ color: 'var(--accent-cyan)', fontWeight: 600 }}>{evidenceStrength}</span>
+        {/* Center: Risk Level, Title & Summary Description */}
+        <div className="hero-main-content">
+          <div className="level-pill" style={{ backgroundColor: `${levelColor}22`, color: levelColor, borderColor: `${levelColor}44` }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            <span>{level} RISK</span>
+          </div>
+
+          <h2 className="hero-title">Investigation Result</h2>
+          <p className="hero-description">
+            {level === 'CRITICAL' || level === 'HIGH'
+              ? `This message shows several warning signs commonly used in scams, including ${primaryCategories.join(' and ') || 'a prize claim and a request for payment'}.`
+              : level === 'MEDIUM'
+              ? `This message contains patterns that warrant caution, including ${primaryCategories.join(' and ') || 'unverified claims'}.`
+              : 'No recognized scam indicators were detected in the provided submission.'}
+          </p>
+        </div>
+
+        {/* Right: Mode, Investigated Date & Audit ID */}
+        <div className="hero-meta-panel">
+          <div className="meta-row">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <div>
+              <div className="meta-label">Mode</div>
+              <div className="meta-value">{modeLabel}</div>
             </div>
           </div>
 
-          {/* Meter Bar */}
-          <div className="risk-meter">
-            <div className={`risk-meter-fill fill-${level}`} style={{ width: `${Math.max(4, score)}%` }}></div>
+          <div className="meta-row">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <div>
+              <div className="meta-label">Investigated</div>
+              <div className="meta-value">{formatInvestigatedDate(timestamp)}</div>
+            </div>
           </div>
 
-          {/* Score & Evidence Explanation */}
-          <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '10px', lineHeight: 1.5 }}>
-            {level === 'BENIGN' ? (
-              <span>
-                <strong>Risk Assessment:</strong> 0/100 — BENIGN. No known suspicious indicators were detected in the submitted text. A 0/100 result reflects the absence of checked scam patterns and does not prove that the message is legitimate.
-              </span>
-            ) : (
-              <span>
-                <strong>Risk Assessment:</strong> {score}/100 — {level}. This score reflects the verified suspicious indicators detected in the submitted text and how strongly they combine. It is an algorithmic risk assessment, not a probability that the message is a scam.
-              </span>
-            )}
+          <div className="meta-row">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <div>
+              <div className="meta-label">Audit ID</div>
+              <div className="meta-value">#{id}</div>
+            </div>
           </div>
+        </div>
+      </div>
 
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>
-            <strong>Evidence Basis:</strong> {getEvidenceStrengthText()}
+      {/* 3. Card 1: Simple Conclusion */}
+      <div className="report-card-panel">
+        <div className="card-header-row">
+          <div className="card-icon-circle icon-circle-blue">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <line x1="9" y1="18" x2="15" y2="18"></line>
+              <line x1="10" y1="22" x2="14" y2="22"></line>
+              <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
+            </svg>
           </div>
+          <h3 className="card-title">Simple Conclusion</h3>
+        </div>
+        <p className="card-body-text">{getSimpleConclusion()}</p>
+      </div>
 
-          {/* Narrative Plain-Language Summary */}
-          <p className="assessment-narrative">{getOverallSummary()}</p>
+      {/* 4. Card 2: What You Should Do (Do vs Don't Two-Column Matrix) */}
+      <div className="report-card-panel">
+        <div className="card-header-row">
+          <div className="card-icon-circle icon-circle-green">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              <polyline points="9 12 11 14 15 10"></polyline>
+            </svg>
+          </div>
+          <h3 className="card-title">What You Should Do</h3>
+        </div>
 
-          {primaryCategories.length > 0 && (
-            <div className="tag-list" style={{ marginTop: '12px' }}>
-              {primaryCategories.map((cat) => (
-                <span key={cat} className="tag-item" style={{ borderColor: 'var(--border-medium)', color: '#f1f5f9' }}>
-                  🏷️ {cat}
-                </span>
+        <div className="do-dont-grid">
+          {/* Green Do Box */}
+          <div className="do-box">
+            <div className="do-box-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>Do</span>
+            </div>
+            <div className="checklist-items">
+              {doItems.map((item, idx) => (
+                <div key={idx} className="checklist-row do-row">
+                  <div className="icon-badge-box do-badge">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </div>
+                  <span>{item}</span>
+                </div>
               ))}
             </div>
-          )}
-        </div>
-
-        {/* Right Column: Investigation Assessment Panel */}
-        <InvestigationAssessmentPanel report={report} />
-      </div>
-
-      {/* 2. WHAT WAS FOUND & WHERE IT APPEARS */}
-      <div className="report-section">
-        <div className="section-label">
-          {observedIndicators.length > 0 ? '2. WHY THIS MESSAGE WAS FLAGGED' : '2. WHY NO SUSPICIOUS EVIDENCE WAS FOUND'}
-        </div>
-        <h3 className="section-heading">
-          {observedIndicators.length > 0 ? 'Verified Observed Evidence' : 'No Suspicious Indicators Detected'}
-        </h3>
-        <p className="section-subtext">
-          {observedIndicators.length > 0
-            ? 'Every indicator below was directly observed and verified in the submitted text. No evidence quotes were invented or assumed.'
-            : 'The submitted message was scanned against known digital scam, phishing, extortion, and impersonation patterns.'}
-        </p>
-
-        {/* Interactive Source Highlighter / Original Message */}
-        <div style={{ marginBottom: '16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)' }}>
-              {observedIndicators.length > 0 ? 'WHERE IT APPEARS (ORIGINAL MESSAGE TEXT):' : 'SUBMITTED MESSAGE TEXT:'}
-            </span>
-            {observedIndicators.length > 0 && (
-              <span style={{ fontSize: '11px', color: 'var(--accent-cyan)' }}>
-                {observedIndicators.length} verified pattern{observedIndicators.length === 1 ? '' : 's'}
-              </span>
-            )}
           </div>
-          <div className="highlighter-terminal">
-            {segments.map((seg, i) => {
-              if (!seg.isHighlight || !seg.indicator) {
-                return <React.Fragment key={i}>{seg.text}</React.Fragment>;
-              }
-              const ind = seg.indicator;
-              const isSelected = selectedIndicatorId === ind.id;
-              return (
-                <span
-                  key={i}
-                  className={`evidence-highlight-span ${ind.severity} ${isSelected ? 'selected' : ''}`}
-                  onClick={() => onSelectIndicator(isSelected ? null : ind.id)}
-                  title={`${ind.name} [${ind.severity}] - Click to jump to rationale`}
-                >
-                  {seg.text}
-                </span>
-              );
-            })}
-          </div>
-        </div>
 
-        {/* Indicator Cards List or Deliberate Empty State */}
-        {observedIndicators.length === 0 ? (
-          <div className="deliberate-empty-state">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-              <span style={{ fontSize: '20px', color: '#34d399' }}>🛡️</span>
-              <h4 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>
-                No suspicious indicators found
-              </h4>
+          {/* Red Don't Box */}
+          <div className="dont-box">
+            <div className="dont-box-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+              <span>Don't</span>
             </div>
-            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '10px' }}>
-              The investigation did not identify any of the scam patterns currently checked by the system.
-            </p>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', borderTop: '1px solid var(--border-subtle)', paddingTop: '8px', lineHeight: 1.5 }}>
-              <strong>Important:</strong> This does not confirm that the sender or message is legitimate. Verify unexpected payments, account notices, credential requests, or high-stakes claims independently.
-            </div>
-          </div>
-        ) : (
-          <div className="evidence-grid">
-            {observedIndicators.map((ind) => {
-              const isSelected = selectedIndicatorId === ind.id;
-              return (
-                <div
-                  key={ind.id}
-                  id={`evidence-${ind.id}`}
-                  className={`evidence-card ${ind.severity} ${isSelected ? 'selected' : ''}`}
-                  onClick={() => onSelectIndicator(isSelected ? null : ind.id)}
-                >
-                  <div className="evidence-card-header">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span className="evidence-card-title">{ind.name}</span>
-                      <span className="source-tag">OBSERVED EVIDENCE</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
-                        offset: [{ind.characterRange[0]}, {ind.characterRange[1]}]
-                      </span>
-                      <span className={`risk-level-badge badge-${ind.severity}`} style={{ fontSize: '11px', padding: '2px 8px' }}>
-                        {ind.severity}
-                      </span>
-                    </div>
+            <div className="checklist-items">
+              {dontItems.map((item, idx) => (
+                <div key={idx} className="checklist-row dont-row">
+                  <div className="icon-badge-box dont-badge">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
                   </div>
-
-                  <div className="verbatim-quote">
-                    <span style={{ color: 'var(--accent-cyan)', marginRight: '6px' }}>“</span>
-                    <strong>{ind.evidence}</strong>
-                    <span style={{ color: 'var(--accent-cyan)', marginLeft: '6px' }}>”</span>
-                  </div>
-
-                  <div className="evidence-card-body">
-                    <strong>WHAT was found:</strong> {ind.explanation}
-                  </div>
-                  <div className="evidence-why">
-                    <strong>WHY it matters:</strong> {ind.whyItMatters}
-                  </div>
+                  <span>{item}</span>
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </div>
-        )}
+        </div>
       </div>
 
-      {/* 3. EVIDENCE INTELLIGENCE & CAUSAL GRAPH */}
-      {report.evidenceIntelligence && (
-        <EvidenceGraphView evidenceIntelligence={report.evidenceIntelligence} />
-      )}
-
-      {/* 4. URL & DOMAIN THREAT INTELLIGENCE */}
-      {report.urlAnalysis && report.urlAnalysis.length > 0 && (
-        <UrlIntelSection urlAnalysis={report.urlAnalysis} />
-      )}
-
-      {/* 5. EVIDENCE-GROUNDED CYBERSECURITY EDUCATION */}
-      {report.education && (
-        <EducationDeepDiveView education={report.education} />
-      )}
-
-      {/* 6. CONTEXTUAL INTERPRETATION */}
-      <div className="report-section">
-        <div className="section-label">6. CONTEXTUAL INTERPRETATION</div>
-        <h3 className="section-heading">Contextual Analysis & Attacker Psychology</h3>
-
-        <div className="ai-notice">
-          <span>🧠</span>
-          <span>
-            <strong>AI Contextual Inference:</strong> The analysis below explains psychological persuasion mechanics and context. It is derived analytically and strictly segregated from observed physical evidence.
-          </span>
+      {/* 5. Card 3: Assessment (Observed / Verified vs AI Interpretation) */}
+      <div className="report-card-panel">
+        <div className="card-header-row">
+          <div className="card-icon-circle icon-circle-slate">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+          </div>
+          <h3 className="card-title">Assessment</h3>
         </div>
 
-        <div style={{ marginBottom: '14px' }}>
-          <h4 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-            Social Engineering Mechanics:
-          </h4>
-          <p style={{ fontSize: '14px', color: 'var(--text-primary)', lineHeight: 1.6, backgroundColor: 'var(--bg-input)', padding: '12px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
-            {aiContext.socialEngineeringTactics}
-          </p>
-        </div>
+        <div className="assessment-split-grid">
+          {/* Left: Observed / Verified Information */}
+          <div className="observed-box">
+            <div className="observed-box-title">
+              <span className="bullet-dot-blue"></span>
+              <span>Observed / Verified Information</span>
+            </div>
+            <ul className="assessment-list">
+              {observedFacts.map((fact, idx) => (
+                <li key={idx} className="assessment-list-item">
+                  <span className="bullet-char">•</span>
+                  <span>{fact}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-        <div style={{ marginBottom: '14px' }}>
-          <h4 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-            Psychological Manipulation Triggers:
-          </h4>
-          <div className="tag-list">
-            {aiContext.psychologicalTriggers.map((trig, i) => (
-              <span key={i} className="tag-item" style={{ color: '#38bdf8', backgroundColor: 'rgba(2, 132, 199, 0.1)', borderColor: 'rgba(2, 132, 199, 0.3)' }}>
-                ⚡ {trig}
-              </span>
-            ))}
+          {/* Right: AI Interpretation */}
+          <div className="ai-box">
+            <div className="ai-box-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+              <span>AI Interpretation</span>
+            </div>
+            <ul className="assessment-list">
+              {aiPoints.map((pt, idx) => (
+                <li key={idx} className="assessment-list-item">
+                  <span className="bullet-char-purple">•</span>
+                  <span>{pt}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="ai-advisory-footnote">
+              Note: This interpretation is based on the available context and is not itself verified evidence.
+            </div>
           </div>
         </div>
-
-        <div>
-          <h4 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px' }}>
-            Contextual Ambiguity Evaluation:
-          </h4>
-          <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-            {aiContext.ambiguityAssessment}
-          </p>
-        </div>
-
-        {aiContext.unverifiedInferences && aiContext.unverifiedInferences.length > 0 && (
-          <div style={{ marginTop: '14px', borderTop: '1px solid var(--border-subtle)', paddingTop: '10px' }}>
-            <h4 style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px' }}>
-              Unverified Inferences (Non-Authoritative):
-            </h4>
-            {aiContext.unverifiedInferences.map((inf, idx) => (
-              <div key={idx} style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>
-                &bull; <em>{inf.claim}</em> ({inf.rationale})
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
-      {/* 4. WHAT TO DO NOW (ACTIONABLE PROTOCOL) */}
-      <div className="report-section">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-          <div>
-            <div className="section-label">4. WHAT TO DO NOW</div>
-            <h3 className="section-heading">Prioritized Defensive Protocols</h3>
-          </div>
-          <button type="button" className="btn-secondary" onClick={copyActionChecklist} style={{ fontSize: '12px' }}>
-            {copiedChecklist ? '✓ Checklist Copied' : '📋 Copy Action Checklist'}
+      {/* 6. Download Full Investigation Report Action */}
+      {onDownloadReport && (
+        <div className="report-download-footer-container">
+          <button
+            type="button"
+            className="btn-download-report"
+            onClick={onDownloadReport}
+            id="download-investigation-report-btn"
+            title="Download complete standalone investigation audit report"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>Download Full Investigation Report</span>
           </button>
         </div>
-
-        {/* DO NOT SECTION */}
-        {doNotActions.length > 0 && (
-          <div style={{ marginBottom: '18px' }}>
-            <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#f87171', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', letterSpacing: '0.5px' }}>
-              <span>⛔</span>
-              <span>DO NOT DO THE FOLLOWING:</span>
-            </h4>
-            <div className="actions-grid">
-              {doNotActions.map((act) => {
-                const isDone = !!completedActions[act.id];
-                return (
-                  <div key={act.id} className="action-item do-not-item" style={{ opacity: isDone ? 0.6 : 1 }}>
-                    <input
-                      type="checkbox"
-                      checked={isDone}
-                      onChange={() => toggleAction(act.id)}
-                      style={{ marginTop: '4px', cursor: 'pointer', width: '16px', height: '16px' }}
-                      title="Mark reviewed"
-                    />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
-                        <span className={`action-priority-badge priority-${act.priority}`}>{act.priority}</span>
-                        <strong style={{ fontSize: '13px', color: '#fca5a5' }}>{act.action}</strong>
-                      </div>
-                      <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{act.detail}</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* DO SECTION */}
-        <div>
-          <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#34d399', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', letterSpacing: '0.5px' }}>
-            <span>✅</span>
-            <span>TAKE THESE DEFENSIVE STEPS:</span>
-          </h4>
-          <div className="actions-grid">
-            {doActions.map((act, index) => {
-              const isDone = !!completedActions[act.id];
-              return (
-                <div key={act.id} className="action-item do-item" style={{ opacity: isDone ? 0.6 : 1 }}>
-                  <input
-                    type="checkbox"
-                    checked={isDone}
-                    onChange={() => toggleAction(act.id)}
-                    style={{ marginTop: '4px', cursor: 'pointer', width: '16px', height: '16px' }}
-                    title="Mark completed"
-                  />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--accent-cyan)' }}>
-                        {index + 1}.
-                      </span>
-                      <span className={`action-priority-badge priority-${act.priority}`}>{act.priority}</span>
-                      <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{act.action}</strong>
-                    </div>
-                    <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{act.detail}</div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* 5. ASSESSMENT BASIS & DISCLAIMER */}
-      <div className="report-section assessment-basis-section">
-        <div className="section-label">5. ASSESSMENT BASIS & DISCLAIMER</div>
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '12px' }}>
-          <div>
-            <strong>Evaluation Metric:</strong> Risk Score {score}/100 ({level})
-          </div>
-          <div>
-            <strong>Evidence Strength:</strong> {evidenceStrength}
-          </div>
-          <div>
-            <strong>Contextual Provider:</strong> {aiContext.providerName}
-          </div>
-        </div>
-
-        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '10px' }}>
-          ⚖️ <strong>Algorithmic Basis:</strong> This score reflects the verified suspicious indicators detected in the submitted text and how strongly they combine. It is an algorithmic risk assessment, not a probability that the message is a scam. {level === 'BENIGN' && 'A 0/100 result reflects the absence of checked scam patterns and does NOT prove that the message is legitimate.'}
-        </p>
-
-        <p style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '12px' }}>
-          {disclaimer}
-        </p>
-
-        <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '10px', fontSize: '11px', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-          <span>Notice: No suspicious evidence detected does not guarantee a message is legitimate.</span>
-          <span>Engine Status: Operational &bull; Zero external raw-input logging</span>
-        </div>
-      </div>
+      )}
     </div>
   );
 };
