@@ -38,13 +38,18 @@ export const EvidenceGraphView: React.FC<EvidenceGraphViewProps> = ({ evidenceIn
   const getStageTitle = (stage: string) => {
     switch (stage) {
       case 'HOOK':
-        return '1. Initial Contact / Pretext';
+        return '1. Hook / Inception';
+      case 'TRUST_AUTHORITY':
+        return '2. Trust / Authority';
       case 'PRESSURE':
-        return '2. Urgency & Coercive Pressure';
+        return '3. Urgency & Pressure';
+      case 'REQUEST':
+        return '4. Action Request';
       case 'EXPLOITATION':
-        return '3. Request for Information or Payment';
+        return '5. Exploitation / Extraction';
+      case 'POTENTIAL_IMPACT':
       case 'COMPOUND_IMPACT':
-        return '4. Potential Impact / Follow-up';
+        return '6. Potential Impact';
       default:
         return stage;
     }
@@ -160,18 +165,49 @@ export const EvidenceGraphView: React.FC<EvidenceGraphViewProps> = ({ evidenceIn
                   gap: '12px',
                 }}
               >
-                <div
-                  style={{
-                    backgroundColor: 'rgba(56, 189, 248, 0.1)',
-                    color: 'var(--accent-cyan)',
-                    fontWeight: 700,
-                    fontSize: '12px',
-                    padding: '4px 8px',
-                    borderRadius: 'var(--radius-sm)',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {getStageTitle(step.stage)}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
+                  <div
+                    style={{
+                      backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                      color: 'var(--accent-cyan)',
+                      fontWeight: 700,
+                      fontSize: '12px',
+                      padding: '4px 8px',
+                      borderRadius: 'var(--radius-sm)',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {getStageTitle(step.stage)}
+                  </div>
+                  {step.observedOrInferred === 'PROJECTED_CONSEQUENCE' ? (
+                    <span
+                      style={{
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        color: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                      }}
+                    >
+                      Potential Consequence
+                    </span>
+                  ) : (
+                    <span
+                      style={{
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        color: 'var(--text-muted)',
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                      }}
+                    >
+                      Observed
+                    </span>
+                  )}
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-primary)', marginBottom: '4px' }}>

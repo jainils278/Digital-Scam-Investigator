@@ -7,11 +7,16 @@
  * 3. Contradictory & Mitigating Evidence Synthesis (Balanced assessment avoiding false binary forcing)
  */
 
-import {
+import type {
   DefensiveAction,
+  EvidenceGraph,
   EvidenceStrength,
+  GraphEdge,
+  GraphNode,
   ObservedIndicator,
   RiskLevel,
+  TimelineStage,
+  TimelineStep,
   UrlAnalysisSummary,
 } from '../../types.js';
 
@@ -33,37 +38,7 @@ export type GraphEdgeType =
   | 'MITIGATED_BY'
   | 'TRIGGERS_ACTION';
 
-export interface GraphNode {
-  id: string;
-  type: GraphNodeType;
-  label: string;
-  severity?: string;
-  metadata?: Record<string, any>;
-}
-
-export interface GraphEdge {
-  id: string;
-  source: string;
-  target: string;
-  type: GraphEdgeType;
-  label: string;
-}
-
-export interface EvidenceGraph {
-  nodes: GraphNode[];
-  edges: GraphEdge[];
-}
-
-export type TimelineStage = 'HOOK' | 'PRESSURE' | 'EXPLOITATION' | 'COMPOUND_IMPACT';
-
-export interface TimelineStep {
-  stepIndex: number;
-  stage: TimelineStage;
-  title: string;
-  description: string;
-  evidenceQuote?: string;
-  indicatorId?: string;
-}
+export { TimelineStage, TimelineStep, EvidenceGraph, GraphNode, GraphEdge };
 
 export interface MitigatingFactor {
   code: string;
@@ -243,8 +218,50 @@ export function buildEvidenceGraph(
   return { nodes, edges };
 }
 
+function deriveProjectedImpact(indicators: ObservedIndicator[]): { title: string; description: string } {
+  const hasOtpOrCreds = indicators.some((i) => i.category === 'CREDENTIAL_HARVESTING' || i.id.includes('otp'));
+  const hasGiftCardOrFunds = indicators.some((i) => i.category === 'FINANCIAL_COERCION' || i.id.includes('gift'));
+  const hasSuspiciousUrl = indicators.some((i) => i.category === 'SUSPICIOUS_LINK' || i.id.includes('url') || i.id.includes('link'));
+  const hasThreat = indicators.some((i) => i.category === 'ACCOUNT_THREAT' || i.id.includes('threat'));
+
+  if (hasOtpOrCreds) {
+    return {
+      title: 'Potential Consequence: Account Compromise',
+      description: 'Potential consequence: unauthorized account access if authentication codes or credentials are disclosed.',
+    };
+  }
+  if (hasGiftCardOrFunds) {
+    return {
+      title: 'Potential Consequence: Financial Loss',
+      description: 'Potential consequence: financial loss if payment or voucher redemption numbers are completed.',
+    };
+  }
+  if (hasSuspiciousUrl) {
+    return {
+      title: 'Potential Consequence: Credential Disclosure',
+      description: 'Potential consequence: credential disclosure if the recipient enters information on the destination site.',
+    };
+  }
+  if (hasThreat) {
+    return {
+      title: 'Potential Consequence: Coercive Compliance',
+      description: 'Potential consequence: compliance under false pressure if recipient acts without independent verification.',
+    };
+  }
+  return {
+    title: 'Potential Consequence: Information Disclosure',
+    description: 'Potential consequence: unauthorized disclosure or exploitation if recipient complies with requested actions.',
+  };
+}
+
 /**
- * Builds an investigation timeline mapping the causal progression of the interaction
+ * Builds an investigation timeline mapping the 6-stage attack chain:
+ * 1. HOOK
+ * 2. TRUST / AUTHORITY
+ * 3. PRESSURE
+ * 4. REQUEST
+ * 5. EXPLOITATION
+ * 6. POTENTIAL IMPACT (Projected consequence, never claimed as actual occurrence)
  */
 export function buildInvestigationTimeline(
   indicators: ObservedIndicator[],
@@ -252,33 +269,72 @@ export function buildInvestigationTimeline(
 ): TimelineStep[] {
   const steps: TimelineStep[] = [];
   let stepIndex = 1;
+  const consumedIndicatorIds = new Set<string>();
 
-  // 1. Stage: Hook / Inception
+  // 1. Stage: HOOK (Initial contact, prize, delivery notice, or inbound lure)
   const hookIndicators = indicators.filter(
-    (i) => i.category === 'IMPERSONATION' || i.category === 'PRIZE_LOTTERY'
+    (i) =>
+      i.category === 'PRIZE_LOTTERY' ||
+      i.id.startsWith('ind_lure_') ||
+      i.id.startsWith('ind_fin_refund_lure') ||
+      i.id.startsWith('ind_imp_delivery')
   );
   if (hookIndicators.length > 0) {
     const first = hookIndicators[0];
+    consumedIndicatorIds.add(first.id);
     steps.push({
       stepIndex: stepIndex++,
       stage: 'HOOK',
-      title: `Pretext & Identity Hook (${first.name})`,
+      stageLabel: 'Stage 1: Hook / Initial Contact',
+      observedOrInferred: 'OBSERVED',
+      title: `Pretext Hook (${first.name})`,
       description:
-        'The sender establishes an authoritative or enticing pretext to capture recipient attention before presenting demands.',
+        'The sender establishes an enticing, alarming, or routine hook to capture recipient attention before presenting demands.',
       evidenceQuote: first.evidence,
       indicatorId: first.id,
     });
   }
 
-  // 2. Stage: Pressure / Coercion
+  // 2. Stage: TRUST / AUTHORITY (Impersonation of institutions, government, bank, security)
+  const trustIndicators = indicators.filter(
+    (i) =>
+      !consumedIndicatorIds.has(i.id) &&
+      (i.category === 'IMPERSONATION' ||
+        i.id.startsWith('ind_imp_authority') ||
+        i.id.startsWith('ind_imp_bank') ||
+        i.id.startsWith('ind_imp_authority_internal') ||
+        i.id.startsWith('ind_imp_tx_alert'))
+  );
+  if (trustIndicators.length > 0) {
+    const first = trustIndicators[0];
+    consumedIndicatorIds.add(first.id);
+    steps.push({
+      stepIndex: stepIndex++,
+      stage: 'TRUST_AUTHORITY',
+      stageLabel: 'Stage 2: Trust / Authority Pretext',
+      observedOrInferred: 'OBSERVED',
+      title: `Institutional Authority Pretext (${first.name})`,
+      description:
+        'The communication invokes institutional legitimacy, security departments, or regulatory authority to establish rapid credibility.',
+      evidenceQuote: first.evidence,
+      indicatorId: first.id,
+    });
+  }
+
+  // 3. Stage: PRESSURE (Urgency, suspension threat, legal coercion)
   const pressureIndicators = indicators.filter(
-    (i) => i.category === 'URGENCY_PRESSURE' || i.category === 'ACCOUNT_THREAT'
+    (i) =>
+      !consumedIndicatorIds.has(i.id) &&
+      (i.category === 'URGENCY_PRESSURE' || i.category === 'ACCOUNT_THREAT')
   );
   if (pressureIndicators.length > 0) {
     const first = pressureIndicators[0];
+    consumedIndicatorIds.add(first.id);
     steps.push({
       stepIndex: stepIndex++,
       stage: 'PRESSURE',
+      stageLabel: 'Stage 3: Pressure / Urgency',
+      observedOrInferred: 'OBSERVED',
       title: `Psychological Coercion (${first.name})`,
       description:
         'Artificial urgency or threatened negative consequences are introduced to bypass rational verification and rush the recipient.',
@@ -287,42 +343,74 @@ export function buildInvestigationTimeline(
     });
   }
 
-  // 3. Stage: Exploitation / Extraction Vector
+  // 4. Stage: REQUEST (Channel diversion, callback lures, call-to-action directive)
+  const requestIndicators = indicators.filter(
+    (i) =>
+      !consumedIndicatorIds.has(i.id) &&
+      (i.category === 'CHANNEL_DIVERSION' ||
+        i.id.startsWith('ind_div_channel') ||
+        i.id.startsWith('ind_lure_reverse_call') ||
+        i.id.startsWith('ind_div_call_restriction') ||
+        i.id.startsWith('ind_cred_login_lure'))
+  );
+  if (requestIndicators.length > 0) {
+    const first = requestIndicators[0];
+    consumedIndicatorIds.add(first.id);
+    steps.push({
+      stepIndex: stepIndex++,
+      stage: 'REQUEST',
+      stageLabel: 'Stage 4: Action Request',
+      observedOrInferred: 'OBSERVED',
+      title: `Action Directive (${first.name})`,
+      description:
+        'The sender directs the recipient toward a specific communication channel, reverse phone call, or preliminary action.',
+      evidenceQuote: first.evidence,
+      indicatorId: first.id,
+    });
+  }
+
+  // 5. Stage: EXPLOITATION (Extraction payload: OTP, gift cards, crypto, spoofed links)
   const extractionIndicators = indicators.filter(
     (i) =>
-      i.category === 'CREDENTIAL_HARVESTING' ||
-      i.category === 'FINANCIAL_COERCION' ||
-      i.category === 'SUSPICIOUS_LINK' ||
-      i.category === 'CHANNEL_DIVERSION'
+      !consumedIndicatorIds.has(i.id) &&
+      (i.category === 'CREDENTIAL_HARVESTING' ||
+        i.category === 'FINANCIAL_COERCION' ||
+        i.category === 'SUSPICIOUS_LINK')
   );
   for (const ext of extractionIndicators) {
     steps.push({
       stepIndex: stepIndex++,
       stage: 'EXPLOITATION',
-      title: `Action Request (${ext.name})`,
+      stageLabel: 'Stage 5: Exploitation / Extraction',
+      observedOrInferred: 'OBSERVED',
+      title: `Extraction Payload (${ext.name})`,
       description:
-        'The sender directs the recipient toward an irreversible extraction action (sending passcodes, clicking external links, or transferring funds).',
+        'The sender directs the recipient toward an irreversible extraction action (surrendering credentials, sending funds, or interacting with unverified links).',
       evidenceQuote: ext.evidence,
       indicatorId: ext.id,
     });
   }
 
-  // 4. Stage: Compound Impact (if multiple high-severity cues combine)
-  if (steps.length >= 2) {
+  // 6. Stage: POTENTIAL IMPACT (Projected outcome — never claimed as an actual historical event)
+  if (steps.length >= 1 && indicators.length > 0) {
+    const projected = deriveProjectedImpact(indicators);
     steps.push({
       stepIndex: stepIndex++,
-      stage: 'COMPOUND_IMPACT',
-      title: 'High-Risk Multi-Vector Combination',
-      description:
-        'The simultaneous presence of identity pretext, coercive pressure, and extraction triggers constitutes a recognized attack archetype.',
+      stage: 'POTENTIAL_IMPACT',
+      stageLabel: 'Stage 6: Potential Impact',
+      observedOrInferred: 'PROJECTED_CONSEQUENCE',
+      title: projected.title,
+      description: projected.description,
     });
   }
 
-  // If no indicators were detected
+  // Baseline message scan for benign input
   if (steps.length === 0) {
     steps.push({
       stepIndex: 1,
       stage: 'HOOK',
+      stageLabel: 'Baseline Message Scan',
+      observedOrInferred: 'OBSERVED',
       title: 'Baseline Message Scan Completed',
       description:
         'No multi-stage coercive manipulation sequence or extraction vectors were detected in the analyzed message.',

@@ -18,6 +18,9 @@ import { detectIndicators } from './detector.js';
 import { normalizeForAnalysis } from './normalizer.js';
 import { generateEvidenceEducation } from './education/education_engine.js';
 import { analyzeEvidenceIntelligence } from './intelligence/evidence_graph.js';
+import { analyzeTactics } from './intelligence/tactic_engine.js';
+import { analyzeContradictions } from './intelligence/contradiction_engine.js';
+import { assessEvidentiaryCompleteness } from './intelligence/missing_evidence_advisor.js';
 import { OcrService, validateImageBuffer } from './ocr/ocr_service.js';
 import { generateDefensiveRecommendations } from './recommender.js';
 import { calculateRiskAssessment } from './risk_engine.js';
@@ -130,7 +133,16 @@ export class InvestigationService {
     // 11. Evidence-Grounded Cybersecurity Education
     const education = generateEvidenceEducation(verifiedIndicators);
 
-    // 12. Standard Defensive Cybersecurity Disclaimer
+    // 12. V3.0 Deterministic Psychological Tactic Fingerprinting
+    const tactics = analyzeTactics(verifiedIndicators, urlSummaries);
+
+    // 13. V3.0 Pretext Contradiction Matrix
+    const contradictions = analyzeContradictions(verifiedIndicators, urlSummaries, rawText);
+
+    // 14. V3.0 Evidentiary Completeness & Missing Evidence Advisor
+    const missingEvidence = assessEvidentiaryCompleteness(rawText, verifiedIndicators, urlSummaries);
+
+    // 15. Standard Defensive Cybersecurity Disclaimer
     const disclaimer =
       'This analysis identifies indicators and manipulation tactics commonly associated with scams. It is an algorithmic risk assessment, not definitive proof of sender identity, guilt, or innocence. Always verify high-stakes claims, payments, and account notices through known, trusted official channels.';
 
@@ -151,6 +163,9 @@ export class InvestigationService {
       urlAnalysis: urlSummaries.length > 0 ? urlSummaries : undefined,
       evidenceIntelligence,
       education,
+      tactics,
+      contradictions,
+      missingEvidence,
     };
   }
 

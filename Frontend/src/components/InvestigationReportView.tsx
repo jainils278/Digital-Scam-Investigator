@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { InvestigationReport } from '../types';
 
 interface InvestigationReportViewProps {
@@ -16,6 +16,13 @@ export const InvestigationReportView: React.FC<InvestigationReportViewProps> = (
 }) => {
   const { observedIndicators, aiContext, riskAssessment, defensiveRecommendations, screenshotMeta, id, timestamp } = report;
   const { score, level, primaryCategories } = riskAssessment;
+
+  // V3.0 Progressive Disclosure Accordion States
+  const [isWaterfallOpen, setIsWaterfallOpen] = useState(false);
+  const [isTacticsOpen, setIsTacticsOpen] = useState(false);
+  const [isContradictionsOpen, setIsContradictionsOpen] = useState(false);
+  const [isChainOpen, setIsChainOpen] = useState(false);
+  const [isMissingEvidenceOpen, setIsMissingEvidenceOpen] = useState(false);
 
   // Format date for Investigated timestamp (e.g. Sep 23, 2026 • 9:16 PM)
   const formatInvestigatedDate = (iso: string) => {
@@ -392,6 +399,530 @@ export const InvestigationReportView: React.FC<InvestigationReportViewProps> = (
           </div>
         </div>
       </div>
+
+      {/* 4. V3.0 Explainable Risk Waterfall Accordion */}
+      {riskAssessment.waterfall && (
+        <div className="v3-accordion-panel" id="v3-waterfall-panel">
+          <button
+            type="button"
+            className="v3-accordion-header"
+            onClick={() => setIsWaterfallOpen(!isWaterfallOpen)}
+            aria-expanded={isWaterfallOpen}
+          >
+            <div className="v3-header-left">
+              <div className="card-icon-circle icon-circle-blue">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <path d="M12 20V10"></path>
+                  <path d="M18 20V4"></path>
+                  <path d="M6 20v-4"></path>
+                </svg>
+              </div>
+              <div>
+                <h4 className="v3-header-title">Explainable Risk Score Breakdown</h4>
+                <div style={{ fontSize: '12px', color: '#94a3b8' }}>
+                  Mathematical provenance: Base severity + compound synergies
+                </div>
+              </div>
+            </div>
+            <div className="v3-header-right">
+              <span className="v3-pill-badge v3-pill-cyan">
+                Raw: {riskAssessment.waterfall.rawTotalScore} pts → Final: {riskAssessment.waterfall.finalScore}/100
+              </span>
+              <svg
+                className={`v3-chevron ${isWaterfallOpen ? 'open' : ''}`}
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+              >
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          </button>
+
+          {isWaterfallOpen && (
+            <div className="v3-accordion-content">
+              <div className="waterfall-reconciliation-bar">
+                <div className="waterfall-math-tokens">
+                  <span className="waterfall-token">
+                    Base: <strong style={{ color: '#f87171' }}>+{riskAssessment.waterfall.baseScore}</strong>
+                  </span>
+                  <span style={{ color: '#64748b' }}>+</span>
+                  <span className="waterfall-token">
+                    Synergy: <strong style={{ color: '#c084fc' }}>+{riskAssessment.waterfall.synergyScore}</strong>
+                  </span>
+                  {riskAssessment.waterfall.capAdjustment !== 0 && (
+                    <>
+                      <span style={{ color: '#64748b' }}>+</span>
+                      <span className="waterfall-token">
+                        Cap Adjustment: <strong style={{ color: '#94a3b8' }}>{riskAssessment.waterfall.capAdjustment}</strong>
+                      </span>
+                    </>
+                  )}
+                  <span style={{ color: '#64748b' }}>=</span>
+                  <span className="waterfall-token-score">
+                    Final Score: {riskAssessment.waterfall.finalScore} / 100
+                  </span>
+                </div>
+                <div style={{ fontSize: '11px', color: '#94a3b8' }}>Deterministic mathematical calculation</div>
+              </div>
+
+              <div className="waterfall-grid">
+                {riskAssessment.waterfall.contributions.map((c) => (
+                  <div key={c.id} className="waterfall-row-card">
+                    <div
+                      className={`waterfall-points-badge ${
+                        c.type === 'COMPOUND_SYNERGY'
+                          ? 'pts-synergy'
+                          : c.type === 'CAP_ADJUSTMENT'
+                          ? 'pts-cap'
+                          : 'pts-base'
+                      }`}
+                    >
+                      {c.points > 0 ? `+${c.points}` : c.points} pts
+                    </div>
+                    <div className="waterfall-details">
+                      <div className="waterfall-label-row">
+                        <span className="waterfall-label">{c.label}</span>
+                        {c.evidenceQuote && (
+                          <span className="waterfall-evidence-quote">"{c.evidenceQuote}"</span>
+                        )}
+                      </div>
+                      <p className="waterfall-explanation">{c.explanation}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 5. V3.0 Psychological Tactic Fingerprinting Accordion */}
+      {report.tactics && (
+        <div className="v3-accordion-panel" id="v3-tactics-panel">
+          <button
+            type="button"
+            className="v3-accordion-header"
+            onClick={() => setIsTacticsOpen(!isTacticsOpen)}
+            aria-expanded={isTacticsOpen}
+          >
+            <div className="v3-header-left">
+              <div className="card-icon-circle icon-circle-slate">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <path d="M12 2a9 9 0 0 0-9 9c0 3.6 2.1 6.7 5.2 8.1V21h7.6v-1.9c3.1-1.4 5.2-4.5 5.2-8.1a9 9 0 0 0-9-9z"></path>
+                  <path d="M9 22h6"></path>
+                </svg>
+              </div>
+              <div>
+                <h4 className="v3-header-title">Psychological Manipulation Tactics</h4>
+                <div style={{ fontSize: '12px', color: '#94a3b8' }}>
+                  Derived social engineering patterns & cognitive vulnerabilities
+                </div>
+              </div>
+            </div>
+            <div className="v3-header-right">
+              <span className={`v3-pill-badge ${report.tactics.tacticCount > 0 ? 'v3-pill-purple' : 'v3-pill-green'}`}>
+                {report.tactics.tacticCount} {report.tactics.tacticCount === 1 ? 'Tactic' : 'Tactics'}
+              </span>
+              <svg
+                className={`v3-chevron ${isTacticsOpen ? 'open' : ''}`}
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+              >
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          </button>
+
+          {isTacticsOpen && (
+            <div className="v3-accordion-content">
+              <p style={{ fontSize: '13px', color: '#cbd5e1', marginTop: '14px', marginBottom: '8px' }}>
+                {report.tactics.summary}
+              </p>
+              {report.tactics.allTactics.length > 0 ? (
+                <div className="tactics-grid">
+                  {report.tactics.allTactics.map((tactic) => (
+                    <div
+                      key={tactic.id}
+                      className={`tactic-card ${tactic.severity === 'CRITICAL' ? 'critical' : 'high'}`}
+                    >
+                      <div className="tactic-header">
+                        <span className="tactic-title">{tactic.name}</span>
+                        <span className="v3-pill-badge v3-pill-cyan" style={{ fontSize: '10px' }}>
+                          Derived pattern
+                        </span>
+                      </div>
+                      <div className="tactic-vuln">Target: {tactic.targetedVulnerability}</div>
+                      <div className="tactic-desc">{tactic.explanation}</div>
+                      <div className="tactic-tip-box">
+                        <strong>Spotting Tip:</strong> {tactic.spottingTip}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic', marginTop: '10px' }}>
+                  No composite predatory social engineering tactic patterns detected in verified evidence.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 6. V3.0 Pretext Contradictions & Anomalies Accordion */}
+      {report.contradictions && (
+        <div className="v3-accordion-panel" id="v3-contradictions-panel">
+          <button
+            type="button"
+            className="v3-accordion-header"
+            onClick={() => setIsContradictionsOpen(!isContradictionsOpen)}
+            aria-expanded={isContradictionsOpen}
+          >
+            <div className="v3-header-left">
+              <div className="card-icon-circle icon-circle-red">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                </svg>
+              </div>
+              <div>
+                <h4 className="v3-header-title">Pretext Contradictions & Inconsistencies</h4>
+                <div style={{ fontSize: '12px', color: '#94a3b8' }}>
+                  Incompatibilities between claimed identity and observed indicators
+                </div>
+              </div>
+            </div>
+            <div className="v3-header-right">
+              <span className={`v3-pill-badge ${report.contradictions.totalFindings > 0 ? 'v3-pill-amber' : 'v3-pill-green'}`}>
+                {report.contradictions.totalFindings} {report.contradictions.totalFindings === 1 ? 'Finding' : 'Findings'}
+              </span>
+              <svg
+                className={`v3-chevron ${isContradictionsOpen ? 'open' : ''}`}
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+              >
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          </button>
+
+          {isContradictionsOpen && (
+            <div className="v3-accordion-content">
+              <p style={{ fontSize: '13px', color: '#cbd5e1', marginTop: '14px', marginBottom: '8px' }}>
+                {report.contradictions.summary}
+              </p>
+              {report.contradictions.findings.length > 0 ? (
+                <div className="contradictions-list">
+                  {report.contradictions.findings.map((f) => (
+                    <div key={f.id} className="contradiction-card">
+                      <div className="contradiction-header">
+                        <span
+                          className={
+                            f.classification === 'CONTRADICTION'
+                              ? 'badge-contradiction'
+                              : f.classification === 'ANOMALY'
+                              ? 'badge-anomaly'
+                              : 'badge-unsupported'
+                          }
+                        >
+                          {f.classification === 'CONTRADICTION'
+                            ? 'Direct Contradiction'
+                            : f.classification === 'ANOMALY'
+                            ? 'Operational Anomaly'
+                            : 'Unsupported Claim'}
+                        </span>
+                      </div>
+                      <div className="contradiction-split-row">
+                        <div>
+                          <div className="pretext-label">Claimed Pretext / Identity</div>
+                          <div className="pretext-val">{f.claimedPretext}</div>
+                        </div>
+                        <div>
+                          <div className="pretext-label">Observed Inconsistency</div>
+                          <div className="conflicting-val">{f.conflictingEvidence}</div>
+                        </div>
+                      </div>
+                      <p className="contradiction-explanation">{f.explanation}</p>
+                      <div className="contradiction-why">
+                        <strong>Why this matters:</strong> {f.whyItMatters}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic', marginTop: '10px' }}>
+                  No contradictions or pretext anomalies detected between claimed sender identity and observed evidence.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 7. V3.0 6-Stage Scam Attack Chain Progression Accordion */}
+      {report.evidenceIntelligence && report.evidenceIntelligence.timeline && (
+        <div className="v3-accordion-panel" id="v3-chain-panel">
+          <button
+            type="button"
+            className="v3-accordion-header"
+            onClick={() => setIsChainOpen(!isChainOpen)}
+            aria-expanded={isChainOpen}
+          >
+            <div className="v3-header-left">
+              <div className="card-icon-circle icon-circle-blue">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                </svg>
+              </div>
+              <div>
+                <h4 className="v3-header-title">6-Stage Scam Attack Chain Progression</h4>
+                <div style={{ fontSize: '12px', color: '#94a3b8' }}>
+                  Sequential attack reconstruction: Hook → Trust → Pressure → Request → Exploitation → Potential Impact
+                </div>
+              </div>
+            </div>
+            <div className="v3-header-right">
+              <span className="v3-pill-badge v3-pill-cyan">
+                {report.evidenceIntelligence.timeline.length} Steps
+              </span>
+              <svg
+                className={`v3-chevron ${isChainOpen ? 'open' : ''}`}
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+              >
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          </button>
+
+          {isChainOpen && (
+            <div className="v3-accordion-content">
+              <div style={{ display: 'grid', gap: '12px', marginTop: '16px' }}>
+                {report.evidenceIntelligence.timeline.map((step) => (
+                  <div
+                    key={step.stepIndex}
+                    style={{
+                      backgroundColor: 'rgba(15, 23, 42, 0.5)',
+                      border: '1px solid rgba(255, 255, 255, 0.05)',
+                      borderRadius: '8px',
+                      padding: '14px 16px',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '12px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
+                      <span
+                        style={{
+                          backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                          color: '#38bdf8',
+                          fontWeight: 700,
+                          fontSize: '11px',
+                          padding: '3px 8px',
+                          borderRadius: '4px',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {step.stageLabel || `Step ${step.stepIndex}`}
+                      </span>
+                      {step.observedOrInferred === 'PROJECTED_CONSEQUENCE' ? (
+                        <span
+                          style={{
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            color: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                          }}
+                        >
+                          Potential Consequence
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            fontSize: '10px',
+                            fontWeight: 600,
+                            textTransform: 'uppercase',
+                            color: '#94a3b8',
+                            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                          }}
+                        >
+                          Observed
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 700, fontSize: '14px', color: '#f8fafc', marginBottom: '4px' }}>
+                        {step.title}
+                      </div>
+                      <div style={{ fontSize: '13px', color: '#cbd5e1', lineHeight: 1.5 }}>
+                        {step.description}
+                      </div>
+                      {step.evidenceQuote && (
+                        <div style={{ marginTop: '8px', fontSize: '12px', fontStyle: 'italic', color: '#94a3b8' }}>
+                          Evidence snippet: "{step.evidenceQuote}"
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 8. V3.0 Missing Evidence & Completeness Advisor Accordion */}
+      {report.missingEvidence && (
+        <div className="v3-accordion-panel" id="v3-missing-evidence-panel">
+          <button
+            type="button"
+            className="v3-accordion-header"
+            onClick={() => setIsMissingEvidenceOpen(!isMissingEvidenceOpen)}
+            aria-expanded={isMissingEvidenceOpen}
+          >
+            <div className="v3-header-left">
+              <div className="card-icon-circle icon-circle-green">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  <line x1="11" y1="8" x2="11" y2="8.01"></line>
+                  <line x1="11" y1="11" x2="11" y2="14"></line>
+                </svg>
+              </div>
+              <div>
+                <h4 className="v3-header-title">Missing Evidence & Verification Advisor</h4>
+                <div style={{ fontSize: '12px', color: '#94a3b8' }}>
+                  Evidentiary completeness assessment & safe official verification steps
+                </div>
+              </div>
+            </div>
+            <div className="v3-header-right">
+              <span
+                className={`v3-pill-badge ${
+                  report.missingEvidence.completenessRating === 'HIGH'
+                    ? 'v3-pill-green'
+                    : report.missingEvidence.completenessRating === 'MODERATE'
+                    ? 'v3-pill-amber'
+                    : 'v3-pill-cyan'
+                }`}
+              >
+                Completeness: {report.missingEvidence.completenessRating} ({report.missingEvidence.completenessScore}%)
+              </span>
+              <svg
+                className={`v3-chevron ${isMissingEvidenceOpen ? 'open' : ''}`}
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+              >
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          </button>
+
+          {isMissingEvidenceOpen && (
+            <div className="v3-accordion-content">
+              <div className="completeness-meter-container">
+                <div style={{ fontSize: '13px', fontWeight: 600, color: '#f8fafc', whiteSpace: 'nowrap' }}>
+                  Artifact Completeness Meter:
+                </div>
+                <div className="completeness-bar-wrapper">
+                  <div
+                    className="completeness-bar-fill"
+                    style={{
+                      width: `${report.missingEvidence.completenessScore}%`,
+                      backgroundColor:
+                        report.missingEvidence.completenessScore >= 75
+                          ? '#10b981'
+                          : report.missingEvidence.completenessScore >= 45
+                          ? '#f59e0b'
+                          : '#38bdf8',
+                    }}
+                  ></div>
+                </div>
+                <div style={{ fontSize: '13px', fontWeight: 700, fontFamily: 'var(--font-mono)', color: '#38bdf8' }}>
+                  {report.missingEvidence.completenessScore}%
+                </div>
+              </div>
+
+              {/* What Scamvera Can vs Cannot Establish */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px', marginBottom: '16px' }}>
+                <div style={{ background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '8px', padding: '14px 16px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#34d399', marginBottom: '8px' }}>
+                    What Scamvera Can Establish:
+                  </div>
+                  <ul style={{ listStyle: 'disc', paddingLeft: '18px', fontSize: '12px', color: '#cbd5e1', lineHeight: 1.5 }}>
+                    {report.missingEvidence.establishedFacts.map((fact, i) => (
+                      <li key={i}>{fact}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div style={{ background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '8px', padding: '14px 16px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#f87171', marginBottom: '8px' }}>
+                    Not Established From Material Alone:
+                  </div>
+                  <ul style={{ listStyle: 'disc', paddingLeft: '18px', fontSize: '12px', color: '#cbd5e1', lineHeight: 1.5 }}>
+                    {report.missingEvidence.unestablishedHypotheses.map((hyp, i) => (
+                      <li key={i}>{hyp}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              {/* Missing Corroborating Evidence Checklist */}
+              {report.missingEvidence.missingEvidenceItems.length > 0 && (
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc', marginBottom: '10px' }}>
+                    Corroborating Evidence Needed For Complete Verification:
+                  </div>
+                  <div className="missing-checklist">
+                    {report.missingEvidence.missingEvidenceItems.map((item) => (
+                      <div key={item.id} className="missing-item-card">
+                        <div className="missing-item-header">{item.title}</div>
+                        <div className="missing-item-what">
+                          <strong>Missing:</strong> {item.whatIsMissing}
+                        </div>
+                        <div className="missing-item-guidance">
+                          <strong>How to safely verify:</strong> {item.safeVerificationGuidance}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Mandatory Advisory Note */}
+              <div className="missing-advisory-box">
+                <strong>Advisory:</strong> {report.missingEvidence.advisoryNote}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 6. Download Full Investigation Report Action */}
       {onDownloadReport && (

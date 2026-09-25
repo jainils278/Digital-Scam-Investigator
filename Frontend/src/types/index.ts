@@ -49,6 +49,27 @@ export type RiskLevel = 'BENIGN' | 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
 export type EvidenceStrength = 'SUBSTANTIAL' | 'MODERATE' | 'LIMITED' | 'MINIMAL';
 
+export interface RiskContribution {
+  id: string;
+  label: string;
+  category: IndicatorCategory | 'COMPOUND_SYNERGY' | 'CAP_ADJUSTMENT' | 'MITIGATING_DISCOUNT';
+  points: number;
+  type: 'BASE_SEVERITY' | 'COMPOUND_SYNERGY' | 'CAP_ADJUSTMENT' | 'MITIGATING_DISCOUNT';
+  sourceIndicatorId?: string;
+  characterRange?: [number, number];
+  evidenceQuote?: string;
+  explanation: string;
+}
+
+export interface RiskWaterfallBreakdown {
+  baseScore: number;
+  synergyScore: number;
+  rawTotalScore: number;
+  capAdjustment: number;
+  finalScore: number;
+  contributions: RiskContribution[];
+}
+
 export interface RiskAssessment {
   score: number;
   level: RiskLevel;
@@ -56,6 +77,7 @@ export interface RiskAssessment {
   evidenceStrengthExplanation: string;
   primaryCategories: string[];
   scoringRationale: string[];
+  waterfall?: RiskWaterfallBreakdown;
   isNonProbabilisticNotice: string;
 }
 
@@ -114,9 +136,20 @@ export interface EvidenceGraph {
   edges: GraphEdge[];
 }
 
+export type TimelineStage =
+  | 'HOOK'
+  | 'TRUST_AUTHORITY'
+  | 'PRESSURE'
+  | 'REQUEST'
+  | 'EXPLOITATION'
+  | 'POTENTIAL_IMPACT'
+  | 'COMPOUND_IMPACT';
+
 export interface TimelineStep {
   stepIndex: number;
-  stage: 'HOOK' | 'PRESSURE' | 'EXPLOITATION' | 'COMPOUND_IMPACT';
+  stage: TimelineStage;
+  stageLabel?: string;
+  observedOrInferred?: 'OBSERVED' | 'PROJECTED_CONSEQUENCE';
   title: string;
   description: string;
   evidenceQuote?: string;
@@ -157,6 +190,75 @@ export interface EducationBriefing {
   summary: string;
 }
 
+export interface TacticFingerprint {
+  id: string;
+  name: string;
+  category: IndicatorCategory;
+  severity: IndicatorSeverity;
+  constituentIndicatorIds: string[];
+  targetedVulnerability: string;
+  patternDescription: string;
+  explanation: string;
+  spottingTip: string;
+}
+
+export interface TacticProfile {
+  primaryTactic?: TacticFingerprint;
+  allTactics: TacticFingerprint[];
+  tacticCount: number;
+  summary: string;
+}
+
+export type ContradictionClassification = 'CONTRADICTION' | 'ANOMALY' | 'UNSUPPORTED_CLAIM';
+
+export interface ContradictionFinding {
+  id: string;
+  ruleId: string;
+  classification: ContradictionClassification;
+  severity: IndicatorSeverity;
+  claimedPretext: string;
+  conflictingEvidence: string;
+  sourceIndicatorIds: string[];
+  explanation: string;
+  whyItMatters: string;
+}
+
+export interface ContradictionAnalysis {
+  hasContradictions: boolean;
+  totalFindings: number;
+  contradictionsCount: number;
+  anomaliesCount: number;
+  unsupportedClaimsCount: number;
+  findings: ContradictionFinding[];
+  summary: string;
+}
+
+export type MissingEvidenceCategory =
+  | 'SENDER_IDENTITY'
+  | 'DESTINATION_INFRASTRUCTURE'
+  | 'ORIGINAL_CHANNEL'
+  | 'TRANSACTION_AUDIT'
+  | 'MESSAGE_CONTEXT';
+
+export interface MissingEvidenceItem {
+  id: string;
+  category: MissingEvidenceCategory;
+  title: string;
+  whatIsMissing: string;
+  whyUnavailable: string;
+  safeVerificationGuidance: string;
+  analyticalSignificance: string;
+}
+
+export interface EvidentiaryCompletenessAssessment {
+  completenessScore: number;
+  completenessRating: 'HIGH' | 'MODERATE' | 'LOW';
+  establishedFacts: string[];
+  unestablishedHypotheses: string[];
+  missingEvidenceItems: MissingEvidenceItem[];
+  advisoryNote: string;
+}
+
 export interface InvestigationReport {
   id: string;
   timestamp: string;
@@ -175,6 +277,9 @@ export interface InvestigationReport {
   screenshotMeta?: ScreenshotMetadata;
   evidenceIntelligence?: EvidenceIntelligenceSummary;
   education?: EducationBriefing;
+  tactics?: TacticProfile;
+  contradictions?: ContradictionAnalysis;
+  missingEvidence?: EvidentiaryCompletenessAssessment;
 }
 
 export interface ExampleCase {
