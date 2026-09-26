@@ -259,6 +259,147 @@ export interface EvidentiaryCompletenessAssessment {
   advisoryNote: string;
 }
 
+// --- V3.1 Interactive Workstation Types ---
+
+export type CounterfactualScope = 'INDICATOR' | 'CATEGORY';
+
+export interface CounterfactualScenario {
+  scope: CounterfactualScope;
+  targetIndicatorId?: string;
+  targetCategory?: IndicatorCategory;
+  removedIndicatorIds: string[];
+  counterfactualScore: number;
+  scoreDelta: number;
+  counterfactualLevel: RiskLevel;
+  brokenSynergies: string[];
+  explanation: string;
+}
+
+export interface CounterfactualAnalysis {
+  baselineScore: number;
+  scenarios: CounterfactualScenario[];
+  primaryPivotFactor?: string;
+}
+
+export interface ObfuscationEvent {
+  id: string;
+  type: 'HOMOGLYPH' | 'ZERO_WIDTH_CHAR';
+  rawChar: string;
+  normalizedChar: string;
+  rawIndex: number;
+  unicodeHex: string;
+  description: string;
+}
+
+export interface DiffToken {
+  text: string;
+  isObfuscated: boolean;
+  type?: 'HOMOGLYPH' | 'ZERO_WIDTH_CHAR';
+  originalChars?: string;
+  decodedChars?: string;
+  unicodeHex?: string;
+}
+
+export interface ObfuscationAnalysis {
+  hasObfuscation: boolean;
+  totalEvasionChars: number;
+  typesDetected: string[];
+  diffTokens: DiffToken[];
+  summary: string;
+}
+
+export type VictimState =
+  | 'RECEIVED_MESSAGE_ONLY'
+  | 'CLICKED_LINK'
+  | 'ENTERED_CREDENTIALS'
+  | 'DISCLOSED_OTP_OR_AUTH_CODE'
+  | 'PROVIDED_PERSONAL_INFORMATION'
+  | 'SENT_MONEY'
+  | 'INSTALLED_SOFTWARE_OR_APP'
+  | 'SHARED_SCREEN_OR_REMOTE_ACCESS'
+  | 'UNKNOWN_STATE';
+
+export interface ReportingChannel {
+  name: string;
+  jurisdiction?: string;
+  channelType:
+    | 'PAYMENT_PROVIDER'
+    | 'BANK'
+    | 'PLATFORM'
+    | 'GOVERNMENT'
+    | 'LAW_ENFORCEMENT'
+    | 'OTHER';
+  sourceUrl?: string;
+  sourceAttribution?: string;
+}
+
+export interface IncidentStep {
+  stepNumber: number;
+  urgency:
+    | 'IMMEDIATE_ACTION'
+    | 'WITHIN_1_HOUR'
+    | 'WITHIN_24_HOURS';
+  title: string;
+  detail: string;
+  category:
+    | 'CONTAINMENT'
+    | 'AUTHENTICATION'
+    | 'FINANCIAL'
+    | 'LEGAL_REPORTING';
+}
+
+export interface VictimStateResponse {
+  declaredState: VictimState;
+  stateLabel: string;
+  containmentUrgency:
+    | 'CRITICAL_CONTAINMENT'
+    | 'ACTIVE_CONTAINMENT'
+    | 'PREVENTATIVE';
+  containmentSteps: IncidentStep[];
+  evidencePreservationGuide: string;
+  reportingChannels: ReportingChannel[];
+}
+
+export type InstitutionCategory =
+  | 'FINANCIAL'
+  | 'LOGISTICS_POSTAL'
+  | 'TECH_IDENTITY'
+  | 'GOVERNMENT'
+  | 'ENTERTAINMENT'
+  | 'COMMERCE';
+
+export interface VerificationSource {
+  sourceUrl: string;
+  sourceType:
+    | 'OFFICIAL_ORGANIZATION_SITE'
+    | 'OFFICIAL_FRAUD_PAGE'
+    | 'OFFICIAL_GOVERNMENT_PAGE'
+    | 'OFFICIAL_HELP_PAGE';
+  lastReviewedDate: string;
+  registryVersion: string;
+}
+
+export interface VerifiedInstitutionProfile {
+  id: string;
+  organizationName: string;
+  category: InstitutionCategory;
+  jurisdiction: string;
+  officialPrimaryDomain: string;
+  officialLoginUrl?: string;
+  officialFraudHotline?: string;
+  officialFraudEmail?: string;
+  safeVerificationGuidance: string;
+  verificationSource: VerificationSource;
+}
+
+export interface InstitutionVerificationMatch {
+  matched: boolean;
+  institution?: VerifiedInstitutionProfile;
+  claimedPretext?: string;
+  messageDiscrepancyNotes?: string[];
+  independentChannelGuidance?: string;
+}
+
 export interface InvestigationReport {
   id: string;
   timestamp: string;
@@ -280,6 +421,10 @@ export interface InvestigationReport {
   tactics?: TacticProfile;
   contradictions?: ContradictionAnalysis;
   missingEvidence?: EvidentiaryCompletenessAssessment;
+  victimResponse?: VictimStateResponse;
+  counterfactuals?: CounterfactualAnalysis;
+  obfuscationAnalysis?: ObfuscationAnalysis;
+  institutionVerification?: InstitutionVerificationMatch;
 }
 
 export interface ExampleCase {

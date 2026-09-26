@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import type { ExampleCase, MessageType } from '../types';
+import type { ExampleCase, MessageType, VictimState } from '../types';
 
 interface WorkstationInputProps {
   text: string;
@@ -13,6 +13,8 @@ interface WorkstationInputProps {
   onSelectExample: (example: ExampleCase) => void;
   onInvestigateScreenshot?: (base64: string, filename: string) => void;
   onInvestigateUrl?: (url: string) => void;
+  victimState?: VictimState;
+  onChangeVictimState?: (state: VictimState) => void;
 }
 
 type IngestionMode = 'text' | 'url' | 'screenshot';
@@ -29,6 +31,8 @@ export const WorkstationInput: React.FC<WorkstationInputProps> = ({
   onSelectExample,
   onInvestigateScreenshot,
   onInvestigateUrl,
+  victimState,
+  onChangeVictimState,
 }) => {
   const [ingestionMode, setIngestionMode] = useState<IngestionMode>('text');
   const [isAnonymized, setIsAnonymized] = useState(false);
@@ -247,6 +251,38 @@ export const WorkstationInput: React.FC<WorkstationInputProps> = ({
                 : 'Ready to investigate (Ctrl + Enter)'}
             </div>
           </div>
+
+          {/* Optional Declared Victim Interaction Status */}
+          {onChangeVictimState && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+              <span style={{ fontWeight: 600 }}>Interaction Status:</span>
+              <select
+                value={victimState || 'RECEIVED_MESSAGE_ONLY'}
+                onChange={(e) => onChangeVictimState(e.target.value as VictimState)}
+                style={{
+                  background: 'var(--bg-card, #0f172a)',
+                  color: 'var(--text-primary, #f1f5f9)',
+                  border: '1px solid var(--border-color, #334155)',
+                  borderRadius: '4px',
+                  padding: '4px 8px',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                }}
+                disabled={isLoading}
+                aria-label="Victim Interaction Status"
+              >
+                <option value="RECEIVED_MESSAGE_ONLY">Received message only (No interaction)</option>
+                <option value="CLICKED_LINK">Clicked a link</option>
+                <option value="ENTERED_CREDENTIALS">Entered passwords / credentials</option>
+                <option value="DISCLOSED_OTP_OR_AUTH_CODE">Shared OTP / 2FA code</option>
+                <option value="PROVIDED_PERSONAL_INFORMATION">Provided personal information</option>
+                <option value="SENT_MONEY">Sent money / gift cards</option>
+                <option value="INSTALLED_SOFTWARE_OR_APP">Installed software / app</option>
+                <option value="SHARED_SCREEN_OR_REMOTE_ACCESS">Shared screen / remote access</option>
+                <option value="UNKNOWN_STATE">Unsure / other</option>
+              </select>
+            </div>
+          )}
 
           {/* Action Toolbar */}
           <div className="input-actions">

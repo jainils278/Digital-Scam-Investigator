@@ -20,7 +20,7 @@ export function createInvestigationRouter(investigationService: InvestigationSer
    */
   router.post('/investigate', async (req: Request, res: Response): Promise<void> => {
     try {
-      const { text, messageType } = req.body as InvestigateRequest;
+      const { text, messageType, victimState } = req.body as InvestigateRequest;
 
       if (!text || typeof text !== 'string') {
         const errorResponse: InvestigateErrorResponse = {
@@ -58,7 +58,7 @@ export function createInvestigationRouter(investigationService: InvestigationSer
         return;
       }
 
-      const report = await investigationService.investigate({ text, messageType });
+      const report = await investigationService.investigate({ text, messageType, victimState });
       const successResponse: InvestigateSuccessResponse = {
         success: true,
         report,

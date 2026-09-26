@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import type { InvestigationReport } from '../types';
+import type { InvestigationReport, VictimState } from '../types';
+import { getClientVictimStateResponse } from '../utils/incidentResponse';
+import { downloadInvestigationPdf, downloadCaseJson } from '../utils/reportGenerator';
 
 interface InvestigationReportViewProps {
   report: InvestigationReport;
@@ -17,12 +19,23 @@ export const InvestigationReportView: React.FC<InvestigationReportViewProps> = (
   const { observedIndicators, aiContext, riskAssessment, defensiveRecommendations, screenshotMeta, id, timestamp } = report;
   const { score, level, primaryCategories } = riskAssessment;
 
-  // V3.0 Progressive Disclosure Accordion States
+  // V3.0 & V3.1 Progressive Disclosure Accordion States
   const [isWaterfallOpen, setIsWaterfallOpen] = useState(false);
   const [isTacticsOpen, setIsTacticsOpen] = useState(false);
   const [isContradictionsOpen, setIsContradictionsOpen] = useState(false);
   const [isChainOpen, setIsChainOpen] = useState(false);
   const [isMissingEvidenceOpen, setIsMissingEvidenceOpen] = useState(false);
+  const [isMaskOpen, setIsMaskOpen] = useState(false);
+  const [isCounterfactualOpen, setIsCounterfactualOpen] = useState(false);
+  const [isVerificationOpen, setIsVerificationOpen] = useState(true);
+  const [isVictimResponseOpen, setIsVictimResponseOpen] = useState(
+    !!(report.victimResponse && report.victimResponse.declaredState !== 'RECEIVED_MESSAGE_ONLY')
+  );
+  const [declaredVictimState, setDeclaredVictimState] = useState<VictimState>(
+    report.victimResponse?.declaredState || 'RECEIVED_MESSAGE_ONLY'
+  );
+
+  const activeVictimResponse = getClientVictimStateResponse(declaredVictimState);
 
   // Format date for Investigated timestamp (e.g. Sep 23, 2026 • 9:16 PM)
   const formatInvestigatedDate = (iso: string) => {
@@ -500,6 +513,96 @@ export const InvestigationReportView: React.FC<InvestigationReportViewProps> = (
         </div>
       )}
 
+      {/* 4B. V3.1 The Attacker's Mask: Structural Obfuscation Diff Accordion */}
+      {report.obfuscationAnalysis && report.obfuscationAnalysis.hasObfuscation && (
+        <div className="v3-accordion-panel" id="v3-attacker-mask-panel">
+          <button
+            type="button"
+            className="v3-accordion-header"
+            onClick={() => setIsMaskOpen(!isMaskOpen)}
+            aria-expanded={isMaskOpen}
+          >
+            <div className="v3-header-left">
+              <div className="card-icon-circle icon-circle-red">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <line x1="2" y1="2" x2="22" y2="22"></line>
+                </svg>
+              </div>
+              <div>
+                <h4 className="v3-header-title">The Attacker's Mask &bull; Structural Evasion Diff</h4>
+                <div style={{ fontSize: '12px', color: '#94a3b8' }}>
+                  Hidden Unicode evasion, zero-width spaces, and homoglyphs detected in original payload
+                </div>
+              </div>
+            </div>
+            <div className="v3-header-right">
+              <span className="v3-pill-badge v3-pill-amber">
+                {report.obfuscationAnalysis.totalEvasionChars} Evasion Chars ({report.obfuscationAnalysis.typesDetected.join(', ')})
+              </span>
+              <svg
+                className={`v3-chevron ${isMaskOpen ? 'open' : ''}`}
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+              >
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          </button>
+
+          {isMaskOpen && (
+            <div className="v3-accordion-content">
+              <p style={{ fontSize: '13px', color: '#cbd5e1', marginTop: '14px', marginBottom: '8px' }}>
+                {report.obfuscationAnalysis.summary}
+              </p>
+              <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '10px' }}>
+                Attackers use visually indistinguishable Unicode characters to bypass automated security filters while looking deceptive to victims.
+              </div>
+              <div
+                style={{
+                  background: '#090e1a',
+                  border: '1px solid #334155',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  fontFamily: 'var(--font-mono, monospace)',
+                  fontSize: '13px',
+                  lineHeight: 1.8,
+                  wordBreak: 'break-all',
+                }}
+              >
+                {report.obfuscationAnalysis.diffTokens.map((token, idx) => {
+                  if (token.isObfuscated) {
+                    return (
+                      <span
+                        key={idx}
+                        style={{
+                          background: 'rgba(239, 68, 68, 0.25)',
+                          border: '1px solid rgba(239, 68, 68, 0.6)',
+                          color: '#fca5a5',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          fontWeight: 700,
+                          margin: '0 2px',
+                        }}
+                        title={`Evasion Character [${token.unicodeHex || ''}]: "${token.originalChars || ''}" -> "${token.decodedChars || ''}"`}
+                      >
+                        [EVASION: {token.originalChars}{token.decodedChars ? ` -> ${token.decodedChars}` : ''}]
+                      </span>
+                    );
+                  }
+                  return <span key={idx}>{token.text}</span>;
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* 5. V3.0 Psychological Tactic Fingerprinting Accordion */}
       {report.tactics && (
         <div className="v3-accordion-panel" id="v3-tactics-panel">
@@ -924,25 +1027,472 @@ export const InvestigationReportView: React.FC<InvestigationReportViewProps> = (
         </div>
       )}
 
-      {/* 6. Download Full Investigation Report Action */}
-      {onDownloadReport && (
-        <div className="report-download-footer-container">
+      {/* 8B. V3.1 Counterfactual Risk Sensitivity Accordion */}
+      {report.counterfactuals && report.counterfactuals.scenarios.length > 0 && (
+        <div className="v3-accordion-panel" id="v3-counterfactual-panel">
+          <button
+            type="button"
+            className="v3-accordion-header"
+            onClick={() => setIsCounterfactualOpen(!isCounterfactualOpen)}
+            aria-expanded={isCounterfactualOpen}
+          >
+            <div className="v3-header-left">
+              <div className="card-icon-circle icon-circle-cyan">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <line x1="4" y1="21" x2="4" y2="14"></line>
+                  <line x1="4" y1="10" x2="4" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12" y2="3"></line>
+                  <line x1="20" y1="21" x2="20" y2="16"></line>
+                  <line x1="20" y1="12" x2="20" y2="3"></line>
+                  <line x1="1" y1="14" x2="7" y2="14"></line>
+                  <line x1="9" y1="8" x2="15" y2="8"></line>
+                  <line x1="17" y1="16" x2="23" y2="16"></line>
+                </svg>
+              </div>
+              <div>
+                <h4 className="v3-header-title">Counterfactual Risk Sensitivity</h4>
+                <div style={{ fontSize: '12px', color: '#94a3b8' }}>
+                  Mathematical sensitivity decomposition re-running scoring on filtered indicator subsets
+                </div>
+              </div>
+            </div>
+            <div className="v3-header-right">
+              <span className="v3-pill-badge v3-pill-cyan">
+                {report.counterfactuals.scenarios.length} Scenarios
+              </span>
+              <svg
+                className={`v3-chevron ${isCounterfactualOpen ? 'open' : ''}`}
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+              >
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          </button>
+
+          {isCounterfactualOpen && (
+            <div className="v3-accordion-content">
+              <div
+                style={{
+                  background: 'rgba(56, 189, 248, 0.05)',
+                  border: '1px solid rgba(56, 189, 248, 0.2)',
+                  borderRadius: '8px',
+                  padding: '12px 16px',
+                  marginTop: '14px',
+                  marginBottom: '14px',
+                  fontSize: '12px',
+                  color: '#cbd5e1',
+                  lineHeight: 1.6,
+                }}
+              >
+                <strong>Mathematical Sensitivity Notice:</strong> Counterfactual analysis isolates which factors most heavily drive the risk assessment without altering the actual baseline score ({report.counterfactuals.baselineScore}/100).
+                {report.counterfactuals.primaryPivotFactor && (
+                  <div style={{ marginTop: '6px', color: '#38bdf8', fontWeight: 600 }}>
+                    Primary Pivot Factor: {report.counterfactuals.primaryPivotFactor}
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: 'grid', gap: '10px' }}>
+                {report.counterfactuals.scenarios.map((sc, sIdx) => {
+                  const isCat = sc.scope === 'CATEGORY';
+                  const title = isCat ? `Removal of All ${sc.targetCategory} Indicators` : `Removal of [${sc.targetIndicatorId}]`;
+                  return (
+                    <div
+                      key={sIdx}
+                      style={{
+                        background: '#090e1a',
+                        border: '1px solid #1e293b',
+                        borderRadius: '6px',
+                        padding: '12px 16px',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '6px',
+                          flexWrap: 'wrap',
+                          gap: '8px',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span
+                            style={{
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              color: '#38bdf8',
+                              background: 'rgba(56, 189, 248, 0.1)',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                            }}
+                          >
+                            {sc.scope}
+                          </span>
+                          <span style={{ fontWeight: 600, fontSize: '13px', color: '#f8fafc' }}>{title}</span>
+                        </div>
+                        <span style={{ fontSize: '12px', fontWeight: 700, color: sc.scoreDelta > 0 ? '#10b981' : '#94a3b8' }}>
+                          {sc.scoreDelta > 0 ? `-${sc.scoreDelta} pts` : 'No score change'} &bull; Hyp: {sc.counterfactualScore}/100 ({sc.counterfactualLevel})
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#94a3b8', lineHeight: 1.5 }}>{sc.explanation}</div>
+                      {sc.brokenSynergies && sc.brokenSynergies.length > 0 && (
+                        <div style={{ fontSize: '11px', color: '#f59e0b', marginTop: '6px' }}>
+                          <strong>Severed Synergies:</strong> {sc.brokenSynergies.join(', ')}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 9B. V3.1 Safe Out-of-Band Verification Directory Accordion */}
+      {report.institutionVerification && report.institutionVerification.matched && report.institutionVerification.institution && (
+        <div className="v3-accordion-panel" id="v3-verification-directory-panel">
+          <button
+            type="button"
+            className="v3-accordion-header"
+            onClick={() => setIsVerificationOpen(!isVerificationOpen)}
+            aria-expanded={isVerificationOpen}
+          >
+            <div className="v3-header-left">
+              <div className="card-icon-circle icon-circle-green">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                  <polyline points="9 12 11 14 15 10"></polyline>
+                </svg>
+              </div>
+              <div>
+                <h4 className="v3-header-title">Safe Out-of-Band Verification: {report.institutionVerification.institution.organizationName}</h4>
+                <div style={{ fontSize: '12px', color: '#94a3b8' }}>
+                  Independently curated official contact channels & security coordinates
+                </div>
+              </div>
+            </div>
+            <div className="v3-header-right">
+              <span className="v3-pill-badge v3-pill-green">
+                Verified Registry Match
+              </span>
+              <svg
+                className={`v3-chevron ${isVerificationOpen ? 'open' : ''}`}
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+              >
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          </button>
+
+          {isVerificationOpen && (
+            <div className="v3-accordion-content">
+              <div
+                style={{
+                  background: 'rgba(16, 185, 129, 0.05)',
+                  border: '1px solid rgba(16, 185, 129, 0.2)',
+                  borderRadius: '8px',
+                  padding: '12px 16px',
+                  marginTop: '14px',
+                  marginBottom: '14px',
+                  fontSize: '12px',
+                  color: '#cbd5e1',
+                  lineHeight: 1.5,
+                }}
+              >
+                <strong style={{ color: '#34d399' }}>Trust Boundary Notice:</strong> The information below is independently curated from official sources. It was NOT extracted from the suspicious submission. Never use phone numbers or links provided in the suspicious message.
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px', marginBottom: '16px' }}>
+                <div style={{ background: '#090e1a', border: '1px solid #1e293b', borderRadius: '6px', padding: '12px 14px' }}>
+                  <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase' }}>Official Domain</div>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#38bdf8', marginTop: '4px', fontFamily: 'var(--font-mono)' }}>
+                    {report.institutionVerification.institution.officialPrimaryDomain}
+                  </div>
+                </div>
+
+                {report.institutionVerification.institution.officialLoginUrl && (
+                  <div style={{ background: '#090e1a', border: '1px solid #1e293b', borderRadius: '6px', padding: '12px 14px' }}>
+                    <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase' }}>Official Login Portal</div>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#cbd5e1', marginTop: '4px', wordBreak: 'break-all', fontFamily: 'var(--font-mono)' }}>
+                      {report.institutionVerification.institution.officialLoginUrl}
+                    </div>
+                  </div>
+                )}
+
+                {report.institutionVerification.institution.officialFraudHotline && (
+                  <div style={{ background: '#090e1a', border: '1px solid #1e293b', borderRadius: '6px', padding: '12px 14px' }}>
+                    <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase' }}>Official Fraud Hotline</div>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#f59e0b', marginTop: '4px' }}>
+                      {report.institutionVerification.institution.officialFraudHotline}
+                    </div>
+                  </div>
+                )}
+
+                {report.institutionVerification.institution.officialFraudEmail && (
+                  <div style={{ background: '#090e1a', border: '1px solid #1e293b', borderRadius: '6px', padding: '12px 14px' }}>
+                    <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase' }}>Official Fraud Reporting Email</div>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#cbd5e1', marginTop: '4px' }}>
+                      {report.institutionVerification.institution.officialFraudEmail}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {report.institutionVerification.messageDiscrepancyNotes && report.institutionVerification.messageDiscrepancyNotes.length > 0 && (
+                <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '6px', padding: '12px 16px', marginBottom: '14px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#f87171', marginBottom: '6px' }}>
+                    Channel Discrepancy Warnings:
+                  </div>
+                  <ul style={{ listStyle: 'disc', paddingLeft: '18px', fontSize: '12px', color: '#fca5a5', lineHeight: 1.5 }}>
+                    {report.institutionVerification.messageDiscrepancyNotes.map((note, nIdx) => (
+                      <li key={nIdx}>{note}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div style={{ fontSize: '12px', color: '#cbd5e1', lineHeight: 1.6, marginBottom: '10px' }}>
+                <strong>Safe Verification Guidance:</strong> {report.institutionVerification.institution.safeVerificationGuidance}
+              </div>
+
+              <div style={{ fontSize: '11px', color: '#64748b' }}>
+                Registry Source: {report.institutionVerification.institution.verificationSource.sourceUrl} (Reviewed: {report.institutionVerification.institution.verificationSource.lastReviewedDate})
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 9C. V3.1 Victim-State Incident Containment & Response Accordion */}
+      <div className="v3-accordion-panel" id="v3-victim-response-panel">
+        <button
+          type="button"
+          className="v3-accordion-header"
+          onClick={() => setIsVictimResponseOpen(!isVictimResponseOpen)}
+          aria-expanded={isVictimResponseOpen}
+        >
+          <div className="v3-header-left">
+            <div className={`card-icon-circle ${activeVictimResponse.containmentUrgency === 'CRITICAL_CONTAINMENT' ? 'icon-circle-red' : activeVictimResponse.containmentUrgency === 'ACTIVE_CONTAINMENT' ? 'icon-circle-amber' : 'icon-circle-green'}`}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            </div>
+            <div>
+              <h4 className="v3-header-title">Incident Containment & Response: {activeVictimResponse.stateLabel}</h4>
+              <div style={{ fontSize: '12px', color: '#94a3b8' }}>
+                Prioritized containment protocols & evidence preservation for declared situation
+              </div>
+            </div>
+          </div>
+          <div className="v3-header-right">
+            <span
+              className={`v3-pill-badge ${
+                activeVictimResponse.containmentUrgency === 'CRITICAL_CONTAINMENT'
+                  ? 'v3-pill-red'
+                  : activeVictimResponse.containmentUrgency === 'ACTIVE_CONTAINMENT'
+                  ? 'v3-pill-amber'
+                  : 'v3-pill-green'
+              }`}
+            >
+              {activeVictimResponse.containmentUrgency}
+            </span>
+            <svg
+              className={`v3-chevron ${isVictimResponseOpen ? 'open' : ''}`}
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+            >
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+        </button>
+
+        {isVictimResponseOpen && (
+          <div className="v3-accordion-content">
+            {/* Interactive State Switcher */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                flexWrap: 'wrap',
+                marginTop: '14px',
+                marginBottom: '16px',
+                background: '#090e1a',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                border: '1px solid #1e293b',
+              }}
+            >
+              <label style={{ fontSize: '12px', fontWeight: 600, color: '#f8fafc' }}>
+                Your Interaction Status:
+              </label>
+              <select
+                value={declaredVictimState}
+                onChange={(e) => setDeclaredVictimState(e.target.value as VictimState)}
+                style={{
+                  background: '#1e293b',
+                  color: '#f8fafc',
+                  border: '1px solid #334155',
+                  borderRadius: '6px',
+                  padding: '6px 12px',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                }}
+              >
+                <option value="RECEIVED_MESSAGE_ONLY">Received message only (No interaction)</option>
+                <option value="CLICKED_LINK">Clicked a link</option>
+                <option value="ENTERED_CREDENTIALS">Entered passwords / credentials</option>
+                <option value="DISCLOSED_OTP_OR_AUTH_CODE">Shared OTP / 2FA code</option>
+                <option value="PROVIDED_PERSONAL_INFORMATION">Provided personal information / ID</option>
+                <option value="SENT_MONEY">Sent money / wire / gift cards</option>
+                <option value="INSTALLED_SOFTWARE_OR_APP">Downloaded / installed software or app</option>
+                <option value="SHARED_SCREEN_OR_REMOTE_ACCESS">Shared screen / remote access</option>
+                <option value="UNKNOWN_STATE">Unsure / other</option>
+              </select>
+              <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                (Zero server retention &bull; client-side instant guidance)
+              </span>
+            </div>
+
+            {/* Step-by-step Containment Action Sequence */}
+            <div style={{ display: 'grid', gap: '10px', marginBottom: '16px' }}>
+              {activeVictimResponse.containmentSteps.map((step) => {
+                const isImm = step.urgency === 'IMMEDIATE_ACTION';
+                const badgeColor = isImm ? '#ef4444' : step.urgency === 'WITHIN_1_HOUR' ? '#f59e0b' : '#38bdf8';
+                return (
+                  <div
+                    key={step.stepNumber}
+                    style={{
+                      background: '#090e1a',
+                      borderLeft: `3px solid ${badgeColor}`,
+                      borderTop: '1px solid #1e293b',
+                      borderRight: '1px solid #1e293b',
+                      borderBottom: '1px solid #1e293b',
+                      borderRadius: '6px',
+                      padding: '12px 16px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: badgeColor, textTransform: 'uppercase' }}>
+                        Step {step.stepNumber} &bull; {step.urgency.replace(/_/g, ' ')}
+                      </span>
+                      <span style={{ fontSize: '11px', color: '#94a3b8', background: '#1e293b', padding: '2px 6px', borderRadius: '4px' }}>
+                        {step.category}
+                      </span>
+                    </div>
+                    <div style={{ fontWeight: 700, fontSize: '13px', color: '#f8fafc', marginBottom: '4px' }}>
+                      {step.title}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#cbd5e1', lineHeight: 1.5 }}>
+                      {step.detail}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Evidence Preservation Guide */}
+            <div style={{ background: '#090e1a', border: '1px solid #1e293b', borderRadius: '6px', padding: '12px 16px', marginBottom: '14px' }}>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#f8fafc', marginBottom: '4px' }}>
+                Evidence Preservation Protocol
+              </div>
+              <div style={{ fontSize: '12px', color: '#94a3b8', lineHeight: 1.5 }}>
+                {activeVictimResponse.evidencePreservationGuide}
+              </div>
+            </div>
+
+            {/* Reporting Channels */}
+            {activeVictimResponse.reportingChannels && activeVictimResponse.reportingChannels.length > 0 && (
+              <div style={{ background: '#090e1a', border: '1px solid #1e293b', borderRadius: '6px', padding: '12px 16px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: '#f8fafc', marginBottom: '8px' }}>
+                  Recommended Reporting Channels (Jurisdiction-Neutral)
+                </div>
+                <div style={{ display: 'grid', gap: '8px' }}>
+                  {activeVictimResponse.reportingChannels.map((rc, rIdx) => (
+                    <div key={rIdx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', borderBottom: '1px solid #1e293b', paddingBottom: '4px' }}>
+                      <span style={{ color: '#cbd5e1' }}>
+                        <strong>{rc.name}</strong> <span style={{ color: '#94a3b8' }}>({rc.channelType})</span>
+                      </span>
+                      <span style={{ color: '#94a3b8', fontSize: '11px' }}>{rc.jurisdiction || 'Universal'}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* 10. Advanced Investigation Case File & Report Exports */}
+      <div className="report-download-footer-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center' }}>
+        {onDownloadReport && (
           <button
             type="button"
             className="btn-download-report"
             onClick={onDownloadReport}
             id="download-investigation-report-btn"
-            title="Download complete standalone investigation audit report"
+            title="Download complete standalone offline HTML investigation audit report"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="7 10 12 15 17 10"></polyline>
               <line x1="12" y1="15" x2="12" y2="3"></line>
             </svg>
-            <span>Download Full Investigation Report</span>
+            <span>Download HTML Report</span>
           </button>
-        </div>
-      )}
+        )}
+
+        <button
+          type="button"
+          className="btn-download-report"
+          style={{ background: '#0284c7' }}
+          onClick={() => downloadInvestigationPdf(report)}
+          id="download-investigation-pdf-btn"
+          title="Download client-side generated PDF 1.4 report"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="12" y1="18" x2="12" y2="12"></line>
+            <polyline points="9 15 12 18 15 15"></polyline>
+          </svg>
+          <span>Download PDF</span>
+        </button>
+
+        <button
+          type="button"
+          className="btn-download-report"
+          style={{ background: '#334155' }}
+          onClick={() => downloadCaseJson(report)}
+          id="download-case-json-btn"
+          title="Export structured Case JSON file for local archival and manual review"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
+            <polyline points="16 18 22 12 16 6"></polyline>
+            <polyline points="8 6 2 12 8 18"></polyline>
+          </svg>
+          <span>Export Case JSON</span>
+        </button>
+      </div>
     </div>
   );
 };

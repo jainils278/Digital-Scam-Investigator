@@ -5,7 +5,7 @@ import { InvestigationProgress } from './components/InvestigationProgress';
 import { InvestigationReportView } from './components/InvestigationReportView';
 import { ThreatReferenceModal } from './components/ThreatReferenceModal';
 import { WorkstationInput } from './components/WorkstationInput';
-import type { ExampleCase, InvestigationReport, LocalHistoryItem, MessageType } from './types';
+import type { ExampleCase, InvestigationReport, LocalHistoryItem, MessageType, VictimState } from './types';
 import { generateFullInvestigationReport } from './utils/reportGenerator';
 
 const STORAGE_KEY = 'scam_investigator_history';
@@ -51,6 +51,7 @@ export const App: React.FC = () => {
   // Input State
   const [inputText, setInputText] = useState('');
   const [messageType, setMessageType] = useState<MessageType>('unknown');
+  const [victimState, setVictimState] = useState<VictimState>('RECEIVED_MESSAGE_ONLY');
 
   // Investigation Pipeline State
   const [isLoading, setIsLoading] = useState(false);
@@ -166,6 +167,7 @@ export const App: React.FC = () => {
         body: JSON.stringify({
           text: inputText,
           messageType,
+          victimState,
         }),
       });
 
@@ -337,6 +339,8 @@ export const App: React.FC = () => {
             onSelectExample={handleSelectExample}
             onInvestigateScreenshot={handleInvestigateScreenshot}
             onInvestigateUrl={handleInvestigateUrl}
+            victimState={victimState}
+            onChangeVictimState={setVictimState}
           />
 
           {/* Friendly Error Notice */}

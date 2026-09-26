@@ -21,6 +21,10 @@ import { analyzeEvidenceIntelligence } from './intelligence/evidence_graph.js';
 import { analyzeTactics } from './intelligence/tactic_engine.js';
 import { analyzeContradictions } from './intelligence/contradiction_engine.js';
 import { assessEvidentiaryCompleteness } from './intelligence/missing_evidence_advisor.js';
+import { generateCounterfactualAnalysis } from './intelligence/counterfactual_engine.js';
+import { analyzeObfuscation } from './intelligence/obfuscation_analyzer.js';
+import { generateVictimStateResponse } from './incident_response.js';
+import { findInstitutionMatch } from '../data/verified_institutions.js';
 import { OcrService, validateImageBuffer } from './ocr/ocr_service.js';
 import { generateDefensiveRecommendations } from './recommender.js';
 import { calculateRiskAssessment } from './risk_engine.js';
@@ -142,7 +146,30 @@ export class InvestigationService {
     // 14. V3.0 Evidentiary Completeness & Missing Evidence Advisor
     const missingEvidence = assessEvidentiaryCompleteness(rawText, verifiedIndicators, urlSummaries);
 
-    // 15. Standard Defensive Cybersecurity Disclaimer
+    // 15. V3.1 Counterfactual Risk Sensitivity Analysis
+    const counterfactuals = generateCounterfactualAnalysis(
+      verifiedIndicators,
+      riskAssessment,
+      rawText.length
+    );
+
+    // 16. V3.1 The Attacker's Mask (Obfuscation & Evasion Diff)
+    const obfuscationAnalysis = analyzeObfuscation(
+      rawText,
+      normalizedResult.obfuscationEvents
+    );
+
+    // 17. V3.1 Victim-State Incident Response Engine
+    const victimResponse = generateVictimStateResponse(request.victimState);
+
+    // 18. V3.1 Safe Out-of-Band Verification Matcher
+    const institutionVerification = findInstitutionMatch(
+      normalizedResult.normalizedText,
+      verifiedIndicators,
+      urlSummaries
+    );
+
+    // 19. Standard Defensive Cybersecurity Disclaimer
     const disclaimer =
       'This analysis identifies indicators and manipulation tactics commonly associated with scams. It is an algorithmic risk assessment, not definitive proof of sender identity, guilt, or innocence. Always verify high-stakes claims, payments, and account notices through known, trusted official channels.';
 
@@ -166,6 +193,10 @@ export class InvestigationService {
       tactics,
       contradictions,
       missingEvidence,
+      victimResponse,
+      counterfactuals,
+      obfuscationAnalysis: obfuscationAnalysis.hasObfuscation ? obfuscationAnalysis : undefined,
+      institutionVerification: institutionVerification.matched ? institutionVerification : undefined,
     };
   }
 

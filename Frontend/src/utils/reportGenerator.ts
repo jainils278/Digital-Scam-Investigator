@@ -267,6 +267,10 @@ export function generateInvestigationPdfBytes(report: InvestigationReport): Uint
     tactics,
     contradictions,
     missingEvidence,
+    counterfactuals,
+    obfuscationAnalysis,
+    victimResponse,
+    institutionVerification,
   } = report;
 
   const { score, level, evidenceStrength, primaryCategories, waterfall } = riskAssessment;
@@ -336,6 +340,23 @@ export function generateInvestigationPdfBytes(report: InvestigationReport): Uint
     writer.addLine(`Final Deterministic Score: ${waterfall.finalScore} / 100 (${level})`, 'F2', 9, r, g, b, 14);
   }
 
+  // 4B. V3.1 Counterfactual Risk Sensitivity
+  if (counterfactuals && counterfactuals.scenarios && counterfactuals.scenarios.length > 0) {
+    writer.addSectionHeading(`Counterfactual Risk Sensitivity (${counterfactuals.scenarios.length} Scenarios)`);
+    writer.addParagraph('Algorithmic sensitivity analysis: Re-running the deterministic risk engine on filtered evidence sets to identify primary score-pivoting factors.', 'F1', 7.5, 0.4, 0.45, 0.5, 10);
+    if (counterfactuals.primaryPivotFactor) {
+      writer.addLine(`Primary Pivot Factor: ${counterfactuals.primaryPivotFactor}`, 'F2', 8.5, 0.22, 0.74, 0.97, 11.5);
+    }
+    for (const s of counterfactuals.scenarios.slice(0, 8)) {
+      writer.checkSpace(24);
+      writer.addLine(`• [${s.scope}] ${s.targetCategory || s.targetIndicatorId}: -${s.scoreDelta} pts (New Score: ${s.counterfactualScore}/100 [${s.counterfactualLevel}])`, 'F2', 8, 0.2, 0.25, 0.3, 10.5, 6);
+      writer.addParagraph(s.explanation, 'F1', 7.5, 0.4, 0.45, 0.5, 10, 6);
+      if (s.brokenSynergies && s.brokenSynergies.length > 0) {
+        writer.addLine(`  Broken Synergies: ${s.brokenSynergies.join(', ')}`, 'F2', 7.5, 0.85, 0.47, 0.02, 10, 6);
+      }
+    }
+  }
+
   // 5. 6-Stage Scam Attack Chain Progression
   if (evidenceIntelligence && evidenceIntelligence.timeline && evidenceIntelligence.timeline.length > 0) {
     writer.addSectionHeading('6-Stage Scam Attack Chain Progression');
@@ -380,6 +401,16 @@ export function generateInvestigationPdfBytes(report: InvestigationReport): Uint
       writer.addParagraph(`Why This Works: ${t.explanation}`, 'F1', 7.5, 0.4, 0.45, 0.5, 10, 6);
       writer.addLine(`Defensive Spotting Tip: ${t.spottingTip}`, 'F2', 7.5, 0.05, 0.45, 0.75, 11, 6);
     }
+  }
+
+  // 7B. V3.1 The Attacker's Mask (Obfuscation & Evasion)
+  if (obfuscationAnalysis && obfuscationAnalysis.hasObfuscation) {
+    writer.addSectionHeading(`The Attacker's Mask — Obfuscation & Evasion (${obfuscationAnalysis.totalEvasionChars} Chars)`);
+    writer.addParagraph(obfuscationAnalysis.summary, 'F1', 8, 0.2, 0.25, 0.3, 11);
+    const evasionTokens = obfuscationAnalysis.diffTokens
+      .map((t) => (t.isObfuscated ? (t.type === 'ZERO_WIDTH_CHAR' ? `[ZW:${t.unicodeHex}]` : `${t.originalChars}->${t.decodedChars}`) : t.text))
+      .join('');
+    writer.addParagraph(`Reconstructed Text with Revealed Evasion: ${evasionTokens.slice(0, 400)}${evasionTokens.length > 400 ? '...' : ''}`, 'F4', 7.5, 0.8, 0.2, 0.2, 10, 8);
   }
 
   // 8. Verified Physical Evidence Findings
@@ -437,6 +468,26 @@ export function generateInvestigationPdfBytes(report: InvestigationReport): Uint
     }
   }
 
+  // 11B. V3.1 Safe Out-of-Band Verification Directory
+  if (institutionVerification && institutionVerification.matched && institutionVerification.institution) {
+    const inst = institutionVerification.institution;
+    writer.addSectionHeading(`Safe Out-of-Band Verification: ${inst.organizationName}`);
+    writer.addLine(`Official Domain: ${inst.officialPrimaryDomain}  •  Category: ${inst.category} (${inst.jurisdiction})`, 'F2', 8, 0.02, 0.59, 0.41, 11);
+    if (inst.officialLoginUrl) {
+      writer.addLine(`Official Login Portal: ${inst.officialLoginUrl}`, 'F1', 7.5, 0.3, 0.35, 0.4, 10, 6);
+    }
+    if (inst.officialFraudHotline) {
+      writer.addLine(`Official Fraud Hotline: ${inst.officialFraudHotline}`, 'F2', 7.5, 0.05, 0.45, 0.75, 10, 6);
+    }
+    if (institutionVerification.messageDiscrepancyNotes && institutionVerification.messageDiscrepancyNotes.length > 0) {
+      for (const note of institutionVerification.messageDiscrepancyNotes) {
+        writer.addLine(`[DISCREPANCY WARNING] ${note}`, 'F2', 7.5, 0.86, 0.15, 0.15, 10, 6);
+      }
+    }
+    writer.addParagraph(`Safe Guidance: ${inst.safeVerificationGuidance}`, 'F1', 7.5, 0.35, 0.4, 0.45, 10, 6);
+    writer.addLine(`Verification Source: ${inst.verificationSource.sourceUrl} (Reviewed: ${inst.verificationSource.lastReviewedDate})`, 'F3', 7, 0.5, 0.55, 0.6, 10, 6);
+  }
+
   // 12. Contextual AI Analysis
   writer.addSectionHeading('Contextual AI Analysis (Advisory Only)');
   writer.addParagraph('Notice: Contextual synthesis provides behavioral context and does not constitute physical evidence.', 'F3', 7.5, 0.45, 0.5, 0.55, 9.5);
@@ -459,6 +510,18 @@ export function generateInvestigationPdfBytes(report: InvestigationReport): Uint
     writer.checkSpace(20);
     writer.addLine(`[${isDoNot ? 'DO NOT' : 'DO'}] ${act.action}`, 'F2', 8, isDoNot ? 0.75 : 0.05, isDoNot ? 0.15 : 0.5, isDoNot ? 0.15 : 0.3, 11);
     writer.addParagraph(act.detail, 'F1', 7.5, 0.3, 0.35, 0.4, 10, 6);
+  }
+
+  // 13B. V3.1 Victim-State Incident Containment & Response
+  if (victimResponse) {
+    writer.addSectionHeading(`Victim-State Incident Containment [${victimResponse.containmentUrgency}]`);
+    writer.addLine(`Declared Status: ${victimResponse.stateLabel}`, 'F2', 8.5, 0.85, 0.47, 0.02, 11.5);
+    for (const step of victimResponse.containmentSteps) {
+      writer.checkSpace(20);
+      writer.addLine(`Step ${step.stepNumber} [${step.urgency}]: ${step.title} (${step.category})`, 'F2', 8, 0.2, 0.25, 0.3, 10.5, 6);
+      writer.addParagraph(step.detail, 'F1', 7.5, 0.4, 0.45, 0.5, 10, 6);
+    }
+    writer.addParagraph(`Evidence Preservation Protocol: ${victimResponse.evidencePreservationGuide}`, 'F1', 7.5, 0.25, 0.3, 0.35, 10, 6);
   }
 
   // 14. Methodology & Legal Disclaimer
@@ -732,6 +795,10 @@ function generateInvestigationPdfBytes(report) {
   var tactics = report.tactics;
   var contradictions = report.contradictions;
   var missingEvidence = report.missingEvidence;
+  var counterfactuals = report.counterfactuals;
+  var obfuscationAnalysis = report.obfuscationAnalysis;
+  var victimResponse = report.victimResponse;
+  var institutionVerification = report.institutionVerification;
 
   var score = riskAssessment.score || 0;
   var level = riskAssessment.level || 'BENIGN';
@@ -801,6 +868,24 @@ function generateInvestigationPdfBytes(report) {
     writer.addLine('Final Deterministic Score: ' + waterfall.finalScore + ' / 100 (' + level + ')', 'F2', 9, r, g, b, 14);
   }
 
+  // 4B. V3.1 Counterfactual Risk Sensitivity
+  if (counterfactuals && counterfactuals.scenarios && counterfactuals.scenarios.length > 0) {
+    writer.addSectionHeading('Counterfactual Risk Sensitivity (' + counterfactuals.scenarios.length + ' Scenarios)');
+    writer.addParagraph('Algorithmic sensitivity analysis: Re-running the deterministic risk engine on filtered evidence sets to identify primary score-pivoting factors.', 'F1', 7.5, 0.4, 0.45, 0.5, 10);
+    if (counterfactuals.primaryPivotFactor) {
+      writer.addLine('Primary Pivot Factor: ' + counterfactuals.primaryPivotFactor, 'F2', 8.5, 0.22, 0.74, 0.97, 11.5);
+    }
+    for (var i = 0; i < Math.min(8, counterfactuals.scenarios.length); i++) {
+      var s = counterfactuals.scenarios[i];
+      writer.checkSpace(24);
+      writer.addLine('• [' + s.scope + '] ' + (s.targetCategory || s.targetIndicatorId) + ': -' + s.scoreDelta + ' pts (New Score: ' + s.counterfactualScore + '/100 [' + s.counterfactualLevel + '])', 'F2', 8, 0.2, 0.25, 0.3, 10.5, 6);
+      writer.addParagraph(s.explanation, 'F1', 7.5, 0.4, 0.45, 0.5, 10, 6);
+      if (s.brokenSynergies && s.brokenSynergies.length > 0) {
+        writer.addLine('  Broken Synergies: ' + s.brokenSynergies.join(', '), 'F2', 7.5, 0.85, 0.47, 0.02, 10, 6);
+      }
+    }
+  }
+
   // 5. 6-Stage Attack Chain
   if (evidenceIntelligence && evidenceIntelligence.timeline && evidenceIntelligence.timeline.length > 0) {
     writer.addSectionHeading('6-Stage Scam Attack Chain Progression');
@@ -848,6 +933,16 @@ function generateInvestigationPdfBytes(report) {
       writer.addParagraph('Why This Works: ' + t.explanation, 'F1', 7.5, 0.4, 0.45, 0.5, 10, 6);
       writer.addLine('Defensive Spotting Tip: ' + t.spottingTip, 'F2', 7.5, 0.05, 0.45, 0.75, 11, 6);
     }
+  }
+
+  // 7B. V3.1 The Attacker's Mask (Obfuscation & Evasion)
+  if (obfuscationAnalysis && obfuscationAnalysis.hasObfuscation) {
+    writer.addSectionHeading("The Attacker's Mask — Obfuscation & Evasion (" + obfuscationAnalysis.totalEvasionChars + ' Chars)');
+    writer.addParagraph(obfuscationAnalysis.summary, 'F1', 8, 0.2, 0.25, 0.3, 11);
+    var evasionTokens = (obfuscationAnalysis.diffTokens || [])
+      .map(function(t) { return t.isObfuscated ? (t.type === 'ZERO_WIDTH_CHAR' ? '[ZW:' + t.unicodeHex + ']' : t.originalChars + '->' + t.decodedChars) : t.text; })
+      .join('');
+    writer.addParagraph('Reconstructed Text with Revealed Evasion: ' + evasionTokens.slice(0, 400) + (evasionTokens.length > 400 ? '...' : ''), 'F4', 7.5, 0.8, 0.2, 0.2, 10, 8);
   }
 
   // 8. Physical Evidence
@@ -908,6 +1003,26 @@ function generateInvestigationPdfBytes(report) {
     }
   }
 
+  // 11B. V3.1 Safe Out-of-Band Verification Directory
+  if (institutionVerification && institutionVerification.matched && institutionVerification.institution) {
+    var inst = institutionVerification.institution;
+    writer.addSectionHeading('Safe Out-of-Band Verification: ' + inst.organizationName);
+    writer.addLine('Official Domain: ' + inst.officialPrimaryDomain + '  •  Category: ' + inst.category + ' (' + inst.jurisdiction + ')', 'F2', 8, 0.02, 0.59, 0.41, 11);
+    if (inst.officialLoginUrl) {
+      writer.addLine('Official Login Portal: ' + inst.officialLoginUrl, 'F1', 7.5, 0.3, 0.35, 0.4, 10, 6);
+    }
+    if (inst.officialFraudHotline) {
+      writer.addLine('Official Fraud Hotline: ' + inst.officialFraudHotline, 'F2', 7.5, 0.05, 0.45, 0.75, 10, 6);
+    }
+    if (institutionVerification.messageDiscrepancyNotes && institutionVerification.messageDiscrepancyNotes.length > 0) {
+      for (var d = 0; d < institutionVerification.messageDiscrepancyNotes.length; d++) {
+        writer.addLine('[DISCREPANCY WARNING] ' + institutionVerification.messageDiscrepancyNotes[d], 'F2', 7.5, 0.86, 0.15, 0.15, 10, 6);
+      }
+    }
+    writer.addParagraph('Safe Guidance: ' + inst.safeVerificationGuidance, 'F1', 7.5, 0.35, 0.4, 0.45, 10, 6);
+    writer.addLine('Verification Source: ' + inst.verificationSource.sourceUrl + ' (Reviewed: ' + inst.verificationSource.lastReviewedDate + ')', 'F3', 7, 0.5, 0.55, 0.6, 10, 6);
+  }
+
   // 12. Contextual AI Analysis
   writer.addSectionHeading('Contextual AI Analysis (Advisory Only)');
   writer.addParagraph('Notice: Contextual synthesis provides behavioral context and does not constitute physical evidence.', 'F3', 7.5, 0.45, 0.5, 0.55, 9.5);
@@ -927,6 +1042,19 @@ function generateInvestigationPdfBytes(report) {
     writer.checkSpace(20);
     writer.addLine('[' + (isDoNot ? 'DO NOT' : 'DO') + '] ' + act.action, 'F2', 8, isDoNot ? 0.75 : 0.05, isDoNot ? 0.15 : 0.5, isDoNot ? 0.15 : 0.3, 11);
     writer.addParagraph(act.detail, 'F1', 7.5, 0.3, 0.35, 0.4, 10, 6);
+  }
+
+  // 13B. V3.1 Victim-State Incident Containment & Response
+  if (victimResponse) {
+    writer.addSectionHeading('Victim-State Incident Containment [' + victimResponse.containmentUrgency + ']');
+    writer.addLine('Declared Status: ' + victimResponse.stateLabel, 'F2', 8.5, 0.85, 0.47, 0.02, 11.5);
+    for (var sIdx = 0; sIdx < (victimResponse.containmentSteps || []).length; sIdx++) {
+      var step = victimResponse.containmentSteps[sIdx];
+      writer.checkSpace(20);
+      writer.addLine('Step ' + step.stepNumber + ' [' + step.urgency + ']: ' + step.title + ' (' + step.category + ')', 'F2', 8, 0.2, 0.25, 0.3, 10.5, 6);
+      writer.addParagraph(step.detail, 'F1', 7.5, 0.4, 0.45, 0.5, 10, 6);
+    }
+    writer.addParagraph('Evidence Preservation Protocol: ' + victimResponse.evidencePreservationGuide, 'F1', 7.5, 0.25, 0.3, 0.35, 10, 6);
   }
 
   // 14. Methodology & Disclaimer
@@ -962,6 +1090,60 @@ function downloadInvestigationPdf() {
     alert('Unable to generate PDF: ' + (err && err.message ? err.message : String(err)));
   }
 }
+
+function downloadCaseJson() {
+  var dataEl = document.getElementById('scamvera-report-data');
+  if (!dataEl) {
+    alert('Report data not found.');
+    return;
+  }
+  try {
+    var report = JSON.parse(dataEl.textContent);
+    var caseExport = {
+      caseSchemaVersion: '1.0.0',
+      caseId: report.id,
+      generatedAt: new Date().toISOString(),
+      investigationTimestamp: report.timestamp,
+      inputMeta: report.inputMeta,
+      rawText: report.rawText,
+      riskAssessment: {
+        score: report.riskAssessment.score,
+        level: report.riskAssessment.level,
+        evidenceStrength: report.riskAssessment.evidenceStrength,
+        evidenceStrengthExplanation: report.riskAssessment.evidenceStrengthExplanation,
+        primaryCategories: report.riskAssessment.primaryCategories,
+        scoringRationale: report.riskAssessment.scoringRationale,
+        waterfall: report.riskAssessment.waterfall,
+      },
+      observedIndicators: report.observedIndicators,
+      defensiveRecommendations: report.defensiveRecommendations,
+      tactics: report.tactics,
+      contradictions: report.contradictions,
+      attackChain: report.evidenceIntelligence && report.evidenceIntelligence.timeline,
+      missingEvidence: report.missingEvidence,
+      victimResponse: report.victimResponse,
+      counterfactuals: report.counterfactuals,
+      obfuscationAnalysis: report.obfuscationAnalysis,
+      institutionVerification: report.institutionVerification,
+      urlAnalysis: report.urlAnalysis,
+      screenshotMeta: report.screenshotMeta,
+      disclaimer: report.disclaimer,
+    };
+    var jsonStr = JSON.stringify(caseExport, null, 2);
+    var blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = (report.id || 'INV') + '_CaseFile.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error('Error exporting case JSON:', err);
+    alert('Unable to export case JSON: ' + (err && err.message ? err.message : String(err)));
+  }
+}
 `;
 }
 
@@ -986,6 +1168,10 @@ export function buildReportHtml(report: InvestigationReport): string {
     tactics,
     contradictions,
     missingEvidence,
+    victimResponse,
+    counterfactuals,
+    obfuscationAnalysis,
+    institutionVerification,
   } = report;
 
   const { score, level, evidenceStrength, primaryCategories, scoringRationale, waterfall } = riskAssessment;
@@ -1254,8 +1440,9 @@ export function buildReportHtml(report: InvestigationReport): string {
         <div><strong>DATE:</strong> ${escapeHtml(formattedDate)}</div>
         <div><strong>MODE:</strong> ${escapeHtml(investigationTypeLabel.toUpperCase())}</div>
       </div>
-      <div class="no-print" style="width: 100%; display: flex; justify-content: flex-end; margin-top: 8px;">
+      <div class="no-print" style="width: 100%; display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
         <button class="btn-print" id="downloadPdfBtn" onclick="downloadInvestigationPdf()">Download as PDF</button>
+        <button class="btn-print" id="downloadCaseJsonBtn" onclick="downloadCaseJson()" style="background: #334155;">Export Case JSON</button>
       </div>
     </div>
 
@@ -1398,6 +1585,34 @@ export function buildReportHtml(report: InvestigationReport): string {
           `
       }
 
+      ${
+        obfuscationAnalysis && obfuscationAnalysis.hasObfuscation
+          ? `
+      <!-- 4B. The Attacker's Mask: Structural Obfuscation Diff -->
+      <div class="section-title" style="margin-top: 24px;">The Attacker's Mask &bull; Structural Evasion Diff</div>
+      <div style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">
+        ${escapeHtml(obfuscationAnalysis.summary)} (${obfuscationAnalysis.totalEvasionChars} evasion characters, types: ${escapeHtml(obfuscationAnalysis.typesDetected.join(', '))})
+      </div>
+      <div class="indicator-card" style="margin-bottom: 24px;">
+        <div style="font-size: 11px; text-transform: uppercase; color: #94a3b8; margin-bottom: 8px;">
+          Decoded Visual Diff (Hidden Unicode / Zero-Width / Homoglyphs Highlighted)
+        </div>
+        <div style="background: #090e1a; border: 1px solid #334155; border-radius: 6px; padding: 14px; font-family: monospace; font-size: 13px; line-height: 1.8; word-break: break-all;">
+          ${obfuscationAnalysis.diffTokens
+            .map((t) => {
+              if (t.isObfuscated) {
+                const hex = t.unicodeHex ? ` [${t.unicodeHex}]` : '';
+                const decoded = t.decodedChars ? ` &rarr; "${escapeHtml(t.decodedChars)}"` : '';
+                return `<span style="background: rgba(239, 68, 68, 0.25); border: 1px solid rgba(239, 68, 68, 0.5); color: #fca5a5; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin: 0 1px;" title="Obfuscated Character${hex}${decoded}">[EVASION: ${escapeHtml(t.originalChars || '')}${decoded}]</span>`;
+              }
+              return `<span>${escapeHtml(t.text)}</span>`;
+            })
+            .join('')}
+        </div>
+      </div>`
+          : ''
+      }
+
       <!-- 5. 6-Stage Scam Attack Chain Progression -->
       ${
         evidenceIntelligence && evidenceIntelligence.timeline && evidenceIntelligence.timeline.length > 0
@@ -1532,6 +1747,49 @@ export function buildReportHtml(report: InvestigationReport): string {
               .join('')
       }
 
+      ${
+        counterfactuals && counterfactuals.scenarios && counterfactuals.scenarios.length > 0
+          ? `
+      <!-- 8B. Counterfactual Risk Analysis (Mathematical Sensitivity Decomposition) -->
+      <div class="section-title" style="margin-top: 24px;">Counterfactual Risk Sensitivity Analysis</div>
+      <div style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">
+        Mathematical sensitivity analysis re-running the deterministic risk engine on filtered indicator and category subsets. Evaluates pivot factors without altering the actual baseline score (${counterfactuals.baselineScore}/100).
+        ${counterfactuals.primaryPivotFactor ? `<br><strong>Primary Pivot Factor:</strong> ${escapeHtml(counterfactuals.primaryPivotFactor)}` : ''}
+      </div>
+      <div style="margin-bottom: 24px;">
+        ${counterfactuals.scenarios
+          .map((sc) => {
+            const isCat = sc.scope === 'CATEGORY';
+            const title = isCat ? `Hypothetical Removal: All ${sc.targetCategory} Indicators` : `Hypothetical Removal: Indicator [${sc.targetIndicatorId}]`;
+            const deltaColor = sc.scoreDelta > 0 ? '#10b981' : '#94a3b8';
+            return `
+            <div class="indicator-card">
+              <div class="indicator-header">
+                <div>
+                  <span style="font-size: 11px; font-weight: 700; color: #38bdf8; text-transform: uppercase; margin-right: 8px;">${sc.scope}</span>
+                  <span class="indicator-name">${escapeHtml(title)}</span>
+                </div>
+                <span class="indicator-severity" style="color: ${deltaColor}; background: rgba(51, 65, 85, 0.5);">
+                  ${sc.scoreDelta > 0 ? `-${sc.scoreDelta} pts` : 'No score change'} &bull; Hyp. Score: ${sc.counterfactualScore}/100 (${sc.counterfactualLevel})
+                </span>
+              </div>
+              <div style="font-size: 12px; color: #cbd5e1; margin-top: 4px;">
+                ${escapeHtml(sc.explanation)}
+              </div>
+              ${
+                sc.brokenSynergies && sc.brokenSynergies.length > 0
+                  ? `<div style="font-size: 11px; color: #f59e0b; margin-top: 4px;">
+                      <strong>Severed Risk Synergies:</strong> ${escapeHtml(sc.brokenSynergies.join(', '))}
+                    </div>`
+                  : ''
+              }
+            </div>`;
+          })
+          .join('')}
+      </div>`
+          : ''
+      }
+
       <!-- 9. Missing Evidence & Evidentiary Completeness Advisor -->
       ${
         missingEvidence
@@ -1608,6 +1866,61 @@ export function buildReportHtml(report: InvestigationReport): string {
           : ''
       }
 
+      ${
+        institutionVerification && institutionVerification.matched && institutionVerification.institution
+          ? `
+      <!-- 10B. Safe Out-of-Band Verification Directory -->
+      <div class="section-title" style="margin-top: 24px;">Safe Out-of-Band Verification Directory</div>
+      <div style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">
+        Independently curated official contact coordinates for <strong>${escapeHtml(institutionVerification.institution.organizationName)}</strong>.
+        <em>Note: This information is derived from verified authoritative registries, NOT from the suspicious submission. Registry absence does not imply lack of legitimacy.</em>
+      </div>
+      <div class="indicator-card" style="border-left: 3px solid #10b981; margin-bottom: 24px;">
+        <div class="indicator-header">
+          <span class="indicator-name" style="color: #38bdf8; font-size: 15px;">${escapeHtml(institutionVerification.institution.organizationName)}</span>
+          <span class="indicator-severity" style="background: rgba(16, 185, 129, 0.2); color: #34d399;">
+            ${escapeHtml(institutionVerification.institution.category)} &bull; ${escapeHtml(institutionVerification.institution.jurisdiction)}
+          </span>
+        </div>
+        <div style="font-size: 12px; color: #cbd5e1; margin-top: 6px; display: grid; gap: 6px;">
+          <div><strong>Official Primary Domain:</strong> <code style="color: #38bdf8;">${escapeHtml(institutionVerification.institution.officialPrimaryDomain)}</code></div>
+          ${
+            institutionVerification.institution.officialLoginUrl
+              ? `<div><strong>Official Login Portal:</strong> <code style="color: #cbd5e1;">${escapeHtml(institutionVerification.institution.officialLoginUrl)}</code></div>`
+              : ''
+          }
+          ${
+            institutionVerification.institution.officialFraudHotline
+              ? `<div><strong>Official Fraud Hotline:</strong> <span style="color: #f59e0b; font-weight: 600;">${escapeHtml(institutionVerification.institution.officialFraudHotline)}</span></div>`
+              : ''
+          }
+          ${
+            institutionVerification.institution.officialFraudEmail
+              ? `<div><strong>Official Fraud Reporting:</strong> <span style="color: #cbd5e1;">${escapeHtml(institutionVerification.institution.officialFraudEmail)}</span></div>`
+              : ''
+          }
+        </div>
+        ${
+          institutionVerification.messageDiscrepancyNotes && institutionVerification.messageDiscrepancyNotes.length > 0
+            ? `
+          <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 4px; padding: 8px 12px; margin-top: 10px; font-size: 12px; color: #fca5a5;">
+            <strong>Channel Discrepancy Warnings:</strong>
+            <ul style="margin-left: 18px; margin-top: 4px;">
+              ${institutionVerification.messageDiscrepancyNotes.map((note) => `<li>${escapeHtml(note)}</li>`).join('')}
+            </ul>
+          </div>`
+            : ''
+        }
+        <div style="font-size: 12px; color: #94a3b8; margin-top: 8px; line-height: 1.5;">
+          <strong>Safe Verification Guidance:</strong> ${escapeHtml(institutionVerification.institution.safeVerificationGuidance)}
+        </div>
+        <div style="font-size: 11px; color: #64748b; margin-top: 8px;">
+          <strong>Provenance:</strong> ${escapeHtml(institutionVerification.institution.verificationSource.sourceUrl)} (Reviewed: ${escapeHtml(institutionVerification.institution.verificationSource.lastReviewedDate)})
+        </div>
+      </div>`
+          : ''
+      }
+
       <!-- 11. Contextual AI Analysis (Clearly Separated) -->
       <div class="section-title" style="margin-top: 24px;">Contextual Analysis (Advisory Only)</div>
       <div class="indicator-card">
@@ -1654,6 +1967,62 @@ export function buildReportHtml(report: InvestigationReport): string {
           })
           .join('')}
       </div>
+
+      ${
+        victimResponse
+          ? `
+      <!-- 12B. Victim-State Incident Containment & Response -->
+      <div class="section-title" style="margin-top: 24px;">Victim-State Incident Containment &bull; ${escapeHtml(victimResponse.containmentUrgency)}</div>
+      <div style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">
+        Actionable containment protocol based on user-declared state: <strong style="color: #f59e0b;">${escapeHtml(victimResponse.stateLabel)}</strong>.
+        <em>Neutral jurisdiction guidance focusing on immediate exposure containment and evidence preservation.</em>
+      </div>
+      <div style="margin-bottom: 24px;">
+        ${victimResponse.containmentSteps
+          .map((st) => {
+            const isImm = st.urgency === 'IMMEDIATE_ACTION';
+            const badgeColor = isImm ? '#ef4444' : st.urgency === 'WITHIN_1_HOUR' ? '#f59e0b' : '#38bdf8';
+            const badgeBg = isImm ? 'rgba(239, 68, 68, 0.15)' : st.urgency === 'WITHIN_1_HOUR' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(56, 189, 248, 0.15)';
+            return `
+            <div class="indicator-card" style="border-left: 3px solid ${badgeColor};">
+              <div class="indicator-header">
+                <div>
+                  <span style="font-size: 11px; font-weight: 700; color: ${badgeColor}; text-transform: uppercase; margin-right: 8px;">STEP ${st.stepNumber} &bull; ${escapeHtml(st.urgency)}</span>
+                  <span class="indicator-name">${escapeHtml(st.title)}</span>
+                </div>
+                <span class="indicator-severity" style="background: ${badgeBg}; color: ${badgeColor};">${st.category}</span>
+              </div>
+              <div style="font-size: 12px; color: #cbd5e1; margin-top: 4px; line-height: 1.5;">${escapeHtml(st.detail)}</div>
+            </div>`;
+          })
+          .join('')}
+      </div>
+      <div class="indicator-card" style="margin-bottom: 24px;">
+        <div style="font-weight: 700; font-size: 13px; color: #cbd5e1; margin-bottom: 6px;">Evidence Preservation Protocol</div>
+        <div style="font-size: 12px; color: #94a3b8; line-height: 1.6;">${escapeHtml(victimResponse.evidencePreservationGuide)}</div>
+      </div>
+      ${
+        victimResponse.reportingChannels && victimResponse.reportingChannels.length > 0
+          ? `
+      <div class="indicator-card" style="margin-bottom: 24px;">
+        <div style="font-weight: 700; font-size: 13px; color: #cbd5e1; margin-bottom: 6px;">Recommended Reporting Channels</div>
+        <div style="display: grid; gap: 8px; font-size: 12px; color: #cbd5e1;">
+          ${victimResponse.reportingChannels
+            .map(
+              (rc) => `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #1e293b;">
+              <span><strong>${escapeHtml(rc.name)}</strong> (${escapeHtml(rc.channelType)})</span>
+              <span style="color: #94a3b8;">${escapeHtml(rc.jurisdiction || 'Universal')}</span>
+            </div>`
+            )
+            .join('')}
+        </div>
+      </div>`
+          : ''
+      }
+      `
+          : ''
+      }
 
       <!-- 13. Assessment Basis, Methodology & Legal Disclaimer -->
       <div class="disclaimer-box">
@@ -1718,3 +2087,55 @@ function escapeHtml(text: string): string {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
+/**
+ * Assembles a structured Case JSON export conforming to caseSchemaVersion "1.0.0".
+ * Client-generated, user-controlled, containing zero server secrets.
+ */
+export function buildCaseJson(report: InvestigationReport): string {
+  const caseExport = {
+    caseSchemaVersion: '1.0.0',
+    caseId: report.id,
+    generatedAt: new Date().toISOString(),
+    investigationTimestamp: report.timestamp,
+    inputMeta: report.inputMeta,
+    rawText: report.rawText,
+    riskAssessment: {
+      score: report.riskAssessment.score,
+      level: report.riskAssessment.level,
+      evidenceStrength: report.riskAssessment.evidenceStrength,
+      evidenceStrengthExplanation: report.riskAssessment.evidenceStrengthExplanation,
+      primaryCategories: report.riskAssessment.primaryCategories,
+      scoringRationale: report.riskAssessment.scoringRationale,
+      waterfall: report.riskAssessment.waterfall,
+    },
+    observedIndicators: report.observedIndicators,
+    defensiveRecommendations: report.defensiveRecommendations,
+    tactics: report.tactics,
+    contradictions: report.contradictions,
+    attackChain: report.evidenceIntelligence?.timeline,
+    missingEvidence: report.missingEvidence,
+    victimResponse: report.victimResponse,
+    counterfactuals: report.counterfactuals,
+    obfuscationAnalysis: report.obfuscationAnalysis,
+    institutionVerification: report.institutionVerification,
+    urlAnalysis: report.urlAnalysis,
+    screenshotMeta: report.screenshotMeta,
+    disclaimer: report.disclaimer,
+  };
+  return JSON.stringify(caseExport, null, 2);
+}
+
+export function downloadCaseJson(report: InvestigationReport): void {
+  const jsonStr = buildCaseJson(report);
+  const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
+  const downloadUrl = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = downloadUrl;
+  a.download = `${report.id || 'INV'}_CaseFile.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(downloadUrl);
+}
+

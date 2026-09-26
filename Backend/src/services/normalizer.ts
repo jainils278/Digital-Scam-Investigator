@@ -8,8 +8,10 @@
  * used for detection and matching.
  */
 
+import type { ObfuscationEvent } from '../types.js';
+
 // Zero-width and invisible characters commonly used for evasion
-const ZERO_WIDTH_REGEX = /[\u200B-\u200D\uFEFF\u200E\u200F\u202A-\u202E\u00AD]/g;
+const ZERO_WIDTH_REGEX = /[\u200B-\u200D\uFEFF\u200E\u200F\u202A-\u202E\u00AD]/;
 
 // Common Cyrillic and Greek homoglyphs used in phishing / smishing
 const HOMOGLYPH_MAP: Record<string, string> = {
@@ -48,6 +50,7 @@ export interface NormalizedResult {
   indexMap: number[];
   hasZeroWidthCharacters: boolean;
   hasHomoglyphs: boolean;
+  obfuscationEvents: ObfuscationEvent[];
 }
 
 /**
@@ -56,6 +59,7 @@ export interface NormalizedResult {
 export function normalizeForAnalysis(rawText: string): NormalizedResult {
   const indexMap: number[] = [];
   const normalizedChars: string[] = [];
+  const obfuscationEvents: ObfuscationEvent[] = [];
   let hasZeroWidthCharacters = false;
   let hasHomoglyphs = false;
 
@@ -65,6 +69,16 @@ export function normalizeForAnalysis(rawText: string): NormalizedResult {
     // Check for zero-width / invisible characters
     if (ZERO_WIDTH_REGEX.test(char)) {
       hasZeroWidthCharacters = true;
+      const hex = 'U+' + char.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0');
+      obfuscationEvents.push({
+        id: `obf_${obfuscationEvents.length + 1}`,
+        type: 'ZERO_WIDTH_CHAR',
+        rawChar: char,
+        normalizedChar: '',
+        rawIndex: rawIdx,
+        unicodeHex: hex,
+        description: `Zero-width invisible formatting character (${hex}) used to evade string filters`,
+      });
       continue; // Skip zero-width character, indexMap will skip this rawIdx
     }
 
@@ -72,6 +86,16 @@ export function normalizeForAnalysis(rawText: string): NormalizedResult {
     const homoglyphReplacement = HOMOGLYPH_MAP[char];
     if (homoglyphReplacement) {
       hasHomoglyphs = true;
+      const hex = 'U+' + char.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0');
+      obfuscationEvents.push({
+        id: `obf_${obfuscationEvents.length + 1}`,
+        type: 'HOMOGLYPH',
+        rawChar: char,
+        normalizedChar: homoglyphReplacement,
+        rawIndex: rawIdx,
+        unicodeHex: hex,
+        description: `Homoglyph character '${char}' (${hex}) substituting Latin '${homoglyphReplacement}'`,
+      });
       normalizedChars.push(homoglyphReplacement);
       indexMap.push(rawIdx);
       continue;
@@ -87,6 +111,7 @@ export function normalizeForAnalysis(rawText: string): NormalizedResult {
     indexMap,
     hasZeroWidthCharacters,
     hasHomoglyphs,
+    obfuscationEvents,
   };
 }
 
