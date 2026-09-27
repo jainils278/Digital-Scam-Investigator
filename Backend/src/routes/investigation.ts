@@ -20,33 +20,65 @@ export function createInvestigationRouter(investigationService: InvestigationSer
    */
   router.post('/investigate', async (req: Request, res: Response): Promise<void> => {
     try {
-      const { text, messageType, victimState } = req.body as InvestigateRequest;
+      const { text, urls, images, messageType, victimState } = req.body as InvestigateRequest;
 
-      if (!text || typeof text !== 'string') {
+      const hasImages = Array.isArray(images) && images.length > 0;
+      const hasUrls = Array.isArray(urls) && urls.some((u) => typeof u === 'string' && u.trim().length > 0);
+      const hasTextSpecified = text !== undefined && text !== null;
+
+      // If no images and no URLs are provided, enforce standard text string validation
+      if (!hasImages && !hasUrls) {
+        if (!hasTextSpecified || typeof text !== 'string' || text.trim().length === 0) {
+          const errorResponse: InvestigateErrorResponse = {
+            success: false,
+            error: {
+              code: 'VALIDATION_ERROR',
+              message: 'A non-empty text string is required for investigation.',
+            },
+          };
+          res.status(400).json(errorResponse);
+          return;
+        }
+
+        if (text.trim().length < 5) {
+          const errorResponse: InvestigateErrorResponse = {
+            success: false,
+            error: {
+              code: 'VALIDATION_ERROR',
+              message: 'Input text is too short to investigate. Minimum 5 characters required.',
+            },
+          };
+          res.status(400).json(errorResponse);
+          return;
+        }
+
+        if (text.length > 10000) {
+          const errorResponse: InvestigateErrorResponse = {
+            success: false,
+            error: {
+              code: 'VALIDATION_ERROR',
+              message: 'Input text exceeds the maximum limit of 10,000 characters.',
+            },
+          };
+          res.status(400).json(errorResponse);
+          return;
+        }
+      }
+
+      // Max 5 images per request
+      if (hasImages && images.length > 5) {
         const errorResponse: InvestigateErrorResponse = {
           success: false,
           error: {
             code: 'VALIDATION_ERROR',
-            message: 'A non-empty text string is required for investigation.',
+            message: 'A maximum of 5 screenshots can be attached per investigation.',
           },
         };
         res.status(400).json(errorResponse);
         return;
       }
 
-      if (text.trim().length < 5) {
-        const errorResponse: InvestigateErrorResponse = {
-          success: false,
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: 'Input text is too short to investigate. Minimum 5 characters required.',
-          },
-        };
-        res.status(400).json(errorResponse);
-        return;
-      }
-
-      if (text.length > 10000) {
+      if (typeof text === 'string' && text.length > 10000) {
         const errorResponse: InvestigateErrorResponse = {
           success: false,
           error: {
@@ -58,7 +90,7 @@ export function createInvestigationRouter(investigationService: InvestigationSer
         return;
       }
 
-      const report = await investigationService.investigate({ text, messageType, victimState });
+      const report = await investigationService.investigate({ text, urls, images, messageType, victimState });
       const successResponse: InvestigateSuccessResponse = {
         success: true,
         report,
@@ -66,14 +98,20 @@ export function createInvestigationRouter(investigationService: InvestigationSer
 
       res.status(200).json(successResponse);
     } catch (err: any) {
+      const statusCode =
+        err?.code === 'VALIDATION_ERROR' ||
+        err?.code === 'INVALID_IMAGE' ||
+        err?.code === 'LOW_CONTRAST_OR_UNREADABLE'
+          ? 400
+          : 500;
       const errorResponse: InvestigateErrorResponse = {
         success: false,
         error: {
-          code: 'INVESTIGATION_ERROR',
+          code: err?.code || 'INVESTIGATION_ERROR',
           message: err?.message || 'An unexpected error occurred during investigation analysis.',
         },
       };
-      res.status(500).json(errorResponse);
+      res.status(statusCode).json(errorResponse);
     }
   });
 

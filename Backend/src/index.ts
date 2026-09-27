@@ -79,8 +79,28 @@ app.use(
 
 // 4. Strict Payload Size Limiting
 // General endpoints: 50KB max (prevents memory exhaustion)
-// Screenshot endpoint: 7MB max (supports up to 5MB images base64 encoded)
+// Dedicated screenshot endpoint: 7MB max (supports single up to 5MB image base64 encoded)
+// Unified investigation endpoint: 35MB max (supports up to 5 screenshots of 5MB each, base64 encoded)
 app.use('/api/investigate/screenshot', express.json({ limit: '7mb' }));
+app.use('/api/investigate', express.json({ limit: '35mb' }));
+app.use('/api/investigate', (req: Request, res: Response, next: NextFunction): void => {
+  const hasImages = Array.isArray(req.body?.images) && req.body.images.length > 0;
+  const contentLength =
+    parseInt(req.headers['content-length'] || '0', 10) ||
+    (req.body ? Buffer.byteLength(JSON.stringify(req.body)) : 0);
+
+  if (!hasImages && contentLength > config.maxPayloadSizeBytes) {
+    res.status(413).json({
+      success: false,
+      error: {
+        code: 'PAYLOAD_TOO_LARGE',
+        message: 'Payload exceeds the 50KB maximum limit for text-based investigations.',
+      },
+    });
+    return;
+  }
+  next();
+});
 app.use(express.json({ limit: `${Math.ceil(config.maxPayloadSizeBytes / 1024)}kb` }));
 
 // Configure trust proxy if running behind a trusted reverse proxy (e.g. AWS ALB, Cloudflare, Nginx)

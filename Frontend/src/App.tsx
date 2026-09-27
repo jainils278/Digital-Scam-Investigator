@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Header } from './components/Header';
 import { HistoryDrawer } from './components/HistoryDrawer';
 import { InvestigationProgress } from './components/InvestigationProgress';
 import { InvestigationReportView } from './components/InvestigationReportView';
 import { ThreatReferenceModal } from './components/ThreatReferenceModal';
-import { WorkstationInput } from './components/WorkstationInput';
+import { WorkstationInput, type AttachedEvidenceImage } from './components/WorkstationInput';
 import { CinematicLanding } from './components/landing/CinematicLanding';
-import type { ExampleCase, InvestigationReport, LocalHistoryItem, MessageType, VictimState } from './types';
+import type { EvidenceImageInput, ExampleCase, InvestigationReport, LocalHistoryItem, MessageType, VictimState } from './types';
 import { generateFullInvestigationReport } from './utils/reportGenerator';
 
 const STORAGE_KEY = 'scam_investigator_history';
@@ -64,6 +64,7 @@ export const App: React.FC = () => {
 
   // Input State
   const [inputText, setInputText] = useState('');
+  const [attachedImages, setAttachedImages] = useState<AttachedEvidenceImage[]>([]);
   const [messageType, setMessageType] = useState<MessageType>('unknown');
   const [victimState, setVictimState] = useState<VictimState>('RECEIVED_MESSAGE_ONLY');
 
@@ -72,6 +73,65 @@ export const App: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [currentReport, setCurrentReport] = useState<InvestigationReport | null>(null);
   const [selectedIndicatorId, setSelectedIndicatorId] = useState<string | null>(null);
+
+  // Clean up object URLs on component unmount
+  const attachedImagesRef = useRef<AttachedEvidenceImage[]>(attachedImages);
+  useEffect(() => {
+    attachedImagesRef.current = attachedImages;
+  }, [attachedImages]);
+
+  useEffect(() => {
+    return () => {
+      attachedImagesRef.current.forEach((img) => URL.revokeObjectURL(img.previewUrl));
+    };
+  }, []);
+
+  const handleAddImages = (files: File[]) => {
+    const validMimes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+    const newItems: AttachedEvidenceImage[] = [];
+
+    for (const file of files) {
+      if (attachedImages.length + newItems.length >= 5) {
+        setErrorMessage('You can attach a maximum of 5 screenshots per investigation.');
+        break;
+      }
+      if (!validMimes.includes(file.type)) {
+        setErrorMessage(`"${file.name}" can't be used. Please choose a PNG, JPG, WebP, or GIF image.`);
+        continue;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setErrorMessage(`"${file.name}" is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum size is 5MB.`);
+        continue;
+      }
+      if (file.size === 0) {
+        setErrorMessage(`"${file.name}" contains 0 bytes.`);
+        continue;
+      }
+
+      const previewUrl = URL.createObjectURL(file);
+      newItems.push({
+        id: `img-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        file,
+        previewUrl,
+        filename: file.name,
+        byteSize: file.size,
+      });
+    }
+
+    if (newItems.length > 0) {
+      setAttachedImages((prev) => [...prev, ...newItems]);
+    }
+  };
+
+  const handleRemoveImage = (id: string) => {
+    setAttachedImages((prev) => {
+      const found = prev.find((i) => i.id === id);
+      if (found?.previewUrl) {
+        URL.revokeObjectURL(found.previewUrl);
+      }
+      return prev.filter((i) => i.id !== id);
+    });
+  };
 
   // External / System Telemetry
   const [examples, setExamples] = useState<ExampleCase[]>([]);
@@ -127,6 +187,17 @@ export const App: React.FC = () => {
 
   // Save history to localStorage
   const saveHistoryItem = (report: InvestigationReport) => {
+    // Strip previewDataUrl before saving to localStorage to maintain zero retention & prevent quota issues
+    const cleanReport: InvestigationReport = {
+      ...report,
+      screenshotMeta: report.screenshotMeta
+        ? { ...report.screenshotMeta, previewDataUrl: undefined }
+        : undefined,
+      screenshotsMeta: report.screenshotsMeta
+        ? report.screenshotsMeta.map((s) => ({ ...s, previewDataUrl: undefined }))
+        : undefined,
+    };
+
     const newItem: LocalHistoryItem = {
       id: report.id,
       timestamp: report.timestamp,
@@ -137,7 +208,7 @@ export const App: React.FC = () => {
       riskLevel: report.riskAssessment.level,
       primaryCategory: report.riskAssessment.primaryCategories[0] || 'General Communication',
       indicatorCount: report.observedIndicators.length,
-      report,
+      report: cleanReport,
     };
 
     setHistory((prev) => {
@@ -161,10 +232,15 @@ export const App: React.FC = () => {
     }
   };
 
-  // 2. Text Investigation Action
+  // 2. Unified Multimodal Investigation Action
   const handleInvestigate = async () => {
-    if (inputText.trim().length < 5) {
-      setErrorMessage('Please enter at least 5 characters to run an investigation.');
+    const trimmedText = inputText.trim();
+    const hasText = trimmedText.length >= 5;
+    const hasImages = attachedImages.length > 0;
+    const hasUrl = /(?:https?:\/\/|www\.)[^\s<>"'{}|\\^`]+/gi.test(trimmedText);
+
+    if (!hasText && !hasImages && !hasUrl) {
+      setErrorMessage('Add a message, URL, or screenshot to investigate.');
       return;
     }
 
@@ -173,13 +249,34 @@ export const App: React.FC = () => {
     setSelectedIndicatorId(null);
 
     try {
+      // Convert attached images to base64 in-memory
+      let imagePayloads: EvidenceImageInput[] | undefined = undefined;
+      if (attachedImages.length > 0) {
+        imagePayloads = await Promise.all(
+          attachedImages.map((img) => {
+            return new Promise<EvidenceImageInput>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                resolve({
+                  imageBase64: reader.result as string,
+                  filename: img.filename,
+                });
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(img.file);
+            });
+          })
+        );
+      }
+
       const response = await fetch('/api/investigate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          text: inputText,
+          text: trimmedText || undefined,
+          images: imagePayloads,
           messageType,
           victimState,
         }),
@@ -188,10 +285,25 @@ export const App: React.FC = () => {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data?.error?.message || 'Failed to analyze text.');
+        throw new Error(data?.error?.message || 'Failed to complete investigation analysis.');
       }
 
       const report: InvestigationReport = data.report;
+
+      // Attach client-side object preview URLs so thumbnails display immediately in the report
+      if (attachedImages.length > 0) {
+        if (report.screenshotsMeta && report.screenshotsMeta.length > 0) {
+          report.screenshotsMeta.forEach((meta, idx) => {
+            if (attachedImages[idx]) {
+              meta.previewDataUrl = attachedImages[idx].previewUrl;
+            }
+          });
+        }
+        if (report.screenshotMeta && attachedImages[0]) {
+          report.screenshotMeta.previewDataUrl = attachedImages[0].previewUrl;
+        }
+      }
+
       setCurrentReport(report);
       saveHistoryItem(report);
 
@@ -208,7 +320,7 @@ export const App: React.FC = () => {
     }
   };
 
-  // 3. Screenshot OCR Investigation Action
+  // 3. Backward-compatible Screenshot OCR Investigation Action
   const handleInvestigateScreenshot = async (imageBase64: string, filename: string) => {
     setIsLoading(true);
     setErrorMessage(null);
@@ -255,7 +367,7 @@ export const App: React.FC = () => {
     }
   };
 
-  // 4. Direct URL Investigation Action
+  // 4. Backward-compatible Direct URL Investigation Action
   const handleInvestigateUrl = async (url: string) => {
     setIsLoading(true);
     setErrorMessage(null);
@@ -299,6 +411,8 @@ export const App: React.FC = () => {
   // 5. Clear & Reset Actions
   const handleClear = () => {
     setInputText('');
+    attachedImages.forEach((img) => URL.revokeObjectURL(img.previewUrl));
+    setAttachedImages([]);
     setErrorMessage(null);
     setCurrentReport(null);
     setSelectedIndicatorId(null);
@@ -311,6 +425,8 @@ export const App: React.FC = () => {
   };
 
   const handleSelectHistoryItem = (item: LocalHistoryItem) => {
+    attachedImages.forEach((img) => URL.revokeObjectURL(img.previewUrl));
+    setAttachedImages([]);
     setInputText(item.report.rawText);
     setMessageType(item.report.inputMeta.messageType);
     setCurrentReport(item.report);
@@ -388,6 +504,9 @@ export const App: React.FC = () => {
             isLoading={isLoading}
             examples={examples}
             onSelectExample={handleSelectExample}
+            attachedImages={attachedImages}
+            onAddImages={handleAddImages}
+            onRemoveImage={handleRemoveImage}
             onInvestigateScreenshot={handleInvestigateScreenshot}
             onInvestigateUrl={handleInvestigateUrl}
             victimState={victimState}

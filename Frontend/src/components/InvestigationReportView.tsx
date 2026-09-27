@@ -55,10 +55,28 @@ export const InvestigationReportView: React.FC<InvestigationReportViewProps> = (
     }
   };
 
-  // Determine mode label
-  const isScreenshot = !!screenshotMeta;
+  // Determine mode and evidence sources
+  const screenshots = report.screenshotsMeta || (screenshotMeta ? [screenshotMeta] : []);
+  const isScreenshot = screenshots.length > 0;
   const isUrlMode = !!(report.urlAnalysis && report.urlAnalysis.length > 0);
-  const modeLabel = isScreenshot ? 'Screenshot OCR' : isUrlMode ? 'URL Analysis' : 'Text Analysis';
+  const sources = report.evidenceSources || [
+    ...(isScreenshot ? ['IMAGE'] : []),
+    ...(isUrlMode ? ['URL'] : []),
+    ...(!isScreenshot && !isUrlMode ? ['TEXT'] : []),
+  ];
+
+  let modeLabel = 'Text Analysis';
+  if (sources.length > 1) {
+    const labels: string[] = [];
+    if (sources.includes('TEXT')) labels.push('Text');
+    if (sources.includes('URL')) labels.push('URL');
+    if (sources.includes('IMAGE')) labels.push(screenshots.length > 1 ? `${screenshots.length} Screenshots` : 'Screenshot');
+    modeLabel = `Unified Case (${labels.join(' + ')})`;
+  } else if (isScreenshot) {
+    modeLabel = screenshots.length > 1 ? `Screenshot OCR (${screenshots.length} Images)` : 'Screenshot OCR';
+  } else if (isUrlMode) {
+    modeLabel = 'URL Analysis';
+  }
 
   // Level theme colors
   const levelColor =
@@ -121,19 +139,25 @@ export const InvestigationReportView: React.FC<InvestigationReportViewProps> = (
     doItems.push('If you already shared information, secure your account immediately.');
   }
 
-  // Derive Observed / Verified Information bullets
-  const observedFacts: string[] = [];
+  // Derive Observed / Verified Information bullets with provenance
+  const observedFacts: { text: string; source?: string }[] = [];
   if (observedIndicators && observedIndicators.length > 0) {
-    for (const ind of observedIndicators.slice(0, 4)) {
+    for (const ind of observedIndicators.slice(0, 6)) {
       if (ind.evidence) {
-        observedFacts.push(`Identified ${ind.name.toLowerCase()}: "${ind.evidence}"`);
+        observedFacts.push({
+          text: `Identified ${ind.name.toLowerCase()}: "${ind.evidence}"`,
+          source: ind.evidenceSource,
+        });
       } else {
-        observedFacts.push(ind.explanation);
+        observedFacts.push({
+          text: ind.explanation,
+          source: ind.evidenceSource,
+        });
       }
     }
   } else {
-    observedFacts.push('No recognized scam patterns detected in submitted content.');
-    observedFacts.push('No suspicious payment demands or credential solicitation identified.');
+    observedFacts.push({ text: 'No recognized scam patterns detected in submitted content.' });
+    observedFacts.push({ text: 'No suspicious payment demands or credential solicitation identified.' });
   }
 
   // Derive AI Interpretation bullets
@@ -384,7 +408,12 @@ export const InvestigationReportView: React.FC<InvestigationReportViewProps> = (
               {observedFacts.map((fact, idx) => (
                 <li key={idx} className="assessment-list-item">
                   <span className="bullet-char">•</span>
-                  <span>{fact}</span>
+                  <span>{fact.text}</span>
+                  {fact.source && (
+                    <span className="evidence-provenance-tag">
+                      {fact.source === 'IMAGE_OCR' ? 'Screenshot' : fact.source === 'URL' ? 'URL' : 'Text'}
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>
@@ -412,6 +441,60 @@ export const InvestigationReportView: React.FC<InvestigationReportViewProps> = (
           </div>
         </div>
       </div>
+
+      {/* Investigated Screenshot Evidence Card */}
+      {screenshots.length > 0 && (
+        <div className="report-card-panel evidence-package-panel">
+          <div className="card-header-row">
+            <div className="card-icon-circle icon-circle-cyan">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21 15 16 10 5 21"></polyline>
+              </svg>
+            </div>
+            <h3 className="card-title">Investigated Screenshot Evidence ({screenshots.length})</h3>
+          </div>
+
+          <div className="evidence-package-grid">
+            {screenshots.map((s, idx) => (
+              <div key={idx} className="evidence-package-card">
+                {s.previewDataUrl ? (
+                  <div className="evidence-package-thumb-box">
+                    <img src={s.previewDataUrl} alt={s.filename || `Screenshot ${idx + 1}`} className="evidence-package-thumb" />
+                  </div>
+                ) : (
+                  <div className="evidence-package-thumb-placeholder">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                      <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                      <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                    <span>Evidence #{idx + 1}</span>
+                  </div>
+                )}
+                <div className="evidence-package-details">
+                  <div className="evidence-package-name" title={s.filename || `Screenshot ${idx + 1}`}>
+                    {s.filename || `Screenshot ${idx + 1}`}
+                  </div>
+                  <div className="evidence-package-sub">
+                    <span>{((s.byteSize || 0) / 1024).toFixed(1)} KB</span>
+                    <span>•</span>
+                    <span>Confidence: <strong>{s.ocrConfidence || 0}%</strong></span>
+                    <span>•</span>
+                    <span>{s.extractedCharacterCount || 0} chars</span>
+                  </div>
+                  {s.ocrError && (
+                    <div className="evidence-package-warning">
+                      ⚠️ {s.ocrError}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 4. V3.0 Explainable Risk Waterfall Accordion */}
       {riskAssessment.waterfall && (

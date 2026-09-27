@@ -1127,6 +1127,8 @@ function downloadCaseJson() {
       institutionVerification: report.institutionVerification,
       urlAnalysis: report.urlAnalysis,
       screenshotMeta: report.screenshotMeta,
+      screenshotsMeta: report.screenshotsMeta,
+      evidenceSources: report.evidenceSources,
       disclaimer: report.disclaimer,
     };
     var jsonStr = JSON.stringify(caseExport, null, 2);
@@ -2121,6 +2123,8 @@ export function buildCaseJson(report: InvestigationReport): string {
     institutionVerification: report.institutionVerification,
     urlAnalysis: report.urlAnalysis,
     screenshotMeta: report.screenshotMeta,
+    screenshotsMeta: report.screenshotsMeta,
+    evidenceSources: report.evidenceSources,
     disclaimer: report.disclaimer,
   };
   return JSON.stringify(caseExport, null, 2);

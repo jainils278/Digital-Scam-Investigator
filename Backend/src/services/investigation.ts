@@ -11,6 +11,7 @@ import {
   InvestigateRequest,
   InvestigationReport,
   MessageType,
+  ScreenshotMetadata,
   UrlAnalysisSummary,
 } from '../types.js';
 import { AiProviderCoordinator } from './ai/factory.js';
@@ -33,6 +34,8 @@ import { validateUrlForSafeFetch } from './url/ssrf_guard.js';
 import { analyzeUrl, extractUrlsWithRanges } from './url/url_analyzer.js';
 import { filterAndValidateIndicators } from './validator.js';
 
+export const MAX_SCREENSHOTS_PER_INVESTIGATION = 5;
+
 export class InvestigationService {
   private aiCoordinator: AiProviderCoordinator;
   private urlReputationProvider: LocalHeuristicReputationProvider;
@@ -50,14 +53,139 @@ export class InvestigationService {
   }
 
   public async investigate(request: InvestigateRequest): Promise<InvestigationReport> {
-    const rawText = (request.text || '').trim();
+    const submittedText = (request.text || '').trim();
+    const urls = (request.urls || []).map((u) => u.trim()).filter(Boolean);
+    const images = request.images || [];
+
+    if (images.length > MAX_SCREENSHOTS_PER_INVESTIGATION) {
+      const err: any = new Error(
+        `A maximum of ${MAX_SCREENSHOTS_PER_INVESTIGATION} screenshots can be investigated at once.`
+      );
+      err.code = 'VALIDATION_ERROR';
+      throw err;
+    }
+
+    const screenshotsMeta: ScreenshotMetadata[] = [];
+    const ocrTextSegments: { filename?: string; text: string }[] = [];
+
+    if (images.length > 0) {
+      const ocrService = new OcrService();
+      for (const img of images) {
+        if (!img.imageBase64 || typeof img.imageBase64 !== 'string') continue;
+        const base64Clean = img.imageBase64.replace(/^data:image\/[a-zA-Z0-9+.-]+;base64,/, '');
+        const buffer = Buffer.from(base64Clean, 'base64');
+        const validation = validateImageBuffer(buffer);
+
+        if (!validation.isValid) {
+          screenshotsMeta.push({
+            filename: img.filename,
+            mimeType: 'image/unknown',
+            byteSize: buffer.length,
+            ocrConfidence: 0,
+            extractedCharacterCount: 0,
+            extractedTextPreview: '',
+            ocrError: validation.error || 'INVALID_IMAGE',
+          });
+          continue;
+        }
+
+        try {
+          const extraction = await ocrService.extractText(buffer);
+          if (extraction.success && extraction.text && extraction.text.trim().length >= 5) {
+            screenshotsMeta.push({
+              filename: img.filename,
+              mimeType: validation.mimeType || 'image/png',
+              byteSize: buffer.length,
+              ocrConfidence: extraction.confidence,
+              extractedCharacterCount: extraction.text.length,
+              extractedTextPreview: extraction.text.slice(0, 120),
+              warning: extraction.warning,
+            });
+            ocrTextSegments.push({ filename: img.filename, text: extraction.text.trim() });
+          } else {
+            screenshotsMeta.push({
+              filename: img.filename,
+              mimeType: validation.mimeType || 'image/png',
+              byteSize: buffer.length,
+              ocrConfidence: extraction.confidence || 0,
+              extractedCharacterCount: extraction.text?.length || 0,
+              extractedTextPreview: (extraction.text || '').slice(0, 120),
+              ocrError:
+                extraction.warning ||
+                'Could not extract sufficient readable text from this screenshot. Ensure the image is clear and contains readable text.',
+            });
+          }
+        } catch (ocrErr: any) {
+          screenshotsMeta.push({
+            filename: img.filename,
+            mimeType: validation.mimeType || 'image/png',
+            byteSize: buffer.length,
+            ocrConfidence: 0,
+            extractedCharacterCount: 0,
+            extractedTextPreview: '',
+            ocrError: ocrErr?.message || 'Failed to extract text from screenshot.',
+          });
+        }
+      }
+    }
+
+    // If only images were provided and OCR extracted no text:
+    if (images.length > 0 && ocrTextSegments.length === 0 && submittedText.length === 0 && urls.length === 0) {
+      const firstInvalid = screenshotsMeta.find(
+        (s) =>
+          s.ocrError &&
+          (s.ocrError.includes('EMPTY_IMAGE') ||
+            s.ocrError.includes('OVERSIZED_IMAGE') ||
+            s.ocrError.includes('UNSUPPORTED_IMAGE_FORMAT') ||
+            s.ocrError.includes('UNSAFE_FORMAT'))
+      );
+      if (firstInvalid) {
+        const err: any = new Error(firstInvalid.ocrError);
+        err.code = 'INVALID_IMAGE';
+        throw err;
+      }
+      const err: any = new Error(
+        screenshotsMeta[0]?.ocrError ||
+          'Could not extract sufficient readable text from the screenshot. Ensure the image is clear and contains readable text.'
+      );
+      err.code = 'LOW_CONTRAST_OR_UNREADABLE';
+      throw err;
+    }
+
+    if (submittedText.length === 0 && ocrTextSegments.length === 0 && urls.length === 0) {
+      const err: any = new Error('Input text is too short to investigate. Minimum 5 characters required.');
+      err.code = 'VALIDATION_ERROR';
+      throw err;
+    }
+
+    let rawText = '';
+    const textBoundary = submittedText.length;
+    let ocrBoundaryStart = -1;
+
+    if (submittedText.length > 0) {
+      rawText = submittedText;
+    }
+
+    const missingUrls = urls.filter((u) => !rawText.includes(u));
+    if (missingUrls.length > 0) {
+      rawText = rawText ? `${rawText}\n\n${missingUrls.join('\n')}` : missingUrls.join('\n');
+    }
+
+    if (ocrTextSegments.length > 0) {
+      ocrBoundaryStart = rawText.length;
+      const ocrCombined = ocrTextSegments.map((s) => s.text).join('\n\n');
+      rawText = rawText ? `${rawText}\n\n${ocrCombined}` : ocrCombined;
+    }
 
     // 1. Strict Input Validation
     if (rawText.length < 5) {
       throw new Error('Input text is too short to investigate. Minimum 5 characters required.');
     }
-    if (rawText.length > 10000) {
+    if (images.length === 0 && rawText.length > 10000) {
       throw new Error('Input text exceeds maximum allowed length of 10,000 characters.');
+    }
+    if (rawText.length > 25000) {
+      throw new Error('Combined investigation evidence exceeds maximum allowed length.');
     }
 
     const validChannels: MessageType[] = ['sms', 'email', 'social_dm', 'voice_transcript', 'unknown'];
@@ -85,6 +213,24 @@ export class InvestigationService {
       rawText,
       normalizedResult
     );
+
+    // Attribute evidence provenance to verified indicators
+    for (const ind of verifiedIndicators) {
+      const [start] = ind.characterRange;
+      if (textBoundary > 0 && start < textBoundary) {
+        ind.evidenceSource = 'TEXT';
+      } else if (
+        ind.category === 'SUSPICIOUS_LINK' ||
+        ind.name.toLowerCase().includes('url') ||
+        ind.name.toLowerCase().includes('link')
+      ) {
+        ind.evidenceSource = 'URL';
+      } else if (ocrBoundaryStart >= 0 && start >= ocrBoundaryStart) {
+        ind.evidenceSource = 'IMAGE_OCR';
+      } else {
+        ind.evidenceSource = textBoundary > 0 ? 'TEXT' : 'IMAGE_OCR';
+      }
+    }
 
     // 6. Transparent Risk Engine
     const riskAssessment = calculateRiskAssessment(verifiedIndicators, rawText.length);
@@ -173,6 +319,11 @@ export class InvestigationService {
     const disclaimer =
       'This analysis identifies indicators and manipulation tactics commonly associated with scams. It is an algorithmic risk assessment, not definitive proof of sender identity, guilt, or innocence. Always verify high-stakes claims, payments, and account notices through known, trusted official channels.';
 
+    const evidenceSources: ('TEXT' | 'URL' | 'IMAGE')[] = [];
+    if (submittedText.length > 0) evidenceSources.push('TEXT');
+    if (screenshotsMeta.length > 0) evidenceSources.push('IMAGE');
+    if (urlSummaries.length > 0 || urls.length > 0) evidenceSources.push('URL');
+
     return {
       id: reportId,
       timestamp: new Date().toISOString(),
@@ -188,6 +339,9 @@ export class InvestigationService {
       defensiveRecommendations,
       disclaimer,
       urlAnalysis: urlSummaries.length > 0 ? urlSummaries : undefined,
+      screenshotMeta: screenshotsMeta.length > 0 ? screenshotsMeta[0] : undefined,
+      screenshotsMeta: screenshotsMeta.length > 0 ? screenshotsMeta : undefined,
+      evidenceSources: evidenceSources.length > 0 ? evidenceSources : undefined,
       evidenceIntelligence,
       education,
       tactics,
@@ -267,7 +421,7 @@ export class InvestigationService {
       messageType: 'unknown',
     });
 
-    report.screenshotMeta = {
+    const meta: ScreenshotMetadata = {
       filename,
       mimeType: validation.mimeType || 'image/unknown',
       byteSize: imageBuffer.length,
@@ -275,6 +429,10 @@ export class InvestigationService {
       extractedCharacterCount: extraction.text.length,
       extractedTextPreview: extraction.text.slice(0, 120),
     };
+
+    report.screenshotMeta = meta;
+    report.screenshotsMeta = [meta];
+    report.evidenceSources = ['IMAGE'];
 
     return report;
   }

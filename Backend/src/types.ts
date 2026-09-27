@@ -34,6 +34,7 @@ export interface ObservedIndicator {
   explanation: string;
   whyItMatters: string;
   source: 'DETERMINISTIC';
+  evidenceSource?: 'TEXT' | 'URL' | 'IMAGE_OCR';
 }
 
 export interface UnverifiedInference {
@@ -118,6 +119,8 @@ export interface ScreenshotMetadata {
   ocrConfidence: number;
   extractedCharacterCount: number;
   extractedTextPreview: string;
+  ocrError?: string;
+  warning?: string;
 }
 
 export interface GraphNode {
@@ -421,6 +424,8 @@ export interface InvestigationReport {
   disclaimer: string;
   urlAnalysis?: UrlAnalysisSummary[];
   screenshotMeta?: ScreenshotMetadata;
+  screenshotsMeta?: ScreenshotMetadata[];
+  evidenceSources?: ('TEXT' | 'URL' | 'IMAGE')[];
   evidenceIntelligence?: EvidenceIntelligenceSummary;
   education?: EducationBriefing;
   tactics?: TacticProfile;
@@ -432,8 +437,15 @@ export interface InvestigationReport {
   institutionVerification?: InstitutionVerificationMatch;
 }
 
+export interface EvidenceImageInput {
+  imageBase64: string;
+  filename?: string;
+}
+
 export interface InvestigateRequest {
-  text: string;
+  text?: string;
+  urls?: string[];
+  images?: EvidenceImageInput[];
   messageType?: MessageType;
   victimState?: VictimState;
 }
