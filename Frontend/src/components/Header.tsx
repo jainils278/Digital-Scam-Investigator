@@ -9,6 +9,7 @@ interface HeaderProps {
   onNewInvestigation: () => void;
   hasActiveReport?: boolean;
   onDownloadReport?: () => void;
+  onNavigateHome?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -18,12 +19,29 @@ export const Header: React.FC<HeaderProps> = ({
   onNewInvestigation,
   hasActiveReport,
   onDownloadReport,
+  onNavigateHome,
 }) => {
   return (
     <header className="workstation-header">
       <div className="header-inner">
         {/* Brand Identity */}
-        <div className="brand-section">
+        <div
+          className="brand-section"
+          onClick={onNavigateHome}
+          style={{ cursor: onNavigateHome ? 'pointer' : 'default' }}
+          title={onNavigateHome ? 'Return to Scamvera Overview' : undefined}
+          role={onNavigateHome ? 'button' : undefined}
+          tabIndex={onNavigateHome ? 0 : undefined}
+          onKeyDown={
+            onNavigateHome
+              ? (e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    onNavigateHome();
+                  }
+                }
+              : undefined
+          }
+        >
           <div className="brand-icon-box">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>

@@ -5,6 +5,7 @@ import { InvestigationProgress } from './components/InvestigationProgress';
 import { InvestigationReportView } from './components/InvestigationReportView';
 import { ThreatReferenceModal } from './components/ThreatReferenceModal';
 import { WorkstationInput } from './components/WorkstationInput';
+import { CinematicLanding } from './components/landing/CinematicLanding';
 import type { ExampleCase, InvestigationReport, LocalHistoryItem, MessageType, VictimState } from './types';
 import { generateFullInvestigationReport } from './utils/reportGenerator';
 
@@ -48,6 +49,19 @@ function formatFriendlyError(err: any, fallbackMessage: string): string {
 }
 
 export const App: React.FC = () => {
+  // Navigation & View Routing State
+  const [currentView, setCurrentView] = useState<'landing' | 'workstation'>(() => {
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname;
+      const hash = window.location.hash;
+      const search = new URLSearchParams(window.location.search);
+      if (path === '/investigate' || hash === '#investigate' || search.get('view') === 'investigate') {
+        return 'workstation';
+      }
+    }
+    return 'landing';
+  });
+
   // Input State
   const [inputText, setInputText] = useState('');
   const [messageType, setMessageType] = useState<MessageType>('unknown');
@@ -304,11 +318,47 @@ export const App: React.FC = () => {
     setErrorMessage(null);
   };
 
+  // 1b. Synchronize native browser history / popstate
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      const hash = window.location.hash;
+      const search = new URLSearchParams(window.location.search);
+      if (path === '/investigate' || hash === '#investigate' || search.get('view') === 'investigate') {
+        setCurrentView('workstation');
+      } else {
+        setCurrentView('landing');
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const handleLaunchWorkstation = () => {
+    if (window.location.pathname !== '/investigate') {
+      window.history.pushState(null, '', '/investigate');
+    }
+    setCurrentView('workstation');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleNavigateHome = () => {
+    if (window.location.pathname !== '/') {
+      window.history.pushState(null, '', '/');
+    }
+    setCurrentView('landing');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   // 6. Unified Report Download Action
   const handleDownloadReport = () => {
     if (!currentReport) return;
     generateFullInvestigationReport(currentReport);
   };
+
+  if (currentView === 'landing') {
+    return <CinematicLanding onLaunchWorkstation={handleLaunchWorkstation} />;
+  }
 
   return (
     <div className="app-container">
@@ -322,6 +372,7 @@ export const App: React.FC = () => {
         onNewInvestigation={handleClear}
         hasActiveReport={!!currentReport}
         onDownloadReport={handleDownloadReport}
+        onNavigateHome={handleNavigateHome}
       />
 
       <main className="main-content">
