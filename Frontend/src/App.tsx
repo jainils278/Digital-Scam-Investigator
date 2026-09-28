@@ -1,10 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Header } from './components/Header';
 import { HistoryDrawer } from './components/HistoryDrawer';
-import { InvestigationProgress } from './components/InvestigationProgress';
-import { InvestigationReportView } from './components/InvestigationReportView';
 import { ThreatReferenceModal } from './components/ThreatReferenceModal';
-import { WorkstationInput, type AttachedEvidenceImage } from './components/WorkstationInput';
+import type { AttachedEvidenceImage } from './components/WorkstationInput';
+import { InvestigationEnvironment } from './components/investigation/InvestigationEnvironment';
 import { CinematicLanding } from './components/landing/CinematicLanding';
 import type { EvidenceImageInput, ExampleCase, InvestigationReport, LocalHistoryItem, MessageType, VictimState } from './types';
 import { generateFullInvestigationReport } from './utils/reportGenerator';
@@ -306,13 +305,6 @@ export const App: React.FC = () => {
 
       setCurrentReport(report);
       saveHistoryItem(report);
-
-      setTimeout(() => {
-        const reportElem = document.getElementById('investigation-report-section');
-        if (reportElem) {
-          reportElem.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 100);
     } catch (err: any) {
       setErrorMessage(formatFriendlyError(err, 'An error occurred while connecting to the investigation engine.'));
     } finally {
@@ -320,95 +312,7 @@ export const App: React.FC = () => {
     }
   };
 
-  // 3. Backward-compatible Screenshot OCR Investigation Action
-  const handleInvestigateScreenshot = async (imageBase64: string, filename: string) => {
-    setIsLoading(true);
-    setErrorMessage(null);
-    setSelectedIndicatorId(null);
-
-    try {
-      const response = await fetch('/api/investigate/screenshot', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          imageBase64,
-          filename,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        const error: any = new Error(data?.error?.message || 'Failed to analyze screenshot image.');
-        error.code = data?.error?.code;
-        throw error;
-      }
-
-      const report: InvestigationReport = data.report;
-      if (report.screenshotMeta) {
-        report.screenshotMeta.previewDataUrl = imageBase64;
-      }
-      setInputText(report.rawText);
-      setCurrentReport(report);
-      saveHistoryItem(report);
-
-      setTimeout(() => {
-        const reportElem = document.getElementById('investigation-report-section');
-        if (reportElem) {
-          reportElem.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 100);
-    } catch (err: any) {
-      setErrorMessage(formatFriendlyError(err, 'An error occurred during screenshot analysis.'));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // 4. Backward-compatible Direct URL Investigation Action
-  const handleInvestigateUrl = async (url: string) => {
-    setIsLoading(true);
-    setErrorMessage(null);
-    setSelectedIndicatorId(null);
-
-    try {
-      const fullRes = await fetch('/api/investigate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: `Target link to investigate: ${url}`,
-          messageType: 'sms',
-        }),
-      });
-
-      const fullData = await fullRes.json();
-      if (!fullRes.ok || !fullData.success) {
-        throw new Error(fullData?.error?.message || 'Failed to inspect target URL.');
-      }
-
-      const report: InvestigationReport = fullData.report;
-      setInputText(url);
-      setCurrentReport(report);
-      saveHistoryItem(report);
-
-      setTimeout(() => {
-        const reportElem = document.getElementById('investigation-report-section');
-        if (reportElem) {
-          reportElem.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 100);
-    } catch (err: any) {
-      setErrorMessage(formatFriendlyError(err, 'An error occurred during URL investigation.'));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // 5. Clear & Reset Actions
+  // 3. Clear & Reset Actions
   const handleClear = () => {
     setInputText('');
     attachedImages.forEach((img) => URL.revokeObjectURL(img.previewUrl));
@@ -492,68 +396,28 @@ export const App: React.FC = () => {
       />
 
       <main className="main-content">
-        <div className="workstation-grid">
-          {/* Primary Ingestion Terminal */}
-          <WorkstationInput
-            text={inputText}
-            onChangeText={setInputText}
-            messageType={messageType}
-            onChangeMessageType={setMessageType}
-            onInvestigate={handleInvestigate}
-            onClear={handleClear}
-            isLoading={isLoading}
-            examples={examples}
-            onSelectExample={handleSelectExample}
-            attachedImages={attachedImages}
-            onAddImages={handleAddImages}
-            onRemoveImage={handleRemoveImage}
-            onInvestigateScreenshot={handleInvestigateScreenshot}
-            onInvestigateUrl={handleInvestigateUrl}
-            victimState={victimState}
-            onChangeVictimState={setVictimState}
-          />
-
-          {/* Friendly Error Notice */}
-          {errorMessage && (
-            <div
-              className="panel-card error-card"
-              role="alert"
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="12" y1="8" x2="12" y2="12"></line>
-                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                </svg>
-                <div>
-                  <div style={{ color: '#fca5a5', fontSize: '14px', fontWeight: 600 }}>Investigation Notice</div>
-                  <div style={{ color: '#f87171', fontSize: '13px', marginTop: '2px' }}>{errorMessage}</div>
-                </div>
-              </div>
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={() => setErrorMessage(null)}
-                style={{ fontSize: '12px', padding: '6px 12px' }}
-              >
-                Dismiss
-              </button>
-            </div>
-          )}
-
-          {/* Progress State */}
-          {isLoading && <InvestigationProgress />}
-
-          {/* Unified Structured Investigation Report View */}
-          {currentReport && !isLoading && (
-            <InvestigationReportView
-              report={currentReport}
-              selectedIndicatorId={selectedIndicatorId}
-              onSelectIndicator={setSelectedIndicatorId}
-              onDownloadReport={handleDownloadReport}
-            />
-          )}
-        </div>
+        <InvestigationEnvironment
+          inputText={inputText}
+          onChangeInputText={setInputText}
+          messageType={messageType}
+          onChangeMessageType={setMessageType}
+          attachedImages={attachedImages}
+          onAddImages={handleAddImages}
+          onRemoveImage={handleRemoveImage}
+          victimState={victimState}
+          onChangeVictimState={setVictimState}
+          isLoading={isLoading}
+          onInvestigate={handleInvestigate}
+          onClear={handleClear}
+          examples={examples}
+          onSelectExample={handleSelectExample}
+          report={currentReport}
+          selectedIndicatorId={selectedIndicatorId}
+          onSelectIndicator={setSelectedIndicatorId}
+          onDownloadReport={handleDownloadReport}
+          errorMessage={errorMessage}
+          onDismissError={() => setErrorMessage(null)}
+        />
       </main>
 
       {/* History Drawer Modal */}

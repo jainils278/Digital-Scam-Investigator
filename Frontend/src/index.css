@@ -4,62 +4,96 @@
    ========================================================================== */
 
 :root {
-  /* Surface & Background */
-  --bg-app: #060911;
-  --bg-workspace: #0a0e19;
-  --bg-card: #0f172a;
-  --bg-card-hover: #15213b;
-  --bg-input: #080d18;
-  --bg-subtle: #1e293b;
+  /* ==========================================================================
+     SCAMVERA VISUAL SYSTEM TOKENS — EXPERIMENTAL 3D FORENSICS
+     ========================================================================== */
+  --scamvera-bg: #03060a;
+  --scamvera-surface: #080d16;
+  --scamvera-surface-2: #0f1624;
+  --scamvera-surface-glass: rgba(8, 13, 22, 0.78);
+  --scamvera-surface-elevated: #162032;
+  --scamvera-text: #f8fafc;
+  --scamvera-subtle: #cbd5e1;
+  --scamvera-muted: #64748b;
+  --scamvera-faint: #334155;
+  --scamvera-cyan: #06b6d4;
+  --scamvera-cyan-glow: rgba(6, 182, 212, 0.28);
+  --scamvera-teal: #14b8a6;
+  --scamvera-indigo: #6366f1;
+  --scamvera-warning: #f59e0b;
+  --scamvera-warning-glow: rgba(245, 158, 11, 0.24);
+  --scamvera-danger: #ef4444;
+  --scamvera-danger-glow: rgba(239, 68, 68, 0.28);
+  --scamvera-border: rgba(255, 255, 255, 0.09);
+  --scamvera-border-subtle: rgba(255, 255, 255, 0.05);
+  --scamvera-border-glow: rgba(6, 182, 212, 0.24);
+
+  /* Motion & Easing Curves */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-circ: cubic-bezier(0.85, 0, 0.15, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 180ms;
+  --duration-normal: 320ms;
+  --duration-slow: 650ms;
+  --duration-cinematic: 1200ms;
+
+  /* Backward Compatible Aliases */
+  --bg-app: var(--scamvera-bg);
+  --bg-workspace: #060a12;
+  --bg-card: var(--scamvera-surface);
+  --bg-card-hover: var(--scamvera-surface-2);
+  --bg-input: #040810;
+  --bg-subtle: #131c2d;
 
   /* Borders */
-  --border-subtle: #1e293b;
-  --border-medium: #334155;
-  --border-active: #0284c7;
-  --border-glow: rgba(2, 132, 199, 0.25);
+  --border-subtle: var(--scamvera-border-subtle);
+  --border-medium: var(--scamvera-border);
+  --border-active: var(--scamvera-cyan);
+  --border-glow: var(--scamvera-border-glow);
 
   /* Typography Colors */
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --text-highlight: #38bdf8;
+  --text-primary: var(--scamvera-text);
+  --text-secondary: var(--scamvera-subtle);
+  --text-muted: var(--scamvera-muted);
+  --text-highlight: var(--scamvera-cyan);
 
   /* Accent Colorways */
-  --accent-cyan: #06b6d4;
-  --accent-blue: #3b82f6;
-  --accent-indigo: #6366f1;
+  --accent-cyan: var(--scamvera-cyan);
+  --accent-blue: #38bdf8;
+  --accent-indigo: var(--scamvera-indigo);
 
   /* Risk Level Color Palette */
-  --risk-critical: #ef4444;
-  --risk-critical-bg: rgba(239, 68, 68, 0.12);
-  --risk-critical-border: rgba(239, 68, 68, 0.35);
+  --risk-critical: var(--scamvera-danger);
+  --risk-critical-bg: rgba(239, 68, 68, 0.14);
+  --risk-critical-border: rgba(239, 68, 68, 0.4);
 
   --risk-high: #f97316;
-  --risk-high-bg: rgba(249, 115, 22, 0.12);
-  --risk-high-border: rgba(249, 115, 22, 0.35);
+  --risk-high-bg: rgba(249, 115, 22, 0.14);
+  --risk-high-border: rgba(249, 115, 22, 0.4);
 
-  --risk-medium: #f59e0b;
-  --risk-medium-bg: rgba(245, 158, 11, 0.12);
-  --risk-medium-border: rgba(245, 158, 11, 0.35);
+  --risk-medium: var(--scamvera-warning);
+  --risk-medium-bg: rgba(245, 158, 11, 0.14);
+  --risk-medium-border: rgba(245, 158, 11, 0.4);
 
   --risk-low: #10b981;
-  --risk-low-bg: rgba(16, 185, 129, 0.12);
-  --risk-low-border: rgba(16, 185, 129, 0.35);
+  --risk-low-bg: rgba(16, 185, 129, 0.14);
+  --risk-low-border: rgba(16, 185, 129, 0.4);
 
   --risk-benign: #38bdf8;
-  --risk-benign-bg: rgba(56, 189, 248, 0.12);
-  --risk-benign-border: rgba(56, 189, 248, 0.35);
+  --risk-benign-bg: rgba(56, 189, 248, 0.14);
+  --risk-benign-border: rgba(56, 189, 248, 0.4);
 
   /* Fonts */
-  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* Layout */
-  --max-width: 1280px;
+  /* Layout & Geometry */
+  --max-width: 1320px;
   --header-height: 64px;
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
+  --radius-xl: 16px;
 }
 
 /* Reset & Base */
@@ -7144,8 +7178,854 @@ button, input, select, textarea {
   }
 }
 
+/* ==========================================================================
+   SCAMVERA VISUAL REDESIGN — CINEMATIC 3D / EXPERIMENTAL DIGITAL FORENSICS
+   ========================================================================== */
+
+/* 1. Monumental Hero Section */
+.monumental-hero-section {
+  position: relative;
+  min-height: 94vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 100px 24px 60px;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 38%, rgba(6, 182, 212, 0.07) 0%, rgba(3, 6, 10, 0) 65%),
+              linear-gradient(180deg, #03060a 0%, #060a12 100%);
+  perspective: 1400px;
+  transform-style: preserve-3d;
+}
+
+.hero-vignette-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 50%, transparent 40%, #03060a 90%);
+  z-index: 2;
+}
+
+.hero-forensic-radar-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(85vw, 980px);
+  height: min(85vw, 980px);
+  transform: translate(-50%, -50%) translateZ(-80px);
+  border: 1px dashed rgba(6, 182, 212, 0.12);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+  animation: radarRotate 45s linear infinite;
+}
+
+@keyframes radarRotate {
+  from { transform: translate(-50%, -50%) translateZ(-80px) rotate(0deg); }
+  to { transform: translate(-50%, -50%) translateZ(-80px) rotate(360deg); }
+}
+
+.hero-crosshair-center {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: 0.35;
+}
+
+.hero-crosshair-center::before,
+.hero-crosshair-center::after {
+  content: '';
+  position: absolute;
+  background: var(--scamvera-cyan);
+}
+.hero-crosshair-center::before { top: 9px; left: 0; right: 0; height: 1px; }
+.hero-crosshair-center::after { left: 9px; top: 0; bottom: 0; width: 1px; }
+
+/* 2. Monumental Typography Stack */
+.hero-monumental-content {
+  position: relative;
+  z-index: 5;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateZ(40px)
+             rotateX(var(--hero-tilt-x, 0deg))
+             rotateY(var(--hero-tilt-y, 0deg));
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.hero-forensic-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  background: rgba(8, 13, 22, 0.85);
+  border: 1px solid rgba(6, 182, 212, 0.28);
+  border-radius: 100px;
+  box-shadow: 0 0 24px rgba(6, 182, 212, 0.12);
+  margin-bottom: 28px;
+  backdrop-filter: blur(12px);
+}
+
+.eyebrow-ping-beacon {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--scamvera-cyan);
+  box-shadow: 0 0 10px var(--scamvera-cyan);
+  animation: pulseBeacon 2.4s ease-in-out infinite;
+}
+
+@keyframes pulseBeacon {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.hero-forensic-eyebrow span {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--scamvera-subtle);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.hero-monumental-headline {
+  font-family: var(--font-sans);
+  font-size: clamp(48px, 8.5vw, 110px);
+  font-weight: 800;
+  line-height: 0.94;
+  letter-spacing: -0.045em;
+  color: var(--scamvera-text);
+  margin: 0 0 24px;
+  text-transform: uppercase;
+  text-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.hero-headline-glitch-part {
+  display: block;
+  background: linear-gradient(180deg, #ffffff 10%, #cbd5e1 60%, rgba(203, 213, 225, 0.45) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-headline-accent-part {
+  display: block;
+  background: linear-gradient(90deg, #38bdf8 0%, #06b6d4 50%, #2dd4bf 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 35px rgba(6, 182, 212, 0.35));
+}
+
+.hero-monumental-desc {
+  max-width: 680px;
+  font-size: clamp(16px, 1.8vw, 19px);
+  line-height: 1.6;
+  color: var(--scamvera-subtle);
+  margin: 0 0 36px;
+  text-align: center;
+  font-weight: 400;
+}
+
+/* 3. Hero CTAs & Tactile Controls */
+.hero-actions-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 48px;
+  flex-wrap: wrap;
+}
+
+.btn-monumental-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 32px;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.95), rgba(2, 132, 199, 0.95));
+  color: #03060a;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  box-shadow: 0 12px 36px rgba(6, 182, 212, 0.35), 0 0 0 1px rgba(6, 182, 212, 0.5) inset;
+  transition: all 0.25s var(--ease-out-expo);
+  text-decoration: none;
+}
+
+.btn-monumental-primary:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 16px 44px rgba(6, 182, 212, 0.48), 0 0 0 1.5px #ffffff inset;
+  background: linear-gradient(135deg, #22d3ee, #0284c7);
+}
+
+.btn-monumental-primary:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.btn-monumental-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 28px;
+  background: rgba(15, 23, 42, 0.65);
+  color: var(--scamvera-text);
+  font-weight: 600;
+  font-size: 15px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--scamvera-border);
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  transition: all 0.25s var(--ease-out-expo);
+}
+
+.btn-monumental-secondary:hover {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(6, 182, 212, 0.4);
+  color: var(--scamvera-cyan);
+  transform: translateY(-2px);
+}
+
+/* 4. Hero Floating Evidence Constellation */
+.hero-shards-constellation {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  transform-style: preserve-3d;
+}
+
+.floating-shard {
+  position: absolute;
+  pointer-events: auto;
+  padding: 10px 14px;
+  background: rgba(8, 13, 22, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 20px rgba(6, 182, 212, 0.08);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--scamvera-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: transform 0.3s var(--ease-out-expo), border-color 0.3s ease, box-shadow 0.3s ease;
+  user-select: none;
+}
+
+.floating-shard:hover {
+  border-color: var(--scamvera-cyan);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8), 0 0 30px rgba(6, 182, 212, 0.3);
+  transform: scale(1.05) translateZ(30px) !important;
+  z-index: 10;
+}
+
+.shard-category-tag {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--scamvera-cyan);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.shard-category-tag::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.shard-quote {
+  color: var(--scamvera-text);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.shard-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 9.5px;
+  color: var(--scamvera-muted);
+}
+
+.shard-weight-pill {
+  color: #f87171;
+  font-weight: 600;
+}
+
+/* Individual Shard Positions (Desktop) */
+.shard-pos-1 { top: 18%; left: 8%; transform: translateZ(90px) rotate(-4deg); }
+.shard-pos-2 { top: 22%; right: 7%; transform: translateZ(110px) rotate(3deg); }
+.shard-pos-3 { bottom: 24%; left: 10%; transform: translateZ(60px) rotate(2deg); }
+.shard-pos-4 { bottom: 20%; right: 9%; transform: translateZ(85px) rotate(-3deg); }
+.shard-pos-5 { top: 52%; right: 3%; transform: translateZ(40px) rotate(1deg); }
+
+/* 5. Continuous Narrative Stream System */
+.narrative-stream-container {
+  position: relative;
+  background: var(--scamvera-bg);
+  overflow: hidden;
+}
+
+.narrative-scene-wrapper {
+  position: relative;
+  padding: 120px 24px;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.scene-step-counter {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: var(--scamvera-cyan);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.scene-step-counter::after {
+  content: '';
+  flex: 1;
+  max-width: 80px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--scamvera-cyan), transparent);
+}
+
+.scene-headline-monumental {
+  font-family: var(--font-sans);
+  font-size: clamp(32px, 4.5vw, 56px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  color: var(--scamvera-text);
+  margin: 0 0 20px;
+  text-transform: uppercase;
+}
+
+.scene-lede-text {
+  max-width: 720px;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--scamvera-subtle);
+  margin: 0 0 54px;
+}
+
+/* 6. Discovered Evidence 3D Stage */
+.evidence-world-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 40px;
+  align-items: center;
+}
+
+.specimen-document-frame {
+  position: relative;
+  background: rgba(8, 13, 22, 0.85);
+  border: 1px solid var(--scamvera-border);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  transition: transform 0.3s ease;
+}
+
+.specimen-header-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 18px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--scamvera-muted);
+}
+
+.specimen-raw-message {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--scamvera-text);
+  background: rgba(3, 6, 10, 0.5);
+  padding: 24px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.detached-token-highlight {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.detached-token-highlight.urgency {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.detached-token-highlight.url {
+  background: rgba(239, 68, 68, 0.18);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.detached-token-highlight.debit {
+  background: rgba(56, 189, 248, 0.18);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+}
+
+.detached-token-highlight:hover,
+.detached-token-highlight.active {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px currentColor;
+}
+
+/* Detached Shards Inspector Panel */
+.evidence-shards-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.forensic-shard-card {
+  background: rgba(8, 13, 22, 0.7);
+  border: 1px solid var(--scamvera-border);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  cursor: pointer;
+  transition: all 0.25s var(--ease-out-expo);
+  position: relative;
+  overflow: hidden;
+}
+
+.forensic-shard-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  bottom: 0;
+  background: var(--scamvera-muted);
+  transition: background 0.2s ease;
+}
+
+.forensic-shard-card.active,
+.forensic-shard-card:hover {
+  background: rgba(15, 22, 36, 0.95);
+  border-color: rgba(6, 182, 212, 0.4);
+  transform: translateX(4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+}
+
+.forensic-shard-card.active::before {
+  background: var(--scamvera-cyan);
+}
+
+.shard-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.shard-category-pill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.shard-offset-code {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--scamvera-muted);
+}
+
+.shard-card-phrase {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--scamvera-text);
+  margin-bottom: 6px;
+}
+
+.shard-card-explanation {
+  font-size: 12.5px;
+  color: var(--scamvera-subtle);
+  line-height: 1.5;
+}
+
+/* 7. Spatial Relationship Network */
+.topology-stage-canvas {
+  position: relative;
+  width: 100%;
+  height: 480px;
+  background: rgba(6, 10, 18, 0.6);
+  border: 1px solid var(--scamvera-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5) inset;
+}
+
+.topology-node-element {
+  position: absolute;
+  padding: 12px 16px;
+  background: rgba(8, 13, 22, 0.9);
+  border: 1px solid var(--scamvera-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  transition: all 0.25s var(--ease-out-expo);
+  z-index: 5;
+}
+
+.topology-node-element:hover,
+.topology-node-element.active {
+  border-color: var(--scamvera-cyan);
+  box-shadow: 0 0 30px rgba(6, 182, 212, 0.35);
+  transform: scale(1.08);
+}
+
+.node-title-row {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--scamvera-text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.node-category-tag {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--scamvera-muted);
+  text-transform: uppercase;
+}
+
+/* 8. Tactical Signatures Visual Grid */
+.tactics-spatial-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.tactic-signature-card {
+  background: rgba(8, 13, 22, 0.75);
+  border: 1px solid var(--scamvera-border);
+  border-radius: var(--radius-lg);
+  padding: 28px 24px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s var(--ease-out-expo);
+  backdrop-filter: blur(10px);
+}
+
+.tactic-signature-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(6, 182, 212, 0.35);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+
+.tactic-glyph-box {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 182, 212, 0.1);
+  border: 1px solid rgba(6, 182, 212, 0.25);
+  margin-bottom: 20px;
+  color: var(--scamvera-cyan);
+}
+
+.tactic-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--scamvera-text);
+  margin-bottom: 8px;
+}
+
+.tactic-mechanism {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--scamvera-subtle);
+  margin-bottom: 18px;
+}
+
+.tactic-signature-waveform {
+  height: 36px;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  opacity: 0.6;
+}
+
+.waveform-bar {
+  flex: 1;
+  background: var(--scamvera-cyan);
+  border-radius: 2px 2px 0 0;
+  transition: height 0.3s ease;
+}
+
+/* 9. Deterministic Risk Caliper Scene */
+.risk-scene-stage {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+}
+
+.risk-caliper-instrument {
+  position: relative;
+  width: min(100%, 420px);
+  aspect-ratio: 1;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.08) 0%, rgba(3, 6, 10, 0) 70%);
+}
+
+.caliper-outer-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.caliper-tick-ring {
+  position: absolute;
+  inset: 20px;
+  border-radius: 50%;
+  border: 1px dashed rgba(6, 182, 212, 0.25);
+  animation: radarRotate 60s linear infinite;
+}
+
+.caliper-core-readout {
+  text-align: center;
+  z-index: 5;
+}
+
+.caliper-score-huge {
+  font-family: var(--font-sans);
+  font-size: 88px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--scamvera-danger);
+  text-shadow: 0 0 40px rgba(239, 68, 68, 0.4);
+}
+
+.caliper-level-tag {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.2em;
+  font-weight: 700;
+  color: #fca5a5;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.caliper-authority-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--scamvera-muted);
+  letter-spacing: 0.1em;
+  margin-top: 6px;
+}
+
+.risk-formula-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formula-card {
+  background: rgba(8, 13, 22, 0.8);
+  border: 1px solid var(--scamvera-border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+}
+
+.formula-math-line {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--scamvera-cyan);
+  background: rgba(3, 6, 10, 0.6);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  margin-top: 10px;
+}
+
+/* 10. Operational Incident Response Scene */
+.response-directive-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+.directive-card-danger {
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: var(--radius-lg);
+  padding: 32px 28px;
+}
+
+.directive-card-success {
+  background: rgba(16, 185, 129, 0.05);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: var(--radius-lg);
+  padding: 32px 28px;
+}
+
+.directive-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.directive-title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.directive-item-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--scamvera-text);
+}
+
+.directive-bullet {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+/* 11. Workstation Ingestion Terminal Enhancement */
+.spatial-workstation-input-frame {
+  position: relative;
+  background: radial-gradient(circle at 50% 0%, rgba(6, 182, 212, 0.08) 0%, rgba(8, 13, 22, 0.95) 75%);
+  border: 1px solid var(--scamvera-border);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.spatial-drop-active {
+  border-color: var(--scamvera-cyan) !important;
+  box-shadow: 0 0 40px rgba(6, 182, 212, 0.35) !important;
+}
+
+.tactile-evidence-tray {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.tactile-evidence-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  background: var(--scamvera-surface-2);
+  border: 1px solid var(--scamvera-border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--scamvera-text);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.tactile-evidence-chip:hover {
+  border-color: rgba(6, 182, 212, 0.4);
+  transform: translateY(-1px);
+}
+
+.chip-remove-btn {
+  background: none;
+  border: none;
+  color: var(--scamvera-muted);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  border-radius: 3px;
+  transition: color 0.15s ease;
+}
+
+.chip-remove-btn:hover {
+  color: #f87171;
+}
+
+/* Mobile & Tablet Responsiveness */
+@media (max-width: 900px) {
+  .hero-shards-constellation {
+    display: none;
+  }
+  .evidence-world-grid,
+  .risk-scene-stage,
+  .response-directive-split {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .hero-monumental-headline {
+    font-size: clamp(38px, 10vw, 64px);
+  }
+}
+
 /* 14. Reduced Motion Overrides */
 @media (prefers-reduced-motion: reduce) {
+  .monumental-hero-section,
+  .hero-monumental-content,
+  .hero-forensic-radar-ring,
+  .floating-shard,
+  .specimen-document-frame,
+  .forensic-shard-card,
+  .topology-node-element,
+  .tactic-signature-card,
+  .risk-caliper-instrument,
+  .caliper-tick-ring,
+  .spatial-workstation-input-frame,
+  .tactile-evidence-chip,
   .landing-section,
   .landing-hero-section,
   .section-label-tag,
@@ -7258,3 +8138,3206 @@ button, input, select, textarea {
     transition: none !important;
   }
 }
+
+/* ==========================================================================
+   SCAMVERA 3D INVESTIGATION WORKSTATION — SPATIAL FORENSIC SYSTEM
+   ========================================================================== */
+
+/* 1. Forensic Scene Viewport (Crisp 2D Base Viewport) */
+.forensic-scene-viewport,
+.spatial-investigation-environment-root {
+  position: relative;
+  min-height: calc(100vh - 64px);
+  width: 100%;
+  background-color: var(--scamvera-bg, #03060a);
+  color: var(--scamvera-text, #f8fafc);
+  overflow-x: hidden;
+}
+
+/* 2. Persistent Spatial HUD (100% Crisp Native Plane) */
+.forensic-spatial-hud,
+.spatial-hud-nav-bar {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 28px;
+  background: #060b13;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  transform: none !important;
+}
+
+.hud-left-meta,
+.spatial-hud-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: #cbd5e1;
+}
+
+.hud-live-beacon,
+.spatial-hud-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--scamvera-cyan, #06b6d4);
+  box-shadow: 0 0 10px var(--scamvera-cyan, #06b6d4), 0 0 20px rgba(6, 182, 212, 0.4);
+  animation: pulseBeacon 2.2s infinite;
+}
+
+.hud-case-stamp,
+.spatial-hud-case-id {
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.04em;
+}
+
+.hud-sep,
+.spatial-hud-boundary {
+  color: #64748b;
+  opacity: 0.6;
+}
+
+.hud-crypto-status {
+  font-size: 11px;
+  color: #94a3b8;
+  letter-spacing: 0.04em;
+}
+
+.hud-center-switcher,
+.spatial-hud-center-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #0a111e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 3px;
+  border-radius: 6px;
+}
+
+.hud-mode-pill,
+.spatial-hud-tab-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 7px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hud-mode-pill:hover,
+.spatial-hud-tab-btn:hover {
+  color: #ffffff;
+}
+
+.hud-mode-pill.active,
+.spatial-hud-tab-btn.active {
+  background: #162238;
+  color: #00f2fe;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.hud-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hud-export-action-btn,
+.spatial-hud-export-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(6, 182, 212, 0.12);
+  border: 1px solid rgba(6, 182, 212, 0.45);
+  color: #00f2fe;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 7px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hud-export-action-btn:hover,
+.spatial-hud-export-btn:hover {
+  background: rgba(6, 182, 212, 0.22);
+  border-color: rgba(6, 182, 212, 0.7);
+  box-shadow: 0 0 14px rgba(6, 182, 212, 0.35);
+}
+
+/* 3. 3D Forensic World (transform-style: preserve-3d) */
+.forensic-3d-world,
+.spatial-camera-stage {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  min-height: calc(100vh - 64px);
+  transform-style: preserve-3d;
+  /* Readable content is strictly stationary: cursor tilt/pan removed from entire world container */
+}
+
+/* 4. Spatial Planes */
+.world-spatial-plane {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transform-style: preserve-3d;
+}
+
+/* Plane A: Deep Background Space (translateZ: -250px) - Cursor parallax confined to decorative space */
+.deep-background-plane {
+  transform: translateZ(-250px) scale(1.18) rotateX(var(--cam-tilt-x, 0deg)) rotateY(var(--cam-tilt-y, 0deg)) translate3d(var(--cam-pan-x, 0px), var(--cam-pan-y, 0px), 0);
+  z-index: 1;
+}
+
+.world-particles {
+  position: absolute;
+  inset: 0;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.world-coordinate-ticks {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(6, 182, 212, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(6, 182, 212, 0.035) 1px, transparent 1px);
+  background-size: 80px 80px;
+  background-position: center center;
+  opacity: 0.8;
+}
+
+.world-distant-contours {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    radial-gradient(circle at 50% 20%, rgba(6, 182, 212, 0.05) 0%, transparent 60%),
+    radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.03) 0%, transparent 50%);
+}
+
+.world-ambient-light {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1000px;
+  height: 500px;
+  background: radial-gradient(ellipse at center, rgba(6, 182, 212, 0.08) 0%, rgba(99, 102, 241, 0.03) 45%, transparent 75%);
+  filter: blur(90px);
+  pointer-events: none;
+}
+
+/* Plane B: Datum Horizon & Crosshair Plane (translateZ: -100px) - Subtle decorative parallax */
+.datum-horizon-plane {
+  transform: translateZ(-100px) scale(1.08) rotateX(calc(var(--cam-tilt-x, 0deg) * 0.4)) rotateY(calc(var(--cam-tilt-y, 0deg) * 0.4)) translate3d(calc(var(--cam-pan-x, 0px) * 0.4), calc(var(--cam-pan-y, 0px) * 0.4), 0);
+  z-index: 2;
+}
+
+.datum-laser-line {
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(6, 182, 212, 0.25) 30%, rgba(6, 182, 212, 0.25) 70%, transparent 100%);
+}
+
+.datum-laser-line.top-line {
+  top: 140px;
+}
+
+.datum-laser-line.bottom-line {
+  bottom: 140px;
+}
+
+.datum-crosshair {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 32px;
+  height: 32px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.datum-crosshair::before,
+.datum-crosshair::after {
+  content: '';
+  position: absolute;
+  background: rgba(6, 182, 212, 0.25);
+}
+
+.datum-crosshair::before {
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  transform: translateY(-50%);
+}
+
+.datum-crosshair::after {
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  transform: translateX(-50%);
+}
+
+/* Plane C: Forensics Interactive Stage - Guaranteed 100% stable, readable, and predictable */
+.interactive-stage-plane {
+  position: relative;
+  pointer-events: auto;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 28px 20px 100px;
+  transform: none !important;
+  z-index: 10;
+}
+
+.spatial-intake-stage-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.spatial-active-case-stream {
+  position: relative;
+  width: 100%;
+}
+
+/* Common Section Header in 3D Modules */
+.spatial-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.spatial-section-tag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+}
+
+.spatial-section-num {
+  color: var(--scamvera-cyan, #06b6d4);
+  font-weight: 700;
+}
+
+.spatial-section-bracket {
+  color: var(--scamvera-muted, #64748b);
+}
+
+.spatial-section-title {
+  color: var(--scamvera-text, #f8fafc);
+  font-weight: 700;
+}
+
+.spatial-telemetry-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--scamvera-muted, #64748b);
+}
+
+.spatial-led-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.spatial-led-dot.cyan {
+  background: var(--scamvera-cyan, #06b6d4);
+  box-shadow: 0 0 6px var(--scamvera-cyan, #06b6d4);
+}
+
+.spatial-badge-sep {
+  color: rgba(255, 255, 255, 0.15);
+}
+
+/* Quick Navigation Anchor Bar */
+.spatial-anchors-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 12px;
+  margin-bottom: 32px;
+  background: #080d16;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.spatial-anchor-btn {
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 7px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.spatial-anchor-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.spatial-anchor-btn.report-cta {
+  margin-left: auto;
+  color: #00f2fe;
+  background: rgba(6, 182, 212, 0.12);
+  border: 1px solid rgba(6, 182, 212, 0.35);
+}
+
+.spatial-anchor-btn.report-cta:hover {
+  background: rgba(6, 182, 212, 0.22);
+}
+
+.spatial-module-section {
+  position: relative;
+  margin-bottom: 52px;
+}
+
+/* ==========================================================================
+   MODULE 01: SPATIAL RISK INSTRUMENT
+   ========================================================================== */
+
+.spatial-risk-instrument-root {
+  position: relative;
+  background: #080e18;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 3px solid var(--scamvera-cyan, #06b6d4);
+  border-radius: 12px;
+  padding: 24px 28px;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6);
+}
+
+.spatial-risk-stage {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 32px;
+  align-items: center;
+}
+
+.spatial-risk-caliper-pod {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+  background: rgba(12, 19, 32, 0.7);
+  border: 1px solid rgba(6, 182, 212, 0.28);
+  border-radius: 12px;
+  transform: translateZ(90px);
+  transform-style: preserve-3d;
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.6), 0 0 24px rgba(6, 182, 212, 0.1);
+}
+
+.spatial-caliper-ring-wrap {
+  position: relative;
+  width: 220px;
+  height: 220px;
+}
+
+.spatial-caliper-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.spatial-caliper-readout {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.spatial-score-huge {
+  font-family: var(--font-sans, system-ui);
+  font-size: 52px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.spatial-score-scale {
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+  color: var(--scamvera-muted, #64748b);
+  margin-top: 2px;
+}
+
+.spatial-score-level-badge {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 3px 10px;
+  border: 1px solid;
+  border-radius: 4px;
+  margin-top: 8px;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.spatial-caliper-subtext {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--scamvera-muted, #64748b);
+  margin-top: 16px;
+}
+
+.spatial-risk-factors-pod {
+  display: flex;
+  flex-direction: column;
+}
+
+.spatial-risk-nav {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 8px;
+}
+
+.spatial-risk-tab {
+  background: transparent;
+  border: none;
+  color: var(--scamvera-muted, #64748b);
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.spatial-risk-tab:hover {
+  color: var(--scamvera-text, #f8fafc);
+}
+
+.spatial-risk-tab.active {
+  background: var(--scamvera-surface-elevated, #162032);
+  color: var(--scamvera-cyan, #06b6d4);
+}
+
+.spatial-indicator-chips-flow {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.spatial-indicator-factor-card {
+  text-align: left;
+  background: rgba(15, 22, 36, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.spatial-indicator-factor-card:hover {
+  background: rgba(22, 32, 50, 0.8);
+  border-color: rgba(6, 182, 212, 0.3);
+  transform: translateY(-2px);
+}
+
+.spatial-indicator-factor-card.selected {
+  border-color: var(--scamvera-cyan, #06b6d4);
+  background: rgba(6, 182, 212, 0.08);
+  box-shadow: 0 0 16px rgba(6, 182, 212, 0.2);
+}
+
+.spatial-factor-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.spatial-factor-pts {
+  color: var(--scamvera-muted, #94a3b8);
+}
+
+.spatial-factor-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #f8fafc;
+  margin-bottom: 6px;
+}
+
+.spatial-factor-quote {
+  font-size: 14px;
+  color: #f1f5f9;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 6px 10px;
+  border-radius: 4px;
+  border-left: 2px solid rgba(255, 255, 255, 0.2);
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.spatial-factor-provenance {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  color: var(--scamvera-muted, #94a3b8);
+}
+
+.spatial-category-cluster {
+  padding: 16px 0;
+}
+
+.spatial-category-lead {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #e2e8f0;
+  margin-bottom: 16px;
+}
+
+.spatial-category-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.spatial-category-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 22, 36, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.spatial-category-idx {
+  font-family: var(--font-mono, monospace);
+  color: var(--scamvera-cyan, #06b6d4);
+  font-weight: 700;
+}
+
+.spatial-category-stat {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  color: var(--scamvera-muted, #64748b);
+}
+
+.spatial-waterfall-flow {
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.spatial-waterfall-header-row {
+  display: grid;
+  grid-template-columns: 1fr 80px 80px;
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--scamvera-muted, #64748b);
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.spatial-waterfall-row {
+  display: grid;
+  grid-template-columns: 1fr 80px 80px;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 12px;
+}
+
+.spatial-waterfall-step {
+  font-weight: 600;
+  color: var(--scamvera-text, #f8fafc);
+  display: block;
+}
+
+.spatial-waterfall-reason {
+  font-size: 11px;
+  color: var(--scamvera-muted, #64748b);
+}
+
+.spatial-waterfall-delta {
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+}
+
+.spatial-waterfall-delta.pos {
+  color: var(--scamvera-danger, #ef4444);
+}
+
+.spatial-waterfall-delta.neg {
+  color: var(--scamvera-teal, #14b8a6);
+}
+
+.spatial-waterfall-total {
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  color: var(--scamvera-text, #f8fafc);
+}
+
+/* ==========================================================================
+   MODULE 02: SPATIAL EVIDENCE FIELD
+   ========================================================================== */
+
+.spatial-evidence-field-root {
+  position: relative;
+  background: #080e18;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 3px solid var(--scamvera-cyan, #06b6d4);
+  border-radius: 12px;
+  padding: 24px 28px;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6);
+}
+
+.spatial-evidence-stage {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.spatial-source-chassis {
+  background: #0b111e;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.spatial-source-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 14px;
+}
+
+.spatial-source-label {
+  color: var(--scamvera-cyan, #06b6d4);
+  font-weight: 700;
+}
+
+.spatial-source-status {
+  color: var(--scamvera-muted, #64748b);
+}
+
+.spatial-screenshot-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.spatial-screenshot-card {
+  background: #000;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.spatial-screenshot-img {
+  width: 100%;
+  height: 90px;
+  object-fit: cover;
+  display: block;
+}
+
+.spatial-screenshot-caption {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 6px;
+  font-family: var(--font-mono, monospace);
+  font-size: 9px;
+  color: var(--scamvera-muted, #64748b);
+  background: rgba(15, 22, 36, 0.8);
+}
+
+.spatial-carrier-text-display {
+  background: #04070e;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.spatial-carrier-meta-tag {
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--scamvera-muted, #64748b);
+  margin-bottom: 8px;
+}
+
+.spatial-carrier-stream {
+  font-family: var(--font-mono, monospace);
+  font-size: 15px;
+  line-height: 1.65;
+  color: #f8fafc;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: rgba(4, 7, 14, 0.7);
+  padding: 14px 16px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.spatial-provenance-hud {
+  background: rgba(6, 182, 212, 0.08);
+  border: 1px solid rgba(6, 182, 212, 0.35);
+  border-radius: 8px;
+  padding: 14px 18px;
+}
+
+.spatial-hud-title {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--scamvera-cyan, #06b6d4);
+  margin-bottom: 8px;
+}
+
+.spatial-hud-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+}
+
+.hud-key {
+  color: var(--scamvera-muted, #94a3b8);
+  margin-right: 6px;
+}
+
+.hud-val {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.spatial-shards-constellation {
+  display: flex;
+  flex-direction: column;
+}
+
+.spatial-shards-header {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--scamvera-muted, #94a3b8);
+  margin-bottom: 14px;
+}
+
+.spatial-shards-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 520px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.spatial-shard-card {
+  position: relative;
+  background: rgba(12, 19, 32, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-left: 4px solid var(--shard-accent, var(--scamvera-cyan));
+  border-radius: 10px;
+  padding: 18px 20px;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transform: none !important; /* Strict stability: no hover jump */
+}
+
+.spatial-shard-card:hover {
+  background: rgba(18, 28, 46, 0.95);
+  border-color: rgba(6, 182, 212, 0.5);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+  transform: none !important;
+}
+
+.spatial-shard-card.selected {
+  background: rgba(6, 182, 212, 0.14);
+  border-color: var(--scamvera-cyan, #06b6d4);
+  box-shadow: 0 0 24px rgba(6, 182, 212, 0.3);
+}
+
+.spatial-shard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+}
+
+.spatial-shard-tag {
+  color: var(--scamvera-cyan, #06b6d4);
+  font-weight: 700;
+}
+
+.spatial-shard-sev {
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.spatial-shard-quote {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 10px;
+  line-height: 1.6;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 6px;
+  border-left: 3px solid rgba(255, 255, 255, 0.3);
+  letter-spacing: normal;
+}
+
+.spatial-shard-explanation {
+  font-size: 15px;
+  color: #e2e8f0;
+  line-height: 1.6;
+  margin-bottom: 12px;
+  letter-spacing: normal;
+}
+
+.spatial-shard-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.spatial-shard-click-hint {
+  color: var(--scamvera-cyan, #06b6d4);
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   MODULE 03: SPATIAL EVIDENCE GRAPH
+   ========================================================================== */
+
+.spatial-evidence-graph-root {
+  position: relative;
+  background: #080e18;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 3px solid var(--scamvera-cyan, #06b6d4);
+  border-radius: 12px;
+  padding: 24px 28px;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6);
+}
+
+.spatial-graph-viewport {
+  position: relative;
+  width: 100%;
+  height: 460px;
+  background: #02050c;
+  border: 1px solid rgba(6, 182, 212, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8), 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+
+.spatial-graph-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.spatial-node-beacon {
+  animation: pulseBeacon 2s infinite ease-out;
+}
+
+.spatial-node-hud-card {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  background: #080d16;
+  border: 1px solid rgba(6, 182, 212, 0.45);
+  border-radius: 8px;
+  padding: 12px 16px;
+  max-width: 320px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+.spatial-hud-tag-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  margin-bottom: 4px;
+}
+
+.spatial-hud-type {
+  color: var(--scamvera-cyan, #06b6d4);
+  font-weight: 700;
+}
+
+.spatial-hud-sev {
+  font-weight: 700;
+}
+
+.spatial-hud-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--scamvera-text, #f8fafc);
+  margin-bottom: 4px;
+}
+
+.spatial-hud-matched {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--scamvera-subtle, #cbd5e1);
+  margin-bottom: 6px;
+}
+
+.spatial-hud-hint {
+  font-family: var(--font-mono, monospace);
+  font-size: 9px;
+  color: var(--scamvera-muted, #64748b);
+  letter-spacing: 0.06em;
+}
+
+/* ==========================================================================
+   MODULE 04: SPATIAL ATTACK CHAIN — 3D STEPPED PROGRESSION PATH
+   ========================================================================== */
+
+.spatial-attack-chain-world,
+.spatial-attack-chain-root {
+  position: relative;
+  width: 100%;
+  transform-style: preserve-3d;
+}
+
+.attack-path-3d-stage {
+  position: relative;
+  width: 100%;
+  transform-style: preserve-3d;
+  padding: 16px 0 20px;
+}
+
+.attack-path-laser-svg {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  width: 100%;
+  height: 140px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.65;
+  overflow: visible;
+}
+
+.attack-path-dash-anim {
+  animation: laserDashFlow 24s linear infinite;
+}
+
+@keyframes laserDashFlow {
+  to {
+    stroke-dashoffset: -200;
+  }
+}
+
+.attack-stepped-nodes-track,
+.spatial-chain-spine {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 14px;
+  margin-bottom: 28px;
+  position: relative;
+  z-index: 5;
+  transform-style: preserve-3d;
+}
+
+.attack-stepped-node,
+.spatial-spine-node {
+  position: relative;
+  background: rgba(12, 19, 32, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 14px 12px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-style: preserve-3d;
+  transform: translateZ(var(--step-depth, 20px));
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.attack-stepped-node:hover,
+.spatial-spine-node:hover {
+  background: rgba(20, 30, 48, 0.9);
+  border-color: rgba(6, 182, 212, 0.45);
+  transform: translateZ(calc(var(--step-depth, 20px) + 20px)) translateY(-4px);
+  box-shadow: 0 16px 32px rgba(6, 182, 212, 0.15);
+}
+
+.attack-stepped-node.active-step,
+.spatial-spine-node.active {
+  background: rgba(16, 26, 44, 0.95);
+  border-color: var(--scamvera-cyan, #06b6d4);
+  transform: translateZ(calc(var(--step-depth, 20px) + 38px)) scale(1.03);
+  box-shadow: 0 0 24px rgba(6, 182, 212, 0.35), 0 16px 32px rgba(0, 0, 0, 0.5);
+}
+
+.step-node-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+}
+
+.step-idx {
+  font-weight: 700;
+  color: var(--scamvera-cyan, #06b6d4);
+  letter-spacing: 0.06em;
+}
+
+.step-status-dot,
+.spatial-spine-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.step-name-label,
+.spatial-spine-label {
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+  font-weight: 700;
+  color: #f8fafc;
+  margin-bottom: 8px;
+  line-height: 1.4;
+  min-height: 32px;
+}
+
+.step-hypo-flag,
+.spatial-hypo-pill {
+  font-family: var(--font-mono, monospace);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  display: inline-block;
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--scamvera-warning, #f59e0b);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.step-observed-flag {
+  font-family: var(--font-mono, monospace);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  display: inline-block;
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--scamvera-danger, #ef4444);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.step-latent-flag {
+  font-family: var(--font-mono, monospace);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--scamvera-muted, #64748b);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Active Stage Focused Forensic Chamber */
+.attack-active-stage-chamber,
+.spatial-stage-focus-card {
+  position: relative;
+  z-index: 10;
+  background: #050a14;
+  border: 1px solid rgba(6, 182, 212, 0.38);
+  border-radius: 12px;
+  padding: 26px 30px;
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.75), 0 0 30px rgba(6, 182, 212, 0.1);
+}
+
+.chamber-top-telemetry,
+.spatial-stage-top-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+}
+
+.chamber-step-index,
+.spatial-stage-index-tag {
+  font-weight: 700;
+  color: var(--scamvera-cyan, #06b6d4);
+  letter-spacing: 0.08em;
+}
+
+.chamber-hypo-stamp,
+.spatial-hypothetical-disclaimer {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--scamvera-warning, #f59e0b);
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+.chamber-observed-stamp,
+.spatial-observed-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--scamvera-teal, #14b8a6);
+  background: rgba(20, 184, 166, 0.12);
+  border: 1px solid rgba(20, 184, 166, 0.3);
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+.chamber-stage-title,
+.spatial-stage-title-huge {
+  font-size: 24px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 10px;
+  letter-spacing: 0.01em;
+}
+
+.chamber-stage-desc,
+.spatial-stage-desc {
+  font-size: 16px;
+  color: #e2e8f0;
+  line-height: 1.65;
+  margin: 0 0 20px;
+}
+
+.chamber-evidence-pod,
+.spatial-stage-evidence-quote-box {
+  background: rgba(15, 22, 36, 0.75);
+  border-left: 3px solid var(--scamvera-danger, #ef4444);
+  padding: 14px 18px;
+  border-radius: 6px;
+  margin-bottom: 22px;
+}
+
+.pod-key,
+.spatial-quote-label {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--scamvera-danger, #ef4444);
+  letter-spacing: 0.08em;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.pod-quote,
+.spatial-quote-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.chamber-nav-bar,
+.spatial-stage-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 18px;
+}
+
+.chamber-nav-btn {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  padding: 7px 14px;
+}
+
+.chamber-nav-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.chamber-nav-dots .nav-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chamber-nav-dots .nav-dot.active {
+  background: var(--scamvera-cyan, #06b6d4);
+  box-shadow: 0 0 8px var(--scamvera-cyan, #06b6d4);
+  transform: scale(1.25);
+}
+
+/* ==========================================================================
+   MODULE 05: SPATIAL TACTIC FIELD
+   ========================================================================== */
+
+.spatial-tactics-field-root {
+  position: relative;
+  background: #080e18;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 3px solid var(--scamvera-cyan, #06b6d4);
+  border-radius: 12px;
+  padding: 24px 28px;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6);
+}
+
+.spatial-tactics-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.spatial-tactic-signature-card {
+  background: rgba(15, 22, 36, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.spatial-tactic-signature-card:hover {
+  background: rgba(22, 32, 50, 0.85);
+  border-color: rgba(6, 182, 212, 0.35);
+  transform: translateY(-2px);
+}
+
+.spatial-tactic-signature-card.selected {
+  border-color: var(--tac-color, var(--scamvera-cyan));
+  background: rgba(6, 182, 212, 0.08);
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.15);
+}
+
+.spatial-tactic-card-top {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  margin-bottom: 8px;
+}
+
+.spatial-tactic-cat {
+  color: var(--scamvera-muted, #64748b);
+}
+
+.spatial-tactic-sev {
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.spatial-tactic-waveform-box {
+  width: 100%;
+  height: 48px;
+  background: #020408;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.spatial-waveform-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.spatial-tactic-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #f8fafc;
+  margin-bottom: 4px;
+}
+
+.spatial-tactic-vuln {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.spatial-tactic-detail-inspector {
+  background: #04070e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.spatial-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.spatial-detail-badge {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  color: var(--scamvera-cyan, #06b6d4);
+  letter-spacing: 0.08em;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.spatial-detail-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+}
+
+.spatial-detail-vuln-pill {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 4px 10px;
+  border-radius: 4px;
+  color: #cbd5e1;
+}
+
+.spatial-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+
+.spatial-item-key {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  color: var(--scamvera-muted, #94a3b8);
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+.spatial-item-val {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #e2e8f0;
+  margin: 0;
+}
+
+.spatial-item-val.highlight {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   MODULE 06: COUNTERFACTUAL & OBFUSCATION DIFF
+   ========================================================================== */
+
+.spatial-counterfactual-diff-root {
+  position: relative;
+  background: #080e18;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 3px solid var(--scamvera-cyan, #06b6d4);
+  border-radius: 12px;
+  padding: 24px 28px;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6);
+}
+
+.spatial-cf-diff-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.spatial-cf-pod, .spatial-obfuscation-pod {
+  background: #0a111e;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.spatial-pod-header {
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.spatial-pod-title {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--scamvera-cyan, #06b6d4);
+  letter-spacing: 0.06em;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.spatial-pod-sub {
+  font-size: 11px;
+  color: var(--scamvera-muted, #64748b);
+}
+
+.spatial-cf-baseline-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #04070e;
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+
+.spatial-cf-key {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  color: var(--scamvera-muted, #64748b);
+  margin-right: 8px;
+}
+
+.spatial-cf-val-baseline {
+  font-family: var(--font-mono, monospace);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--scamvera-danger, #ef4444);
+}
+
+.spatial-cf-pivot-tag {
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  background: rgba(6, 182, 212, 0.1);
+  color: var(--scamvera-cyan, #06b6d4);
+  border: 1px solid rgba(6, 182, 212, 0.25);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.spatial-cf-scenarios-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 240px;
+  overflow-y: auto;
+  margin-bottom: 14px;
+}
+
+.spatial-cf-card {
+  text-align: left;
+  background: rgba(15, 22, 36, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.spatial-cf-card:hover {
+  background: rgba(22, 32, 50, 0.9);
+  border-color: rgba(6, 182, 212, 0.3);
+}
+
+.spatial-cf-card.active {
+  background: rgba(6, 182, 212, 0.1);
+  border-color: var(--scamvera-cyan, #06b6d4);
+}
+
+.spatial-cf-card-header {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.spatial-cf-scope {
+  color: var(--scamvera-cyan, #06b6d4);
+}
+
+.spatial-cf-delta {
+  color: var(--scamvera-teal, #14b8a6);
+}
+
+.spatial-cf-explanation {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #e2e8f0;
+  margin-bottom: 6px;
+}
+
+.spatial-cf-card-bottom {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.spatial-cf-comparison-box {
+  display: grid;
+  grid-template-columns: 1fr 100px 1fr;
+  align-items: center;
+  background: #020408;
+  border: 1px solid rgba(6, 182, 212, 0.25);
+  border-radius: 8px;
+  padding: 14px;
+  text-align: center;
+}
+
+.spatial-cf-comp-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.spatial-comp-tag {
+  font-family: var(--font-mono, monospace);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: var(--scamvera-muted, #64748b);
+  margin-bottom: 4px;
+}
+
+.spatial-comp-score {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--scamvera-danger, #ef4444);
+  line-height: 1;
+}
+
+.spatial-comp-note {
+  font-size: 10px;
+  color: var(--scamvera-muted, #64748b);
+  margin-top: 4px;
+}
+
+.spatial-cf-comp-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: var(--font-mono, monospace);
+  font-size: 9px;
+  color: var(--scamvera-cyan, #06b6d4);
+  gap: 4px;
+}
+
+.spatial-comp-diff {
+  font-weight: 700;
+}
+
+/* Obfuscation Layer Peeler */
+.spatial-peel-controls {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.spatial-peel-btn {
+  background: rgba(15, 22, 36, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--scamvera-muted, #64748b);
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.spatial-peel-btn.active {
+  background: var(--scamvera-surface-elevated, #162032);
+  color: var(--scamvera-cyan, #06b6d4);
+  border-color: rgba(6, 182, 212, 0.4);
+}
+
+.spatial-peel-canvas {
+  background: #020408;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 14px;
+  min-height: 120px;
+  margin-bottom: 12px;
+}
+
+.spatial-layer-label {
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--scamvera-muted, #64748b);
+  margin-bottom: 8px;
+}
+
+.spatial-token-stream {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  line-height: 1.8;
+  word-break: break-all;
+}
+
+.spatial-token-normal {
+  color: var(--scamvera-text, #f8fafc);
+}
+
+.spatial-token-obfuscated {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--scamvera-danger, #ef4444);
+  border-bottom: 2px solid var(--scamvera-danger, #ef4444);
+  padding: 1px 4px;
+  border-radius: 2px;
+  margin: 0 1px;
+}
+
+.spatial-token-decoded {
+  background: rgba(20, 184, 166, 0.15);
+  color: var(--scamvera-teal, #14b8a6);
+  border-bottom: 2px solid var(--scamvera-teal, #14b8a6);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+.spatial-obf-badge {
+  font-size: 8px;
+  vertical-align: super;
+  margin-left: 2px;
+}
+
+.spatial-obf-summary-box {
+  background: rgba(15, 22, 36, 0.6);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+.spatial-obf-char-count {
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--scamvera-warning, #f59e0b);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.spatial-obf-summary-txt {
+  font-size: 12px;
+  color: var(--scamvera-subtle, #cbd5e1);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.spatial-no-obf-box {
+  text-align: center;
+  padding: 32px 16px;
+}
+
+.spatial-no-obf-icon {
+  font-size: 24px;
+  color: var(--scamvera-teal, #14b8a6);
+  margin-bottom: 8px;
+}
+
+.spatial-no-obf-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--scamvera-text, #f8fafc);
+  margin-bottom: 6px;
+}
+
+.spatial-no-obf-p {
+  font-size: 12px;
+  color: var(--scamvera-muted, #64748b);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ==========================================================================
+   MODULE 07: INCIDENT CONTAINMENT & DIRECTIVES
+   ========================================================================== */
+
+.spatial-response-directive-root {
+  position: relative;
+  background: #080e18;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 3px solid var(--scamvera-teal, #14b8a6);
+  border-radius: 12px;
+  padding: 24px 28px;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6);
+}
+
+.spatial-victim-state-pod {
+  background: #0a111e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 24px;
+}
+
+.spatial-victim-chips-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}
+
+.spatial-victim-chip {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  text-align: left;
+  background: rgba(8, 13, 22, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.spatial-victim-chip:hover {
+  background: rgba(22, 32, 50, 0.8);
+  border-color: rgba(6, 182, 212, 0.3);
+}
+
+.spatial-victim-chip.active {
+  background: rgba(6, 182, 212, 0.1);
+  border-color: var(--scamvera-cyan, #06b6d4);
+  box-shadow: 0 0 16px rgba(6, 182, 212, 0.15);
+}
+
+.spatial-chip-radio {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--scamvera-muted, #64748b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.spatial-victim-chip.active .spatial-chip-radio {
+  border-color: var(--scamvera-cyan, #06b6d4);
+}
+
+.spatial-chip-inner-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--scamvera-cyan, #06b6d4);
+}
+
+.spatial-chip-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 3px;
+}
+
+.spatial-chip-desc {
+  font-size: 13px;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+
+.spatial-emergency-containment-banner {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.spatial-containment-lead {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.spatial-alert-flasher {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--scamvera-danger, #ef4444);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.spatial-containment-lead strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fca5a5;
+  margin-bottom: 4px;
+}
+
+.spatial-containment-lead p {
+  font-size: 14px;
+  line-height: 1.55;
+  color: #e2e8f0;
+  margin: 0;
+}
+
+.spatial-containment-checklist {
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 6px;
+  padding: 14px;
+}
+
+.checklist-title {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--scamvera-warning, #f59e0b);
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+
+.spatial-containment-checklist ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #f8fafc;
+}
+
+.chk-box {
+  color: var(--scamvera-muted, #64748b);
+  margin-right: 6px;
+}
+
+.spatial-directives-matrix {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.spatial-directive-col {
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.spatial-directive-col.dont {
+  background: rgba(239, 68, 68, 0.04);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.spatial-directive-col.do {
+  background: rgba(20, 184, 166, 0.04);
+  border: 1px solid rgba(20, 184, 166, 0.2);
+}
+
+.spatial-directive-col-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.spatial-directive-icon-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.spatial-directive-icon-circle.dont {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--scamvera-danger, #ef4444);
+}
+
+.spatial-directive-icon-circle.do {
+  background: rgba(20, 184, 166, 0.15);
+  color: var(--scamvera-teal, #14b8a6);
+}
+
+.spatial-directive-h {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+.spatial-directive-col.dont .spatial-directive-h {
+  color: var(--scamvera-danger, #ef4444);
+}
+
+.spatial-directive-col.do .spatial-directive-h {
+  color: var(--scamvera-teal, #14b8a6);
+}
+
+.spatial-directive-sub {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  color: var(--scamvera-muted, #94a3b8);
+  letter-spacing: 0.06em;
+}
+
+.spatial-directive-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.spatial-directive-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #e2e8f0;
+}
+
+.spatial-item-bullet {
+  font-weight: 800;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.spatial-item-bullet.dont {
+  color: var(--scamvera-danger, #ef4444);
+}
+
+.spatial-item-bullet.do {
+  color: var(--scamvera-teal, #14b8a6);
+}
+
+.spatial-verified-directory-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(15, 22, 36, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 14px 18px;
+}
+
+.spatial-dir-badge {
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--scamvera-cyan, #06b6d4);
+  letter-spacing: 0.08em;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.spatial-dir-desc {
+  font-size: 11px;
+  color: var(--scamvera-muted, #64748b);
+}
+
+.spatial-directory-pills {
+  display: flex;
+  gap: 8px;
+}
+
+.spatial-dir-pill {
+  display: flex;
+  flex-direction: column;
+  background: #020408;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 6px 12px;
+}
+
+.dir-org {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--scamvera-text, #f8fafc);
+}
+
+.dir-contact {
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  color: var(--scamvera-cyan, #06b6d4);
+}
+
+/* ==========================================================================
+   MODULE 00: SPATIAL EVIDENCE INTAKE CONSOLE — MULTI-PLANE FORENSIC INTAKE
+   ========================================================================== */
+
+.forensic-intake-spatial-world,
+.spatial-intake-terminal-root {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  padding: 10px 0 50px;
+  transform-style: preserve-3d;
+  transition: all 0.25s ease;
+}
+
+.forensic-intake-spatial-world.spatial-drag-active,
+.spatial-intake-terminal-root.drag-active {
+  filter: drop-shadow(0 0 32px rgba(6, 182, 212, 0.35));
+}
+
+/* -------------------------------------------------------------------------
+   SPATIAL PLANE 1: FLOATING SATELLITE EVIDENCE SHARDS
+   ------------------------------------------------------------------------- */
+.satellite-evidence-constellation,
+.spatial-intake-shards-tray {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 28px;
+  width: 100%;
+  max-width: 960px;
+  position: relative;
+  z-index: 20;
+}
+
+.satellite-shard-obj,
+.spatial-intake-shard {
+  position: relative;
+  flex: 1;
+  max-width: 280px;
+  min-width: 200px;
+  transition: all 0.2s ease;
+}
+
+/* Spatial Alignment for evidence shards (Crisp native rendering) */
+.satellite-shard-obj.text-shard {
+  transform: none;
+}
+
+.satellite-shard-obj.url-shard {
+  transform: none;
+}
+
+.satellite-shard-obj.img-shard {
+  transform: none;
+}
+
+.satellite-shard-obj:hover {
+  transform: translateY(-3px);
+}
+
+/* Glowing laser antenna tether pointing downward to the carrier console */
+.shard-antenna-line {
+  position: absolute;
+  bottom: -32px;
+  left: 50%;
+  width: 1px;
+  height: 32px;
+  background: linear-gradient(180deg, rgba(6, 182, 212, 0.5) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.shard-inner-chassis {
+  background: #0a111e;
+  border: 1px solid rgba(6, 182, 212, 0.25);
+  border-radius: 10px;
+  padding: 14px 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.satellite-shard-obj.active .shard-inner-chassis,
+.spatial-intake-shard.active {
+  background: #0d1728;
+  border-color: rgba(6, 182, 212, 0.55);
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.2), 0 12px 30px rgba(0, 0, 0, 0.6);
+}
+
+.shard-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.shard-type-tag {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #00f2fe;
+}
+
+.shard-status-led {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.shard-status-led.online {
+  background: var(--scamvera-teal, #14b8a6);
+  box-shadow: 0 0 8px var(--scamvera-teal, #14b8a6);
+}
+
+.shard-status-led.offline {
+  background: var(--scamvera-muted, #64748b);
+  opacity: 0.5;
+}
+
+.shard-main-metric {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 3px;
+  letter-spacing: 0.02em;
+}
+
+.shard-sub-metric {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 12px;
+  color: #cbd5e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* -------------------------------------------------------------------------
+   SPATIAL PLANE 2: CENTRAL CARRIER CONSOLE (Crisp Native Plane)
+   ------------------------------------------------------------------------- */
+.forensic-carrier-console-deck {
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+  background: #060a12;
+  border: 1px solid rgba(6, 182, 212, 0.35);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75), 0 0 30px rgba(6, 182, 212, 0.12);
+  padding: 22px 26px;
+  transform: none !important;
+}
+
+.console-hud-header,
+.spatial-intake-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 16px;
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+
+.console-hud-title-wrap,
+.spatial-intake-title-cluster {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.console-radar-icon {
+  color: var(--scamvera-cyan, #06b6d4);
+  font-size: 14px;
+}
+
+.console-hud-name,
+.spatial-intake-title {
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.04em;
+  font-size: 14px;
+}
+
+.console-hud-coords,
+.spatial-intake-tag {
+  font-size: 12px;
+  color: #94a3b8;
+  letter-spacing: 0.03em;
+}
+
+.console-hud-stats,
+.spatial-intake-meta-cluster {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.console-stat-pill {
+  letter-spacing: 0.03em;
+}
+
+.console-stat-sep {
+  opacity: 0.4;
+}
+
+/* Filmstrip */
+.console-evidence-filmstrip,
+.spatial-intake-images-strip {
+  margin-bottom: 16px;
+  background: rgba(12, 19, 32, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.filmstrip-label {
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--scamvera-cyan, #06b6d4);
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+.filmstrip-thumbnails {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+}
+
+.filmstrip-thumb-cell,
+.spatial-intake-thumb-card {
+  position: relative;
+  width: 110px;
+  height: 80px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #000;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
+}
+
+.filmstrip-img,
+.spatial-intake-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.filmstrip-thumb-info,
+.spatial-intake-thumb-meta {
+  position: absolute;
+  bottom: 0;
+  inset-inline: 0;
+  background: rgba(5, 9, 16, 0.88);
+  padding: 3px 5px;
+  font-family: var(--font-mono, monospace);
+  font-size: 9px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.thumb-fname,
+.spatial-thumb-name {
+  color: var(--scamvera-text, #f8fafc);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 65px;
+}
+
+.thumb-fsize,
+.spatial-thumb-size {
+  color: var(--scamvera-muted, #64748b);
+}
+
+.filmstrip-del-btn,
+.spatial-thumb-remove-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.filmstrip-del-btn:hover,
+.spatial-thumb-remove-btn:hover {
+  background: var(--scamvera-danger, #ef4444);
+}
+
+.filmstrip-add-slot,
+.spatial-add-more-thumb-btn {
+  width: 110px;
+  height: 80px;
+  border-radius: 6px;
+  background: rgba(15, 22, 36, 0.4);
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  color: var(--scamvera-muted, #64748b);
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.filmstrip-add-slot:hover,
+.spatial-add-more-thumb-btn:hover {
+  border-color: var(--scamvera-cyan, #06b6d4);
+  color: var(--scamvera-cyan, #06b6d4);
+}
+
+/* Filmstrip Header Row & Scan Badge */
+.filmstrip-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.filmstrip-scan-badge {
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--scamvera-cyan, #06b6d4);
+}
+
+.filmstrip-scan-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 30;
+}
+
+.filmstrip-scan-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 3px;
+  background: #00f2fe;
+  box-shadow: 0 0 10px #00f2fe, 0 0 20px rgba(6, 182, 212, 0.9);
+  animation: forensicScanSweep 1.8s ease-in-out infinite alternate;
+  pointer-events: none;
+  opacity: 1;
+}
+
+.filmstrip-scan-beam-aura {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -10px;
+  height: 24px;
+  background: linear-gradient(180deg, transparent 0%, rgba(6, 182, 212, 0.25) 50%, transparent 100%);
+  pointer-events: none;
+}
+
+/* Recessed Carrier Inspection Chamber */
+.console-recessed-chamber,
+.spatial-textarea-wrapper {
+  position: relative;
+  display: flex;
+  background: #010307;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: inset 0 3px 14px rgba(0, 0, 0, 0.75);
+  margin-bottom: 16px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.console-recessed-chamber.is-scanning {
+  border-color: rgba(6, 182, 212, 0.85);
+  box-shadow: 0 0 24px rgba(6, 182, 212, 0.25), inset 0 0 24px rgba(6, 182, 212, 0.15);
+}
+
+/* ==========================================================================
+   FORENSIC SCANNER OVERLAY & BEAM (Continuous Bidirectional Forensic Scan)
+   ========================================================================== */
+.evidence-scan-overlay,
+.forensic-scanner-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 40;
+  border-radius: 8px;
+}
+
+.evidence-scan-line,
+.forensic-scanner-beam-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 3px;
+  background: #00f2fe;
+  box-shadow: 
+    0 0 12px #00f2fe, 
+    0 0 24px rgba(6, 182, 212, 0.95), 
+    0 0 40px rgba(20, 184, 166, 0.65);
+  animation: forensicScanSweep 1.8s ease-in-out infinite alternate;
+  pointer-events: none;
+  opacity: 1;
+}
+
+.evidence-scan-beam-aura,
+.forensic-scanner-glow-field {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -14px;
+  height: 32px;
+  background: linear-gradient(180deg, 
+    transparent 0%, 
+    rgba(6, 182, 212, 0.22) 50%, 
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.evidence-scan-label,
+.scanner-beam-label {
+  position: absolute;
+  right: 16px;
+  bottom: 6px;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #00f2fe;
+  background: rgba(4, 7, 14, 0.95);
+  border: 1px solid rgba(6, 182, 212, 0.65);
+  padding: 3px 10px;
+  border-radius: 4px;
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.4);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+@keyframes forensicScanSweep {
+  0% {
+    top: 0%;
+    transform: translateY(0);
+  }
+  100% {
+    top: 100%;
+    transform: translateY(-100%);
+  }
+}
+
+.scanner-reduced-motion-badge {
+  display: none;
+}
+
+.intake-persistent-section {
+  margin-bottom: 40px;
+}
+
+.spatial-anchor-btn.intake-anchor {
+  color: var(--scamvera-cyan, #06b6d4);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  padding-right: 14px;
+  margin-right: 4px;
+}
+
+.chamber-line-counter {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 12px;
+  background: rgba(10, 15, 26, 0.6);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.3);
+  user-select: none;
+  gap: 8px;
+}
+
+.chamber-forensic-textarea,
+.spatial-intake-textarea {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 16px 18px;
+  color: #f5f7fa;
+  font-family: var(--font-sans, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  font-size: 16px;
+  line-height: 1.65;
+  resize: vertical;
+  min-height: 140px;
+  outline: none;
+  letter-spacing: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: box-shadow 0.2s ease;
+}
+
+.chamber-forensic-textarea::placeholder,
+.spatial-intake-textarea::placeholder {
+  color: #64748b;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.chamber-forensic-textarea:focus,
+.spatial-intake-textarea:focus {
+  outline: none;
+  box-shadow: inset 0 0 16px rgba(6, 182, 212, 0.15);
+}
+
+.console-error-strip,
+.spatial-intake-file-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #fca5a5;
+  font-size: 12px;
+  margin-bottom: 14px;
+}
+
+/* Operational Controls Dock */
+.console-dock-rail,
+.spatial-intake-controls-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.dock-left-actions,
+.spatial-controls-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.dock-right-actions,
+.spatial-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dock-tool-btn,
+.spatial-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 22, 36, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--scamvera-text, #f8fafc);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 9px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #0c1422;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #f8fafc;
+  transition: all 0.2s ease;
+}
+
+.dock-tool-btn:hover:not(:disabled),
+.spatial-action-btn:hover:not(:disabled) {
+  background: #142034;
+  border-color: rgba(6, 182, 212, 0.5);
+  color: #ffffff;
+}
+
+.dock-channel-pill,
+.spatial-channel-select-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 13px;
+}
+
+.dock-label,
+.spatial-channel-label {
+  color: #cbd5e1;
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.dock-select,
+.spatial-channel-select {
+  background: #020408;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.dock-anonymize-btn,
+.spatial-anonymize-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #cbd5e1;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dock-anonymize-btn.active,
+.spatial-anonymize-btn.active {
+  background: rgba(20, 184, 166, 0.15);
+  border-color: var(--scamvera-teal, #14b8a6);
+  color: var(--scamvera-teal, #14b8a6);
+}
+
+.dock-clear-btn,
+.spatial-clear-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #cbd5e1;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 9px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.dock-clear-btn:hover,
+.spatial-clear-btn:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.dock-analyze-btn,
+.spatial-investigate-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  border: 1px solid rgba(6, 182, 212, 0.55);
+  color: #fff;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 10px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 18px rgba(6, 182, 212, 0.3);
+}
+
+.dock-analyze-btn:hover:not(:disabled),
+.spatial-investigate-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(6, 182, 212, 0.45);
+}
+
+.dock-analyze-btn:disabled,
+.spatial-investigate-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* -------------------------------------------------------------------------
+   SPATIAL PLANE 3: SATELLITE FORENSIC PRESETS (Crisp Native Plane)
+   ------------------------------------------------------------------------- */
+.forensic-presets-satellite-tray,
+.spatial-examples-strip {
+  width: 100%;
+  max-width: 960px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.presets-tray-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+}
+
+.presets-satellite-chips,
+.spatial-examples-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.preset-satellite-chip,
+.spatial-example-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #0a111e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.preset-satellite-chip:hover,
+.spatial-example-pill:hover {
+  background: #111c2e;
+  border-color: rgba(6, 182, 212, 0.4);
+  transform: translateY(-1px);
+}
+
+.preset-chip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--scamvera-cyan, #06b6d4);
+  box-shadow: 0 0 6px var(--scamvera-cyan, #06b6d4);
+}
+
+.preset-chip-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.preset-name,
+.ex-title {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 13px;
+  color: #f1f5f9;
+  font-weight: 500;
+}
+
+.preset-cat,
+.ex-channel {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 11px;
+  color: var(--scamvera-cyan, #06b6d4);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Report Transition Card */
+.spatial-report-transition-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(8, 13, 22, 0.9) 0%, rgba(15, 22, 36, 0.9) 100%);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  border-radius: 12px;
+  padding: 24px 32px;
+  margin-top: 48px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
+}
+
+.spatial-trans-badge {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--scamvera-cyan, #06b6d4);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.spatial-trans-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--scamvera-text, #f8fafc);
+  margin: 0 0 6px;
+}
+
+.spatial-trans-p {
+  font-size: 13px;
+  color: var(--scamvera-subtle, #cbd5e1);
+  margin: 0;
+  max-width: 680px;
+  line-height: 1.5;
+}
+
+.spatial-view-report-btn {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 12px 24px;
+  white-space: nowrap;
+}
+
+/* Editorial Report Transition Wrapper */
+.spatial-editorial-report-wrapper {
+  background: var(--scamvera-surface, #080d16);
+  border: 1px solid var(--scamvera-border, rgba(255, 255, 255, 0.08));
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.spatial-report-top-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 24px;
+}
+
+.spatial-back-to-world-btn {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.spatial-report-file-tag {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--scamvera-muted, #64748b);
+}
+
+.spatial-loading-pod {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: var(--scamvera-surface, #080d16);
+  border: 1px solid rgba(6, 182, 212, 0.35);
+  border-radius: 12px;
+  padding: 36px;
+  margin: 40px auto;
+  max-width: 600px;
+  box-shadow: 0 0 32px rgba(6, 182, 212, 0.2);
+}
+
+.spatial-loading-spinner {
+  width: 44px;
+  height: 44px;
+  border: 3px solid rgba(6, 182, 212, 0.15);
+  border-top-color: var(--scamvera-cyan, #06b6d4);
+  border-radius: 50%;
+  animation: spinnerRotate 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+.spatial-loading-text h3 {
+  font-family: var(--font-mono, monospace);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--scamvera-cyan, #06b6d4);
+  margin: 0 0 4px;
+}
+
+.spatial-loading-text p {
+  font-size: 12px;
+  color: var(--scamvera-muted, #64748b);
+  margin: 0;
+}
+
+.spatial-error-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 24px;
+}
+
+.spatial-error-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.spatial-error-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--scamvera-danger, #ef4444);
+  color: #fff;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.spatial-error-left strong {
+  font-size: 13px;
+  color: #fca5a5;
+  display: block;
+}
+
+.spatial-error-left p {
+  font-size: 12px;
+  color: #f87171;
+  margin: 2px 0 0;
+}
+
+.spatial-error-dismiss {
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   SPATIAL REDUCED-MOTION & RESPONSIVE BREAKPOINTS
+   ========================================================================== */
+
+@media (max-width: 960px) {
+  .spatial-risk-stage,
+  .spatial-evidence-stage,
+  .spatial-cf-diff-grid,
+  .spatial-directives-matrix {
+    grid-template-columns: 1fr;
+  }
+
+  .attack-stepped-nodes-track,
+  .spatial-chain-spine {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .spatial-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .satellite-evidence-constellation,
+  .spatial-intake-shards-tray {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .satellite-shard-obj.text-shard,
+  .satellite-shard-obj.url-shard,
+  .satellite-shard-obj.img-shard {
+    transform: none;
+    max-width: 100%;
+  }
+
+  .shard-antenna-line {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .forensic-spatial-hud,
+  .spatial-hud-nav-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 16px;
+  }
+
+  .forensic-3d-world,
+  .spatial-camera-stage {
+    transform: none !important;
+  }
+
+  .interactive-stage-plane {
+    padding: 16px 10px 60px;
+    transform: none !important;
+  }
+
+  .attack-stepped-nodes-track,
+  .spatial-chain-spine {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .attack-stepped-node {
+    transform: none !important;
+  }
+
+  .console-dock-rail,
+  .spatial-intake-controls-strip {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dock-left-actions,
+  .dock-right-actions,
+  .spatial-controls-left,
+  .spatial-controls-right {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .dock-analyze-btn,
+  .spatial-investigate-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .spatial-report-transition-card {
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+    text-align: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .forensic-3d-world,
+  .spatial-camera-stage,
+  .satellite-shard-obj,
+  .forensic-carrier-console-deck,
+  .attack-stepped-node,
+  .attack-active-stage-chamber,
+  .spatial-shard-card,
+  .spatial-stage-focus-card,
+  .spatial-indicator-factor-card,
+  .spatial-tactic-signature-card,
+  .forensic-intake-spatial-world,
+  .spatial-intake-terminal-root,
+  .interactive-stage-plane {
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .hud-live-beacon,
+  .spatial-hud-pulse-dot,
+  .spatial-node-beacon,
+  .spatial-loading-spinner,
+  .attack-path-dash-anim {
+    animation: none !important;
+  }
+
+  .deep-background-plane,
+  .datum-horizon-plane {
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .forensic-scanner-beam-line,
+  .filmstrip-scan-beam,
+  .evidence-scan-line,
+  .evidence-scan-beam-aura,
+  .filmstrip-scan-line,
+  .filmstrip-scan-beam-aura {
+    display: none !important;
+    animation: none !important;
+  }
+
+  .scanner-reduced-motion-badge {
+    display: block !important;
+    position: absolute;
+    top: 10px;
+    right: 14px;
+    font-family: var(--font-mono, monospace);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--scamvera-cyan, #06b6d4);
+    background: rgba(12, 19, 32, 0.95);
+    border: 1px solid rgba(6, 182, 212, 0.4);
+    padding: 3px 8px;
+    border-radius: 4px;
+    pointer-events: none;
+  }
+}
+

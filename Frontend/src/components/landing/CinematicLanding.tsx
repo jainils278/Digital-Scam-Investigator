@@ -1,12 +1,15 @@
 import React, { useEffect } from 'react';
 import { CinematicHero } from './CinematicHero';
 import { EvidenceFirstSection } from './EvidenceFirstSection';
-import { IntelligenceShowcase } from './IntelligenceShowcase';
+import { RelationshipScene } from './RelationshipScene';
 import { InvestigationFlow } from './InvestigationFlow';
+import { TacticsScene } from './TacticsScene';
+import { RiskScene } from './RiskScene';
+import { ResponseScene } from './ResponseScene';
+import { PrivacySection } from './PrivacySection';
 import { LandingCTA } from './LandingCTA';
 import { LandingFooter } from './LandingFooter';
 import { LandingNav } from './LandingNav';
-import { PrivacySection } from './PrivacySection';
 
 interface CinematicLandingProps {
   onLaunchWorkstation: () => void;
@@ -16,14 +19,14 @@ export const CinematicLanding: React.FC<CinematicLandingProps> = ({ onLaunchWork
   useEffect(() => {
     // Respect user reduced-motion preference
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      document.querySelectorAll('.landing-section, .landing-hero-section').forEach((el) => {
+      document.querySelectorAll('.landing-section, .landing-hero-section, .monumental-hero-section').forEach((el) => {
         el.classList.add('section-visible');
       });
       return;
     }
 
     // 1. Scroll-triggered reveal sequence observer (replayable bidirectional lifecycle)
-    const targets = document.querySelectorAll('.landing-section, .landing-hero-section');
+    const targets = document.querySelectorAll('.landing-section, .landing-hero-section, .monumental-hero-section');
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -35,7 +38,7 @@ export const CinematicLanding: React.FC<CinematicLandingProps> = ({ onLaunchWork
         });
       },
       {
-        threshold: 0.1,
+        threshold: 0.08,
         rootMargin: '0px 0px -40px 0px',
       }
     );
@@ -66,17 +69,39 @@ export const CinematicLanding: React.FC<CinematicLandingProps> = ({ onLaunchWork
   }, []);
 
   return (
-    <div className="landing-page">
+    <div className="landing-page narrative-stream-container">
       {/* Top Technical Navigation */}
       <LandingNav onLaunchWorkstation={onLaunchWorkstation} />
 
       {/* Main Narrative Content Stream */}
       <main className="landing-main-content">
+        {/* Cinematic Monumental Opening */}
         <CinematicHero onLaunchWorkstation={onLaunchWorkstation} />
-        <EvidenceFirstSection />
+
+        {/* Stage 01: Evidence First */}
+        <div id="evidence-stream">
+          <EvidenceFirstSection />
+        </div>
+
+        {/* Stage 02: Topology & Relationships */}
+        <RelationshipScene />
+
+        {/* Stage 03: Attack Chain Reconstruction */}
         <InvestigationFlow />
-        <IntelligenceShowcase />
+
+        {/* Stage 04: Psychological Tactic Fingerprints */}
+        <TacticsScene />
+
+        {/* Stage 05: Deterministic Risk Authority & Sensitivity */}
+        <RiskScene />
+
+        {/* Stage 06: Incident Containment & Response Directive */}
+        <ResponseScene />
+
+        {/* Architectural Defense: Zero Server Retention & Ephemeral Nonces */}
         <PrivacySection />
+
+        {/* Terminal Gateway: Start Investigation */}
         <LandingCTA onLaunchWorkstation={onLaunchWorkstation} />
       </main>
 

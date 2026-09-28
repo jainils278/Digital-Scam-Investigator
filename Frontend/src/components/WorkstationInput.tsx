@@ -175,7 +175,7 @@ export const WorkstationInput: React.FC<WorkstationInputProps> = ({
 
   return (
     <div
-      className={`panel-card workstation-card unified-composer-card ${isDragOver ? 'drag-over' : ''}`}
+      className={`panel-card workstation-card unified-composer-card spatial-workstation-input-frame ${isDragOver ? 'drag-over spatial-drop-active' : ''}`}
       role="region"
       aria-label="Unified Investigation Composer"
       onDragOver={handleDragOver}
