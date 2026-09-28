@@ -10,7 +10,9 @@ import { SpatialAttackChain } from './SpatialAttackChain';
 import { SpatialTacticField } from './SpatialTacticField';
 import { SpatialCounterfactualDiff } from './SpatialCounterfactualDiff';
 import { SpatialResponseDirective } from './SpatialResponseDirective';
+import { PrimaryReportOverview } from './PrimaryReportOverview';
 import { InvestigationReportView } from '../InvestigationReportView';
+import { downloadInvestigationPdf, generateFullInvestigationReport, downloadCaseJson } from '../../utils/reportGenerator';
 
 interface InvestigationEnvironmentProps {
   // Input State
@@ -62,6 +64,7 @@ export const InvestigationEnvironment: React.FC<InvestigationEnvironmentProps> =
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [activeViewMode, setActiveViewMode] = useState<'SPATIAL' | 'REPORT'>('SPATIAL');
+  const [activeReportTab, setActiveReportTab] = useState<'OVERVIEW' | 'ADDITIONAL_INFO'>('OVERVIEW');
   const [isLocallyTriggered, setIsLocallyTriggered] = useState(false);
 
   // Synchronize forensic scanner with real investigation lifecycle
@@ -277,37 +280,6 @@ export const InvestigationEnvironment: React.FC<InvestigationEnvironmentProps> =
           {/* Mode B: Active Investigation Case (Continuous 3D Forensic World with Persistent Intake) */}
           {report && activeViewMode === 'SPATIAL' && (
             <div className="spatial-active-case-stream">
-              {/* Quick Navigation Anchor Bar */}
-              <div className="spatial-anchors-bar">
-                <button type="button" onClick={() => scrollToModule('mod-intake')} className="spatial-anchor-btn intake-anchor">
-                  00 INTAKE
-                </button>
-                <button type="button" onClick={() => scrollToModule('mod-risk')} className="spatial-anchor-btn">
-                  01 RISK
-                </button>
-                <button type="button" onClick={() => scrollToModule('mod-evidence')} className="spatial-anchor-btn">
-                  02 EVIDENCE
-                </button>
-                <button type="button" onClick={() => scrollToModule('mod-topology')} className="spatial-anchor-btn">
-                  03 TOPOLOGY
-                </button>
-                <button type="button" onClick={() => scrollToModule('mod-chain')} className="spatial-anchor-btn">
-                  04 ATTACK CHAIN
-                </button>
-                <button type="button" onClick={() => scrollToModule('mod-tactics')} className="spatial-anchor-btn">
-                  05 TACTICS
-                </button>
-                <button type="button" onClick={() => scrollToModule('mod-counterfactual')} className="spatial-anchor-btn">
-                  06 SENSITIVITY
-                </button>
-                <button type="button" onClick={() => scrollToModule('mod-containment')} className="spatial-anchor-btn">
-                  07 CONTAINMENT
-                </button>
-                <button type="button" onClick={() => setActiveViewMode('REPORT')} className="spatial-anchor-btn report-cta">
-                  08 REPORT FILE →
-                </button>
-              </div>
-
               {/* 00: Persistent Evidence Intake (Always accessible for revision/re-investigation) */}
               <section id="mod-intake" className="spatial-module-section intake-persistent-section">
                 <SpatialEvidenceIntake
@@ -328,96 +300,274 @@ export const InvestigationEnvironment: React.FC<InvestigationEnvironmentProps> =
                 />
               </section>
 
-              {/* 01: Risk Instrument */}
-              <section id="mod-risk" className="spatial-module-section">
-                <SpatialRiskInstrument
-                  riskAssessment={report.riskAssessment}
-                  observedIndicators={report.observedIndicators}
-                  waterfall={report.riskAssessment.waterfall?.contributions}
-                  selectedIndicatorId={selectedIndicatorId}
-                  onSelectIndicator={onSelectIndicator}
-                />
-              </section>
-
-              {/* 02: Evidence Field */}
-              <section id="mod-evidence" className="spatial-module-section">
-                <SpatialEvidenceField
-                  rawText={report.rawText}
-                  observedIndicators={report.observedIndicators}
-                  screenshotMeta={report.screenshotMeta}
-                  screenshotsMeta={report.screenshotsMeta}
-                  selectedIndicatorId={selectedIndicatorId}
-                  onSelectIndicator={onSelectIndicator}
-                />
-              </section>
-
-              {/* 03: Evidence Topology */}
-              <section id="mod-topology" className="spatial-module-section">
-                <SpatialEvidenceGraph
-                  evidenceGraph={report.evidenceIntelligence?.graph}
-                  observedIndicators={report.observedIndicators}
-                  selectedIndicatorId={selectedIndicatorId}
-                  onSelectIndicator={onSelectIndicator}
-                />
-              </section>
-
-              {/* 04: Attack Chain */}
-              <section id="mod-chain" className="spatial-module-section">
-                <SpatialAttackChain
-                  timeline={report.evidenceIntelligence?.timeline}
-                  observedIndicators={report.observedIndicators}
-                />
-              </section>
-
-              {/* 05: Psychological Tactics */}
-              <section id="mod-tactics" className="spatial-module-section">
-                <SpatialTacticField
-                  tacticProfile={report.tactics}
-                  observedIndicators={report.observedIndicators}
-                />
-              </section>
-
-              {/* 06: Counterfactual & Obfuscation */}
-              <section id="mod-counterfactual" className="spatial-module-section">
-                <SpatialCounterfactualDiff
-                  counterfactualAnalysis={report.counterfactuals}
-                  obfuscationAnalysis={report.obfuscationAnalysis}
-                  baselineScore={report.riskAssessment.score}
-                />
-              </section>
-
-              {/* 07: Incident Containment Directives */}
-              <section id="mod-containment" className="spatial-module-section">
-                <SpatialResponseDirective
-                  defensiveRecommendations={report.defensiveRecommendations}
-                  victimState={report.victimResponse?.declaredState || victimState}
-                  onChangeVictimState={onChangeVictimState}
-                  institutionVerification={report.institutionVerification}
-                />
-              </section>
-
-              {/* Transition to Report CTA */}
-              <div className="spatial-report-transition-card">
-                <div className="spatial-transition-content">
-                  <span className="spatial-trans-badge">CASE FILE SECURED</span>
-                  <h3 className="spatial-trans-title">TRANSITION TO FULL EDITORIAL FORENSIC REPORT</h3>
-                  <p className="spatial-trans-p">
-                    Review complete indicator provenance, contradiction matrix, missing evidence analysis, and export officially certified case files in PDF, HTML, or JSON format.
-                  </p>
+              {/* Progressive Disclosure Navigation Bar */}
+              <div className="report-progressive-nav-bar" id="report-nav-bar">
+                <div className="report-nav-pill-group">
+                  <button
+                    type="button"
+                    className={`report-nav-pill ${activeReportTab === 'OVERVIEW' ? 'active' : ''}`}
+                    onClick={() => setActiveReportTab('OVERVIEW')}
+                    id="tab-report-overview"
+                  >
+                    Overview
+                  </button>
+                  <button
+                    type="button"
+                    className={`report-nav-pill ${activeReportTab === 'ADDITIONAL_INFO' ? 'active' : ''}`}
+                    onClick={() => setActiveReportTab('ADDITIONAL_INFO')}
+                    id="tab-report-additional-info"
+                  >
+                    Additional Information
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  className="btn-primary spatial-view-report-btn"
-                  onClick={() => {
-                    setActiveViewMode('REPORT');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                >
-                  OPEN CASE FILE →
-                </button>
+
+                <div className="report-nav-actions-group">
+                  <button
+                    type="button"
+                    className="report-nav-action-btn"
+                    onClick={() => downloadInvestigationPdf(report)}
+                    id="nav-download-pdf-btn"
+                    title="Download Official PDF Report"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    <span>Download PDF</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="report-nav-action-btn"
+                    onClick={() => generateFullInvestigationReport(report)}
+                    id="nav-download-html-btn"
+                    title="Download Standalone HTML Report"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                    <span>Download HTML</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="report-nav-action-btn"
+                    onClick={() => downloadCaseJson(report)}
+                    id="nav-export-json-btn"
+                    title="Export Structured Case JSON"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                      <polyline points="22,6 12,13 2,6" />
+                    </svg>
+                    <span>Export JSON</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="report-nav-action-btn editorial-view-btn"
+                    onClick={() => setActiveViewMode('REPORT')}
+                    id="nav-editorial-view-btn"
+                    title="Switch to Editorial Case File View"
+                  >
+                    <span>Editorial File View →</span>
+                  </button>
+                </div>
               </div>
+
+              {/* View 1: PRIMARY OVERVIEW (Default - Simple by Default) */}
+              {activeReportTab === 'OVERVIEW' && (
+                <PrimaryReportOverview
+                  report={report}
+                  onViewAdditionalInfo={() => {
+                    setActiveReportTab('ADDITIONAL_INFO');
+                    const nav = document.getElementById('report-nav-bar');
+                    if (nav) nav.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  onDownloadPdf={() => downloadInvestigationPdf(report)}
+                  onDownloadHtml={() => generateFullInvestigationReport(report)}
+                  onDownloadJson={() => downloadCaseJson(report)}
+                />
+              )}
+
+              {/* View 2: ADDITIONAL INFORMATION (Deep by Choice) */}
+              {activeReportTab === 'ADDITIONAL_INFO' && (
+                <div className="additional-info-container" id="additional-info-container">
+                  {/* Investigator Jump Strip */}
+                  <div className="additional-info-jump-strip">
+                    <button
+                      type="button"
+                      className="back-to-overview-pill"
+                      onClick={() => setActiveReportTab('OVERVIEW')}
+                      id="btn-back-to-overview"
+                    >
+                      ← Back to Overview
+                    </button>
+                    <div className="jump-strip-links">
+                      <button type="button" onClick={() => scrollToModule('mod-evidence')} className="jump-link-btn">
+                        Evidence &amp; Matches
+                      </button>
+                      <button type="button" onClick={() => scrollToModule('mod-risk')} className="jump-link-btn">
+                        Why this score?
+                      </button>
+                      <button type="button" onClick={() => scrollToModule('mod-chain')} className="jump-link-btn">
+                        How the scam works
+                      </button>
+                      <button type="button" onClick={() => scrollToModule('mod-topology')} className="jump-link-btn">
+                        Evidence connections
+                      </button>
+                      <button type="button" onClick={() => scrollToModule('mod-tactics')} className="jump-link-btn">
+                        Scam tactics detected
+                      </button>
+                      <button type="button" onClick={() => scrollToModule('mod-counterfactual')} className="jump-link-btn">
+                        Things that don't add up
+                      </button>
+                      <button type="button" onClick={() => scrollToModule('mod-containment')} className="jump-link-btn">
+                        What you should do now
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 01: Evidence & Exact Matches */}
+                  <section id="mod-evidence" className="spatial-module-section">
+                    <div className="module-section-header-row">
+                      <span className="module-section-number">01</span>
+                      <h3 className="module-section-title">Evidence &amp; Exact Matches</h3>
+                    </div>
+                    <SpatialEvidenceField
+                      rawText={report.rawText}
+                      observedIndicators={report.observedIndicators}
+                      screenshotMeta={report.screenshotMeta}
+                      screenshotsMeta={report.screenshotsMeta}
+                      selectedIndicatorId={selectedIndicatorId}
+                      onSelectIndicator={onSelectIndicator}
+                    />
+                  </section>
+
+                  {/* 02: Why this score? */}
+                  <section id="mod-risk" className="spatial-module-section">
+                    <div className="module-section-header-row">
+                      <span className="module-section-number">02</span>
+                      <h3 className="module-section-title">Why This Score?</h3>
+                    </div>
+                    <SpatialRiskInstrument
+                      riskAssessment={report.riskAssessment}
+                      observedIndicators={report.observedIndicators}
+                      waterfall={report.riskAssessment.waterfall?.contributions}
+                      selectedIndicatorId={selectedIndicatorId}
+                      onSelectIndicator={onSelectIndicator}
+                    />
+                  </section>
+
+                  {/* 03: How the scam works */}
+                  <section id="mod-chain" className="spatial-module-section">
+                    <div className="module-section-header-row">
+                      <span className="module-section-number">03</span>
+                      <h3 className="module-section-title">How The Scam Works</h3>
+                    </div>
+                    <SpatialAttackChain
+                      timeline={report.evidenceIntelligence?.timeline}
+                      observedIndicators={report.observedIndicators}
+                    />
+                  </section>
+
+                  {/* 04: Evidence connections */}
+                  <section id="mod-topology" className="spatial-module-section">
+                    <div className="module-section-header-row">
+                      <span className="module-section-number">04</span>
+                      <h3 className="module-section-title">Evidence Connections</h3>
+                    </div>
+                    <SpatialEvidenceGraph
+                      evidenceGraph={report.evidenceIntelligence?.graph}
+                      observedIndicators={report.observedIndicators}
+                      selectedIndicatorId={selectedIndicatorId}
+                      onSelectIndicator={onSelectIndicator}
+                    />
+                  </section>
+
+                  {/* 05: Scam tactics detected */}
+                  <section id="mod-tactics" className="spatial-module-section">
+                    <div className="module-section-header-row">
+                      <span className="module-section-number">05</span>
+                      <h3 className="module-section-title">Scam Tactics Detected</h3>
+                    </div>
+                    <SpatialTacticField
+                      tacticProfile={report.tactics}
+                      observedIndicators={report.observedIndicators}
+                    />
+                  </section>
+
+                  {/* 06: Things that don't add up & Sensitivity */}
+                  <section id="mod-counterfactual" className="spatial-module-section">
+                    <div className="module-section-header-row">
+                      <span className="module-section-number">06</span>
+                      <h3 className="module-section-title">Things That Don't Add Up &amp; Sensitivity</h3>
+                    </div>
+                    <SpatialCounterfactualDiff
+                      counterfactualAnalysis={report.counterfactuals}
+                      obfuscationAnalysis={report.obfuscationAnalysis}
+                      baselineScore={report.riskAssessment.score}
+                    />
+                  </section>
+
+                  {/* 07: What you should do now & Containment */}
+                  <section id="mod-containment" className="spatial-module-section">
+                    <div className="module-section-header-row">
+                      <span className="module-section-number">07</span>
+                      <h3 className="module-section-title">What You Should Do Now &amp; Containment</h3>
+                    </div>
+                    <SpatialResponseDirective
+                      defensiveRecommendations={report.defensiveRecommendations}
+                      victimState={report.victimResponse?.declaredState || victimState}
+                      onChangeVictimState={onChangeVictimState}
+                      institutionVerification={report.institutionVerification}
+                    />
+                  </section>
+
+                  {/* Return to Overview Footer */}
+                  <div className="additional-info-footer-bar">
+                    <button
+                      type="button"
+                      className="btn-return-overview"
+                      onClick={() => {
+                        setActiveReportTab('OVERVIEW');
+                        const nav = document.getElementById('report-nav-bar');
+                        if (nav) nav.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                    >
+                      ← Return to Simple Overview
+                    </button>
+                    <div className="additional-info-download-actions">
+                      <button
+                        type="button"
+                        className="btn-download-report-subtle"
+                        onClick={() => downloadInvestigationPdf(report)}
+                      >
+                        Download PDF
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-download-report-subtle"
+                        onClick={() => generateFullInvestigationReport(report)}
+                      >
+                        Download HTML
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-download-report-subtle"
+                        onClick={() => downloadCaseJson(report)}
+                      >
+                        Export JSON
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
+
 
           {/* Mode C: Editorial Case File View */}
           {report && activeViewMode === 'REPORT' && (

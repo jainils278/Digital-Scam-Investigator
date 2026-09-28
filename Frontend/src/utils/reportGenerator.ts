@@ -11,6 +11,7 @@
  */
 
 import type { InvestigationReport } from '../types';
+import { deriveExecutiveSummary } from './executiveSummary';
 
 /* ========================================================================== */
 /* PDF Generation Primitives (Pure Client-Side / Offline / Zero Dependency)  */
@@ -273,7 +274,7 @@ export function generateInvestigationPdfBytes(report: InvestigationReport): Uint
     institutionVerification,
   } = report;
 
-  const { score, level, evidenceStrength, primaryCategories, waterfall } = riskAssessment;
+  const { score, level, evidenceStrength, waterfall } = riskAssessment;
   const formattedDate = new Date(timestamp).toUTCString();
 
   const isScreenshot = !!screenshotMeta;
@@ -284,40 +285,79 @@ export function generateInvestigationPdfBytes(report: InvestigationReport): Uint
     ? 'DIRECT URL INVESTIGATION'
     : 'TEXT MESSAGE INVESTIGATION';
 
+  const summary = deriveExecutiveSummary(report);
+
+  // =========================================================================
+  // PAGE 1: SCAMVERA INVESTIGATION - EXECUTIVE REPORT (Progressive Disclosure)
+  // =========================================================================
+
   // 1. Header Banner
   writer.fillRect(40, writer.getY() - 28, 515, 34, 0.04, 0.07, 0.13);
-  writer.addLine('DIGITAL SCAM INVESTIGATOR - OFFICIAL AUDIT REPORT', 'F2', 12, 1, 1, 1, 15, 10);
+  writer.addLine('SCAMVERA INVESTIGATION', 'F2', 13, 1, 1, 1, 15, 10);
   writer.addLine(`REPORT ID: ${id}  •  DATE: ${formattedDate}  •  MODE: ${modeLabel}`, 'F1', 7.5, 0.7, 0.8, 0.9, 14, 10);
 
-  // 2. Risk Rating Banner
-  writer.checkSpace(50);
+  // 2. [FINAL RISK]
   let r = 0.01, g = 0.52, b = 0.78;
   if (level === 'CRITICAL') { r = 0.86; g = 0.15; b = 0.15; }
   else if (level === 'HIGH') { r = 0.92; g = 0.35; b = 0.05; }
   else if (level === 'MEDIUM') { r = 0.85; g = 0.47; b = 0.02; }
   else if (level === 'LOW') { r = 0.02; g = 0.59; b = 0.41; }
 
-  writer.fillRect(40, writer.getY() - 36, 515, 42, 0.07, 0.10, 0.18);
-  writer.strokeRect(40, writer.getY() - 36, 515, 42, r, g, b, 1);
-  writer.addLine(`OVERALL RISK RATING: ${score} / 100  [ ${level} RISK ]`, 'F2', 12.5, r, g, b, 16, 12);
-  writer.addLine(`Evidence Strength: ${evidenceStrength}  •  Primary Categories: ${primaryCategories.join(', ') || 'None'}`, 'F1', 8, 0.8, 0.85, 0.9, 18, 12);
+  writer.checkSpace(52);
+  writer.fillRect(40, writer.getY() - 42, 515, 46, 0.07, 0.10, 0.18);
+  writer.strokeRect(40, writer.getY() - 42, 515, 46, r, g, b, 1.2);
+  writer.addLine(`[FINAL RISK]  ${summary.riskLevel} RISK  •  ${summary.riskScore} / 100`, 'F2', 13, r, g, b, 15, 12);
+  writer.addParagraph(summary.plainEnglishSummary, 'F1', 8, 0.85, 0.9, 0.95, 11, 12, 490);
 
-  // 3. Simple Executive Conclusion
-  const getSimpleConclusion = () => {
-    if (level === 'BENIGN' || level === 'LOW') {
-      return `The ${isScreenshot ? 'image' : isUrlMode ? 'URL' : 'message'} does not contain recognized scam patterns currently checked by the system. However, this does not verify sender identity or guarantee authenticity.`;
-    }
-    if (level === 'CRITICAL' || level === 'HIGH') {
-      return `The ${isScreenshot ? 'image' : isUrlMode ? 'URL' : 'message'} contains high-risk indicators associated with ${primaryCategories.join(' and ') || 'suspicious communications'}. Immediate caution is advised before clicking links, sharing information, or sending payments.`;
-    }
-    return `The ${isScreenshot ? 'image' : isUrlMode ? 'URL' : 'message'} contains cautionary warning signs commonly associated with ${primaryCategories.join(' and ') || 'suspicious communications'}. Verify the sender through trusted independent channels before responding.`;
-  };
+  // 3. [WHY THIS WAS FLAGGED]
   writer.checkSpace(28);
-  writer.addLine('INVESTIGATION CONCLUSION:', 'F2', 9, 0.22, 0.74, 0.97, 12);
-  writer.addParagraph(getSimpleConclusion(), 'F1', 8, 0.2, 0.25, 0.3, 11, 8);
+  writer.addSectionHeading('WHY THIS WAS FLAGGED');
+  if (summary.strongestIndicators.length > 0) {
+    for (const ind of summary.strongestIndicators) {
+      writer.checkSpace(24);
+      writer.addLine(`• ${ind.name} [${ind.severity}]`, 'F2', 8.5, r, g, b, 10.5, 8);
+      writer.addParagraph(ind.whyItMatters, 'F1', 7.5, 0.25, 0.3, 0.35, 10, 16);
+    }
+  } else {
+    writer.addParagraph('No recognized scam patterns detected in the submitted content.', 'F1', 8, 0.4, 0.45, 0.5, 10, 8);
+  }
+
+  // 4. [WHAT YOU SHOULD DO]
+  writer.checkSpace(28);
+  writer.addSectionHeading('WHAT YOU SHOULD DO');
+  for (const item of summary.doActions) {
+    writer.checkSpace(14);
+    writer.addLine(`[YES]  ${item}`, 'F2', 8, 0.02, 0.59, 0.41, 10.5, 8);
+  }
+
+  // 5. [WHAT YOU SHOULD NOT DO]
+  writer.checkSpace(28);
+  writer.addSectionHeading('WHAT YOU SHOULD NOT DO');
+  for (const item of summary.dontActions) {
+    writer.checkSpace(14);
+    writer.addLine(`[NO]   ${item}`, 'F2', 8, 0.86, 0.15, 0.15, 10.5, 8);
+  }
+
+  // 6. [ASSESSMENT DISCLAIMER]
+  writer.checkSpace(30);
+  writer.fillRect(40, writer.getY() - 24, 515, 26, 0.06, 0.09, 0.14);
+  writer.strokeRect(40, writer.getY() - 24, 515, 26, 0.3, 0.4, 0.5, 0.5);
+  writer.addLine('ASSESSMENT DISCLAIMER:', 'F2', 7.5, 0.58, 0.64, 0.72, 9, 8);
+  writer.addParagraph(summary.disclaimer, 'F3', 7, 0.45, 0.52, 0.60, 8.5, 8, 495);
+
+  // =========================================================================
+  // PAGE 2+: DETAILED FORENSIC DOSSIER & METHODOLOGY
+  // =========================================================================
+  writer.startNewPage();
+
+  writer.fillRect(40, writer.getY() - 28, 515, 34, 0.04, 0.07, 0.13);
+  writer.addLine('DIGITAL SCAM INVESTIGATOR - OFFICIAL AUDIT REPORT', 'F2', 12, 1, 1, 1, 15, 10);
+  writer.addLine(`DETAILED FORENSIC INVESTIGATION DOSSIER  •  OVERALL RISK: ${score} / 100 [ ${level} RISK ]`, 'F2', 8, 0.22, 0.74, 0.97, 12, 10);
+  writer.addLine(`OVERALL RISK RATING: ${score} / 100  [ ${level} RISK ]  •  EVIDENCE STRENGTH: ${evidenceStrength}`, 'F1', 7.5, 0.7, 0.8, 0.9, 14, 10);
 
   // 4. Explainable Risk Waterfall Breakdown
   if (waterfall) {
+
     writer.addSectionHeading('Explainable Risk Waterfall Breakdown');
     writer.addLine(`Base Contributing Factors: +${waterfall.baseScore} pts`, 'F2', 8.5, 0.22, 0.74, 0.97, 12);
     const baseItems = waterfall.contributions.filter((c) => c.type === 'BASE_SEVERITY');
@@ -420,10 +460,18 @@ export function generateInvestigationPdfBytes(report: InvestigationReport): Uint
   } else {
     for (const ind of observedIndicators) {
       writer.checkSpace(28);
-      writer.addLine(`• ${ind.name} [${ind.severity}] (Offset: [${ind.characterRange[0]} - ${ind.characterRange[1]}])`, 'F2', 8.5, 0.1, 0.15, 0.2, 11.5);
-      writer.addQuote(ind.evidence);
-      writer.addParagraph(`Finding Details: ${ind.explanation}`, 'F1', 7.5, 0.25, 0.3, 0.35, 10, 6);
-      writer.addParagraph(`Why This Matters: ${ind.whyItMatters}`, 'F1', 7.5, 0.4, 0.45, 0.5, 10, 6);
+      const anyInd = ind as any;
+      const rangeStr = anyInd.characterRange
+        ? ` (Offset: [${anyInd.characterRange[0]} - ${anyInd.characterRange[1]}])`
+        : (anyInd.offsetStart !== undefined && anyInd.offsetEnd !== undefined)
+        ? ` (Offset: [${anyInd.offsetStart} - ${anyInd.offsetEnd}])`
+        : '';
+      writer.addLine(`• ${anyInd.name} [${anyInd.severity}]${rangeStr}`, 'F2', 8.5, 0.1, 0.15, 0.2, 11.5);
+      writer.addQuote(anyInd.evidence || anyInd.evidenceQuote || '');
+      writer.addParagraph(`Finding Details: ${anyInd.explanation || anyInd.description || ''}`, 'F1', 7.5, 0.25, 0.3, 0.35, 10, 6);
+      if (anyInd.whyItMatters) {
+        writer.addParagraph(`Why This Matters: ${anyInd.whyItMatters}`, 'F1', 7.5, 0.4, 0.45, 0.5, 10, 6);
+      }
     }
   }
 
@@ -450,7 +498,9 @@ export function generateInvestigationPdfBytes(report: InvestigationReport): Uint
   } else if (isUrlMode) {
     writer.addLine(`Target URL: ${urlAnalysis?.[0]?.url || rawText}`, 'F2', 8, 0.22, 0.74, 0.97, 11);
   } else {
-    writer.addLine(`Channel: ${inputMeta.messageType.toUpperCase()}  •  Length: ${inputMeta.characterCount} chars (${inputMeta.wordCount} words)`, 'F1', 7.5, 0.4, 0.45, 0.5, 10);
+    if (inputMeta) {
+      writer.addLine(`Channel: ${inputMeta.messageType.toUpperCase()}  •  Length: ${inputMeta.characterCount} chars (${inputMeta.wordCount} words)`, 'F1', 7.5, 0.4, 0.45, 0.5, 10);
+    }
     writer.addParagraph(rawText, 'F4', 7.5, 0.2, 0.25, 0.3, 9.5, 6);
   }
 
@@ -489,19 +539,29 @@ export function generateInvestigationPdfBytes(report: InvestigationReport): Uint
   }
 
   // 12. Contextual AI Analysis
-  writer.addSectionHeading('Contextual AI Analysis (Advisory Only)');
-  writer.addParagraph('Notice: Contextual synthesis provides behavioral context and does not constitute physical evidence.', 'F3', 7.5, 0.45, 0.5, 0.55, 9.5);
-  writer.addParagraph(aiContext.socialEngineeringTactics, 'F1', 8, 0.2, 0.25, 0.3, 10.5);
-  if (aiContext.scamArchetypes && aiContext.scamArchetypes.length > 0) {
-    writer.addLine(`Associated Scam Archetypes: ${aiContext.scamArchetypes.join(', ')}`, 'F1', 7.5, 0.3, 0.35, 0.4, 10);
-  }
-  if (aiContext.psychologicalTriggers && aiContext.psychologicalTriggers.length > 0) {
-    writer.addLine(`Identified Persuasion Triggers: ${aiContext.psychologicalTriggers.join(', ')}`, 'F1', 7.5, 0.3, 0.35, 0.4, 10);
+  if (aiContext) {
+    writer.addSectionHeading('Contextual AI Analysis (Advisory Only)');
+    writer.addParagraph('Notice: Contextual synthesis provides behavioral context and does not constitute physical evidence.', 'F3', 7.5, 0.45, 0.5, 0.55, 9.5);
+    writer.addParagraph(aiContext.socialEngineeringTactics || '', 'F1', 8, 0.2, 0.25, 0.3, 10.5);
+    if (aiContext.scamArchetypes && aiContext.scamArchetypes.length > 0) {
+      writer.addLine(`Associated Scam Archetypes: ${aiContext.scamArchetypes.join(', ')}`, 'F1', 7.5, 0.3, 0.35, 0.4, 10);
+    }
+    if (aiContext.psychologicalTriggers && aiContext.psychologicalTriggers.length > 0) {
+      writer.addLine(`Identified Persuasion Triggers: ${aiContext.psychologicalTriggers.join(', ')}`, 'F1', 7.5, 0.3, 0.35, 0.4, 10);
+    }
   }
 
   // 13. Prioritized Defensive Protocols
   writer.addSectionHeading('Prioritized Defensive Protocols');
-  for (const act of defensiveRecommendations) {
+  let pdfRecs: Array<{ action: string; detail?: string }> = [];
+  if (Array.isArray(defensiveRecommendations)) {
+    pdfRecs = defensiveRecommendations;
+  } else if (defensiveRecommendations && typeof defensiveRecommendations === 'object') {
+    const imm = (defensiveRecommendations as any).immediateActions || [];
+    const cont = (defensiveRecommendations as any).containmentSteps || [];
+    pdfRecs = [...imm, ...cont].map((text: string) => ({ action: text, detail: '' }));
+  }
+  for (const act of pdfRecs) {
     const isDoNot =
       act.action.toLowerCase().includes('not') ||
       act.action.toLowerCase().includes('halt') ||
@@ -509,7 +569,9 @@ export function generateInvestigationPdfBytes(report: InvestigationReport): Uint
       act.action.toLowerCase().includes('never');
     writer.checkSpace(20);
     writer.addLine(`[${isDoNot ? 'DO NOT' : 'DO'}] ${act.action}`, 'F2', 8, isDoNot ? 0.75 : 0.05, isDoNot ? 0.15 : 0.5, isDoNot ? 0.15 : 0.3, 11);
-    writer.addParagraph(act.detail, 'F1', 7.5, 0.3, 0.35, 0.4, 10, 6);
+    if (act.detail) {
+      writer.addParagraph(act.detail, 'F1', 7.5, 0.3, 0.35, 0.4, 10, 6);
+    }
   }
 
   // 13B. V3.1 Victim-State Incident Containment & Response
@@ -811,36 +873,98 @@ function generateInvestigationPdfBytes(report) {
   var isUrlMode = !!(urlAnalysis && urlAnalysis.length > 0);
   var modeLabel = isScreenshot ? 'SCREENSHOT / OCR INVESTIGATION' : isUrlMode ? 'DIRECT URL INVESTIGATION' : 'TEXT MESSAGE INVESTIGATION';
 
+  // =========================================================================
+  // PAGE 1: SCAMVERA INVESTIGATION - EXECUTIVE REPORT (Progressive Disclosure)
+  // =========================================================================
+
   // 1. Header Banner
   writer.fillRect(40, writer.getY() - 28, 515, 34, 0.04, 0.07, 0.13);
-  writer.addLine('DIGITAL SCAM INVESTIGATOR - OFFICIAL AUDIT REPORT', 'F2', 12, 1, 1, 1, 15, 10);
+  writer.addLine('SCAMVERA INVESTIGATION', 'F2', 13, 1, 1, 1, 15, 10);
   writer.addLine('REPORT ID: ' + id + '  •  DATE: ' + formattedDate + '  •  MODE: ' + modeLabel, 'F1', 7.5, 0.7, 0.8, 0.9, 14, 10);
 
   // 2. Risk Rating Banner
-  writer.checkSpace(50);
   var r = 0.01, g = 0.52, b = 0.78;
   if (level === 'CRITICAL') { r = 0.86; g = 0.15; b = 0.15; }
   else if (level === 'HIGH') { r = 0.92; g = 0.35; b = 0.05; }
   else if (level === 'MEDIUM') { r = 0.85; g = 0.47; b = 0.02; }
   else if (level === 'LOW') { r = 0.02; g = 0.59; b = 0.41; }
 
-  writer.fillRect(40, writer.getY() - 36, 515, 42, 0.07, 0.10, 0.18);
-  writer.strokeRect(40, writer.getY() - 36, 515, 42, r, g, b, 1);
-  writer.addLine('OVERALL RISK RATING: ' + score + ' / 100  [ ' + level + ' RISK ]', 'F2', 12.5, r, g, b, 16, 12);
-  writer.addLine('Evidence Strength: ' + evidenceStrength + '  •  Primary Categories: ' + (primaryCategories.join(', ') || 'None'), 'F1', 8, 0.8, 0.85, 0.9, 18, 12);
-
-  // 3. Simple Executive Conclusion
-  var simpleConclusion = '';
-  if (level === 'BENIGN' || level === 'LOW') {
-    simpleConclusion = 'The ' + (isScreenshot ? 'image' : isUrlMode ? 'URL' : 'message') + ' does not contain recognized scam patterns currently checked by the system. However, this does not verify sender identity or guarantee authenticity.';
-  } else if (level === 'CRITICAL' || level === 'HIGH') {
-    simpleConclusion = 'The ' + (isScreenshot ? 'image' : isUrlMode ? 'URL' : 'message') + ' contains high-risk indicators associated with ' + (primaryCategories.join(' and ') || 'suspicious communications') + '. Immediate caution is advised before clicking links, sharing information, or sending payments.';
+  var plainSummary = '';
+  if (level === 'CRITICAL') {
+    plainSummary = 'This message contains multiple severe indicators commonly associated with active fraud or credential theft attempts.';
+  } else if (level === 'HIGH') {
+    plainSummary = 'This message contains several warning indicators commonly associated with scam or deception attempts.';
+  } else if (level === 'MEDIUM') {
+    plainSummary = 'This message contains suspicious patterns that warrant caution and independent verification.';
+  } else if (level === 'LOW') {
+    plainSummary = 'Few suspicious patterns were identified, but vigilance is still advised for unverified contacts.';
   } else {
-    simpleConclusion = 'The ' + (isScreenshot ? 'image' : isUrlMode ? 'URL' : 'message') + ' contains cautionary warning signs commonly associated with ' + (primaryCategories.join(' and ') || 'suspicious communications') + '. Verify the sender through trusted independent channels before responding.';
+    plainSummary = 'No recognized suspicious scam indicators were detected in the submitted content.';
   }
+
+  writer.checkSpace(52);
+  writer.fillRect(40, writer.getY() - 42, 515, 46, 0.07, 0.10, 0.18);
+  writer.strokeRect(40, writer.getY() - 42, 515, 46, r, g, b, 1.2);
+  writer.addLine('[FINAL RISK]  ' + level + ' RISK  •  ' + score + ' / 100', 'F2', 13, r, g, b, 15, 12);
+  writer.addParagraph(plainSummary, 'F1', 8, 0.85, 0.9, 0.95, 11, 12, 490);
+
+  // 3. Why This Was Flagged
   writer.checkSpace(28);
-  writer.addLine('INVESTIGATION CONCLUSION:', 'F2', 9, 0.22, 0.74, 0.97, 12);
-  writer.addParagraph(simpleConclusion, 'F1', 8, 0.2, 0.25, 0.3, 11, 8);
+  writer.addSectionHeading('WHY THIS WAS FLAGGED');
+  if (observedIndicators.length > 0) {
+    for (var i = 0; i < Math.min(5, observedIndicators.length); i++) {
+      var ind = observedIndicators[i];
+      writer.checkSpace(24);
+      writer.addLine('• ' + (ind.name || 'Indicator') + ' [' + (ind.severity || 'HIGH') + ']', 'F2', 8.5, r, g, b, 10.5, 8);
+      writer.addParagraph(ind.whyItMatters || ind.explanation || 'Identified pattern consistent with scam communications.', 'F1', 7.5, 0.25, 0.3, 0.35, 10, 16);
+    }
+  } else {
+    writer.addParagraph('No recognized scam patterns detected in the submitted content.', 'F1', 8, 0.4, 0.45, 0.5, 10, 8);
+  }
+
+  // 4. What You Should Do
+  writer.checkSpace(28);
+  writer.addSectionHeading('WHAT YOU SHOULD DO');
+  var defaultDos = [
+    'Verify the claim using the organization official website or app.',
+    'Contact the organization through an independently obtained contact method.',
+    'Report or block the message using your device or messaging security settings.'
+  ];
+  for (var i = 0; i < defaultDos.length; i++) {
+    writer.checkSpace(14);
+    writer.addLine('[YES]  ' + defaultDos[i], 'F2', 8, 0.02, 0.59, 0.41, 10.5, 8);
+  }
+
+  // 5. What You Should Not Do
+  writer.checkSpace(28);
+  writer.addSectionHeading('WHAT YOU SHOULD NOT DO');
+  var defaultDonts = [
+    'Do not click suspicious links or open unrequested attachments.',
+    'Do not share passwords, OTP codes, PINs, or sensitive personal information.',
+    'Do not use phone numbers or contact details supplied by the suspicious message.'
+  ];
+  for (var i = 0; i < defaultDonts.length; i++) {
+    writer.checkSpace(14);
+    writer.addLine('[NO]   ' + defaultDonts[i], 'F2', 8, 0.86, 0.15, 0.15, 10.5, 8);
+  }
+
+  // 6. Assessment Disclaimer
+  writer.checkSpace(30);
+  writer.fillRect(40, writer.getY() - 24, 515, 26, 0.06, 0.09, 0.14);
+  writer.strokeRect(40, writer.getY() - 24, 515, 26, 0.3, 0.4, 0.5, 0.5);
+  writer.addLine('ASSESSMENT DISCLAIMER:', 'F2', 7.5, 0.58, 0.64, 0.72, 9, 8);
+  writer.addParagraph(disclaimer || 'Scamvera provides an automated assessment based on the evidence available in the submitted content. It is not proof of fraud. Verify important claims through trusted, independent channels.', 'F3', 7, 0.45, 0.52, 0.60, 8.5, 8, 495);
+
+  // =========================================================================
+  // PAGE 2+: DETAILED FORENSIC DOSSIER & METHODOLOGY
+  // =========================================================================
+  writer.startNewPage();
+
+  writer.fillRect(40, writer.getY() - 28, 515, 34, 0.04, 0.07, 0.13);
+  writer.addLine('DIGITAL SCAM INVESTIGATOR - OFFICIAL AUDIT REPORT', 'F2', 12, 1, 1, 1, 15, 10);
+  writer.addLine('DETAILED FORENSIC INVESTIGATION DOSSIER  •  OVERALL RISK: ' + score + ' / 100 [ ' + level + ' RISK ]', 'F2', 8, 0.22, 0.74, 0.97, 12, 10);
+  writer.addLine('OVERALL RISK RATING: ' + score + ' / 100  [ ' + level + ' RISK ]  •  EVIDENCE STRENGTH: ' + evidenceStrength, 'F1', 7.5, 0.7, 0.8, 0.9, 14, 10);
+
 
   // 4. Waterfall
   if (waterfall) {
@@ -953,10 +1077,17 @@ function generateInvestigationPdfBytes(report) {
     for (var i = 0; i < observedIndicators.length; i++) {
       var ind = observedIndicators[i];
       writer.checkSpace(28);
-      writer.addLine('• ' + ind.name + ' [' + ind.severity + '] (Offset: [' + ind.characterRange[0] + ' - ' + ind.characterRange[1] + '])', 'F2', 8.5, 0.1, 0.15, 0.2, 11.5);
-      writer.addQuote(ind.evidence);
-      writer.addParagraph('Finding Details: ' + ind.explanation, 'F1', 7.5, 0.25, 0.3, 0.35, 10, 6);
-      writer.addParagraph('Why This Matters: ' + ind.whyItMatters, 'F1', 7.5, 0.4, 0.45, 0.5, 10, 6);
+      var rangeStr = ind.characterRange
+        ? ' (Offset: [' + ind.characterRange[0] + ' - ' + ind.characterRange[1] + '])'
+        : (ind.offsetStart !== undefined && ind.offsetEnd !== undefined)
+        ? ' (Offset: [' + ind.offsetStart + ' - ' + ind.offsetEnd + '])'
+        : '';
+      writer.addLine('• ' + ind.name + ' [' + ind.severity + ']' + rangeStr, 'F2', 8.5, 0.1, 0.15, 0.2, 11.5);
+      writer.addQuote(ind.evidence || ind.evidenceQuote || '');
+      writer.addParagraph('Finding Details: ' + (ind.explanation || ind.description || ''), 'F1', 7.5, 0.25, 0.3, 0.35, 10, 6);
+      if (ind.whyItMatters) {
+        writer.addParagraph('Why This Matters: ' + ind.whyItMatters, 'F1', 7.5, 0.4, 0.45, 0.5, 10, 6);
+      }
     }
   }
 
@@ -984,7 +1115,9 @@ function generateInvestigationPdfBytes(report) {
   } else if (isUrlMode) {
     writer.addLine('Target URL: ' + ((urlAnalysis[0] && urlAnalysis[0].url) || rawText), 'F2', 8, 0.22, 0.74, 0.97, 11);
   } else {
-    writer.addLine('Channel: ' + inputMeta.messageType.toUpperCase() + '  •  Length: ' + inputMeta.characterCount + ' chars (' + inputMeta.wordCount + ' words)', 'F1', 7.5, 0.4, 0.45, 0.5, 10);
+    if (inputMeta) {
+      writer.addLine('Channel: ' + inputMeta.messageType.toUpperCase() + '  •  Length: ' + inputMeta.characterCount + ' chars (' + inputMeta.wordCount + ' words)', 'F1', 7.5, 0.4, 0.45, 0.5, 10);
+    }
     writer.addParagraph(rawText, 'F4', 7.5, 0.2, 0.25, 0.3, 9.5, 6);
   }
 
@@ -1024,24 +1157,36 @@ function generateInvestigationPdfBytes(report) {
   }
 
   // 12. Contextual AI Analysis
-  writer.addSectionHeading('Contextual AI Analysis (Advisory Only)');
-  writer.addParagraph('Notice: Contextual synthesis provides behavioral context and does not constitute physical evidence.', 'F3', 7.5, 0.45, 0.5, 0.55, 9.5);
-  writer.addParagraph(aiContext.socialEngineeringTactics || '', 'F1', 8, 0.2, 0.25, 0.3, 10.5);
-  if (aiContext.scamArchetypes && aiContext.scamArchetypes.length > 0) {
-    writer.addLine('Associated Scam Archetypes: ' + aiContext.scamArchetypes.join(', '), 'F1', 7.5, 0.3, 0.35, 0.4, 10);
-  }
-  if (aiContext.psychologicalTriggers && aiContext.psychologicalTriggers.length > 0) {
-    writer.addLine('Identified Persuasion Triggers: ' + aiContext.psychologicalTriggers.join(', '), 'F1', 7.5, 0.3, 0.35, 0.4, 10);
+  if (aiContext) {
+    writer.addSectionHeading('Contextual AI Analysis (Advisory Only)');
+    writer.addParagraph('Notice: Contextual synthesis provides behavioral context and does not constitute physical evidence.', 'F3', 7.5, 0.45, 0.5, 0.55, 9.5);
+    writer.addParagraph(aiContext.socialEngineeringTactics || '', 'F1', 8, 0.2, 0.25, 0.3, 10.5);
+    if (aiContext.scamArchetypes && aiContext.scamArchetypes.length > 0) {
+      writer.addLine('Associated Scam Archetypes: ' + aiContext.scamArchetypes.join(', '), 'F1', 7.5, 0.3, 0.35, 0.4, 10);
+    }
+    if (aiContext.psychologicalTriggers && aiContext.psychologicalTriggers.length > 0) {
+      writer.addLine('Identified Persuasion Triggers: ' + aiContext.psychologicalTriggers.join(', '), 'F1', 7.5, 0.3, 0.35, 0.4, 10);
+    }
   }
 
   // 13. Defensive Protocols
   writer.addSectionHeading('Prioritized Defensive Protocols');
-  for (var i = 0; i < defensiveRecommendations.length; i++) {
-    var act = defensiveRecommendations[i];
+  var pdfRecs = [];
+  if (Array.isArray(defensiveRecommendations)) {
+    pdfRecs = defensiveRecommendations;
+  } else if (defensiveRecommendations && typeof defensiveRecommendations === 'object') {
+    var imm = defensiveRecommendations.immediateActions || [];
+    var cont = defensiveRecommendations.containmentSteps || [];
+    pdfRecs = imm.concat(cont).map(function(t) { return { action: t, detail: '' }; });
+  }
+  for (var i = 0; i < pdfRecs.length; i++) {
+    var act = pdfRecs[i];
     var isDoNot = act.action.toLowerCase().includes('not') || act.action.toLowerCase().includes('halt') || act.action.toLowerCase().includes('refuse') || act.action.toLowerCase().includes('never');
     writer.checkSpace(20);
     writer.addLine('[' + (isDoNot ? 'DO NOT' : 'DO') + '] ' + act.action, 'F2', 8, isDoNot ? 0.75 : 0.05, isDoNot ? 0.15 : 0.5, isDoNot ? 0.15 : 0.3, 11);
-    writer.addParagraph(act.detail, 'F1', 7.5, 0.3, 0.35, 0.4, 10, 6);
+    if (act.detail) {
+      writer.addParagraph(act.detail, 'F1', 7.5, 0.3, 0.35, 0.4, 10, 6);
+    }
   }
 
   // 13B. V3.1 Victim-State Incident Containment & Response
@@ -1218,6 +1363,9 @@ export function buildReportHtml(report: InvestigationReport): string {
       : level === 'LOW'
       ? '#059669'
       : '#0284c7';
+
+  // Derive progressive disclosure executive summary data for First Page / Executive section
+  const summary = deriveExecutiveSummary(report);
 
   // Build the complete standalone HTML report
   const html = `<!DOCTYPE html>
@@ -1449,6 +1597,90 @@ export function buildReportHtml(report: InvestigationReport): string {
     </div>
 
     <div class="content-area">
+      <!-- =========================================================================
+           PRIMARY EXECUTIVE SUMMARY (Progressive Disclosure - First Page / Print Page 1)
+           ========================================================================= -->
+      <div class="executive-summary-page">
+        <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.12em; color: #38bdf8; margin-bottom: 12px; text-transform: uppercase;">
+          PRIMARY INVESTIGATION OVERVIEW
+        </div>
+
+        <!-- A. FINAL SCORE / RISK -->
+        <div class="hero-summary" style="border-left: 5px solid ${levelColor}; margin-bottom: 20px;">
+          <div>
+            <div style="font-size: 11px; text-transform: uppercase; color: #94a3b8; margin-bottom: 4px; font-weight: 700;">Final Risk Rating</div>
+            <div style="display: flex; align-items: baseline;">
+              <span class="score-display" style="color: ${levelColor};">${score}</span>
+              <span style="font-size: 20px; color: #94a3b8; margin-left: 4px;">/ 100</span>
+              <span class="score-badge" style="background: ${levelColor}22; color: ${levelColor}; border: 1px solid ${levelColor}44;">${level} RISK</span>
+            </div>
+            <div style="font-size: 12px; color: #cbd5e1; margin-top: 8px;">
+              Evidence Strength: <strong>${evidenceStrength}</strong>
+            </div>
+          </div>
+          <div style="max-width: 480px; font-size: 14px; color: #f1f5f9; line-height: 1.6;">
+            ${escapeHtml(summary.plainEnglishSummary)}
+          </div>
+        </div>
+
+        <!-- B. WHY WAS THIS FLAGGED? -->
+        <div class="section-title">WHY WAS THIS FLAGGED?</div>
+        <div style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">
+          Strongest verified indicators grounded in deterministic evidence:
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px;">
+          ${
+            summary.strongestIndicators.length > 0
+              ? summary.strongestIndicators.map(ind => `
+            <div class="indicator-card" style="padding: 12px 16px; margin-bottom: 0;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <span style="font-weight: 700; color: #f1f5f9; font-size: 13px;">${escapeHtml(ind.name)}</span>
+                <span class="sev-tag" style="background: ${ind.severity === 'CRITICAL' || ind.severity === 'HIGH' ? '#dc2626' : ind.severity === 'MEDIUM' ? '#d97706' : '#059669'}; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">${escapeHtml(ind.severity)}</span>
+              </div>
+              <p style="font-size: 12px; color: #cbd5e1; line-height: 1.5; margin: 0;">${escapeHtml(ind.whyItMatters)}</p>
+              ${ind.evidenceQuote ? `<div style="font-size: 11px; color: #94a3b8; margin-top: 4px; font-style: italic;">&ldquo;${escapeHtml(ind.evidenceQuote)}&rdquo;</div>` : ''}
+            </div>
+          `).join('')
+              : `<div class="indicator-card" style="padding: 12px 16px; color: #94a3b8; font-size: 12px;">No recognized scam patterns detected in submitted material.</div>`
+          }
+        </div>
+
+        <!-- C & D. WHAT YOU SHOULD DO & WHAT YOU SHOULD NOT DO -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px;">
+          <!-- C. WHAT YOU SHOULD DO -->
+          <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 16px;">
+            <div style="font-size: 13px; font-weight: 700; color: #10b981; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+              <span>✓</span> WHAT YOU SHOULD DO
+            </div>
+            <ul style="list-style: none; padding-left: 0; display: flex; flex-direction: column; gap: 8px;">
+              ${summary.doActions.map(act => `<li style="font-size: 12px; color: #e2e8f0; display: flex; gap: 6px;"><span style="color: #10b981; font-weight: 700;">✓</span><span>${escapeHtml(act)}</span></li>`).join('')}
+            </ul>
+          </div>
+
+          <!-- D. WHAT YOU SHOULD NOT DO -->
+          <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 16px;">
+            <div style="font-size: 13px; font-weight: 700; color: #ef4444; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+              <span>✕</span> WHAT YOU SHOULD NOT DO
+            </div>
+            <ul style="list-style: none; padding-left: 0; display: flex; flex-direction: column; gap: 8px;">
+              ${summary.dontActions.map(act => `<li style="font-size: 12px; color: #e2e8f0; display: flex; gap: 6px;"><span style="color: #ef4444; font-weight: 700;">✕</span><span>${escapeHtml(act)}</span></li>`).join('')}
+            </ul>
+          </div>
+        </div>
+
+        <!-- E. DISCLAIMER -->
+        <div class="conclusion-box" style="margin-bottom: 24px;">
+          <strong style="color: #94a3b8;">ASSESSMENT DISCLAIMER:</strong> ${escapeHtml(summary.disclaimer)}
+        </div>
+      </div>
+
+      <!-- Separation / Print Page Break -->
+      <div class="page-break" style="margin: 32px 0 24px 0; border-top: 2px dashed #334155; position: relative; text-align: center;">
+        <span style="position: relative; top: -11px; background: #0f172a; padding: 0 16px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: #38bdf8;">
+          DETAILED FORENSIC INVESTIGATION DOSSIER
+        </span>
+      </div>
+
       <!-- 1. Executive Assessment -->
       <div class="hero-summary">
         <div>
@@ -1580,9 +1812,10 @@ export function buildReportHtml(report: InvestigationReport): string {
           : `
           <!-- Verbatim Text Submission -->
           <div class="section-title">Original Submission (Verbatim Text)</div>
+          ${inputMeta ? `
           <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">
             Channel: <strong>${escapeHtml(inputMeta.messageType.toUpperCase())}</strong> &bull; Length: ${inputMeta.characterCount} characters (${inputMeta.wordCount} words)
-          </div>
+          </div>` : ''}
           <div class="raw-submission-box">${escapeHtml(rawText)}</div>
           `
       }
@@ -1726,25 +1959,32 @@ export function buildReportHtml(report: InvestigationReport): string {
           ? '<p style="font-size: 13px; color: #94a3b8; margin-bottom: 24px;">No suspicious indicators detected during the investigation scan.</p>'
           : observedIndicators
               .map(
-                (ind) => `
+                (ind) => {
+                  const anyInd = ind as any;
+                  const rangeStr = anyInd.characterRange
+                    ? `Offset: [${anyInd.characterRange[0]} - ${anyInd.characterRange[1]}]`
+                    : (anyInd.offsetStart !== undefined && anyInd.offsetEnd !== undefined)
+                    ? `Offset: [${anyInd.offsetStart} - ${anyInd.offsetEnd}]`
+                    : '';
+                  return `
             <div class="indicator-card">
               <div class="indicator-header">
-                <span class="indicator-name">${escapeHtml(ind.name)}</span>
+                <span class="indicator-name">${escapeHtml(anyInd.name)}</span>
                 <div>
-                  <span style="font-size: 11px; font-family: monospace; color: #94a3b8; margin-right: 8px;">
-                    Offset: [${ind.characterRange[0]} - ${ind.characterRange[1]}]
-                  </span>
-                  <span class="indicator-severity">${ind.severity}</span>
+                  ${rangeStr ? `<span style="font-size: 11px; font-family: monospace; color: #94a3b8; margin-right: 8px;">${rangeStr}</span>` : ''}
+                  <span class="indicator-severity">${anyInd.severity}</span>
                 </div>
               </div>
-              <div class="quote-box">"${escapeHtml(ind.evidence)}"</div>
+              <div class="quote-box">"${escapeHtml(anyInd.evidence || anyInd.evidenceQuote || '')}"</div>
               <div style="font-size: 12px; color: #cbd5e1; margin-top: 6px;">
-                <strong>Finding Details:</strong> ${escapeHtml(ind.explanation)}
+                <strong>Finding Details:</strong> ${escapeHtml(anyInd.explanation || anyInd.description || '')}
               </div>
+              ${anyInd.whyItMatters ? `
               <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">
-                <strong>Why This Matters:</strong> ${escapeHtml(ind.whyItMatters)}
-              </div>
-            </div>`
+                <strong>Why This Matters:</strong> ${escapeHtml(anyInd.whyItMatters)}
+              </div>` : ''}
+            </div>`;
+                }
               )
               .join('')
       }
@@ -1924,13 +2164,14 @@ export function buildReportHtml(report: InvestigationReport): string {
       }
 
       <!-- 11. Contextual AI Analysis (Clearly Separated) -->
+      ${aiContext ? `
       <div class="section-title" style="margin-top: 24px;">Contextual Analysis (Advisory Only)</div>
       <div class="indicator-card">
         <div style="font-size: 11px; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase;">
           Notice: Contextual synthesis provides behavioral context and does not constitute physical evidence.
         </div>
         <div style="font-size: 13px; color: #e2e8f0; line-height: 1.6; margin-bottom: 12px;">
-          ${escapeHtml(aiContext.socialEngineeringTactics)}
+          ${escapeHtml(aiContext.socialEngineeringTactics || '')}
         </div>
         ${
           aiContext.scamArchetypes && aiContext.scamArchetypes.length > 0
@@ -1946,28 +2187,38 @@ export function buildReportHtml(report: InvestigationReport): string {
                </div>`
             : ''
         }
-      </div>
+      </div>` : ''}
 
       <!-- 12. Defensive Action Protocols -->
       <div class="section-title" style="margin-top: 24px;">Prioritized Defensive Protocols</div>
       <div class="action-grid">
-        ${defensiveRecommendations
-          .map((act) => {
-            const isDoNot =
-              act.action.toLowerCase().includes('not') ||
-              act.action.toLowerCase().includes('halt') ||
-              act.action.toLowerCase().includes('refuse') ||
-              act.action.toLowerCase().includes('never');
-            return `
+        ${(() => {
+          let recs: Array<{ action: string; detail?: string }> = [];
+          if (Array.isArray(defensiveRecommendations)) {
+            recs = defensiveRecommendations;
+          } else if (defensiveRecommendations && typeof defensiveRecommendations === 'object') {
+            const imm = (defensiveRecommendations as any).immediateActions || [];
+            const cont = (defensiveRecommendations as any).containmentSteps || [];
+            recs = [...imm, ...cont].map((text: string) => ({ action: text, detail: '' }));
+          }
+          return recs
+            .map((act) => {
+              const isDoNot =
+                act.action.toLowerCase().includes('not') ||
+                act.action.toLowerCase().includes('halt') ||
+                act.action.toLowerCase().includes('refuse') ||
+                act.action.toLowerCase().includes('never');
+              return `
             <div class="action-item ${isDoNot ? 'action-do-not' : 'action-do'}">
               <span style="font-weight: 700;">${isDoNot ? '[DO NOT]' : '[DO]'}:</span>
               <div>
                 <strong style="color: #f8fafc;">${escapeHtml(act.action)}</strong>
-                <div style="font-size: 12px; margin-top: 2px; color: #cbd5e1;">${escapeHtml(act.detail)}</div>
+                ${act.detail ? `<div style="font-size: 12px; margin-top: 2px; color: #cbd5e1;">${escapeHtml(act.detail)}</div>` : ''}
               </div>
             </div>`;
-          })
-          .join('')}
+            })
+            .join('');
+        })()}
       </div>
 
       ${
