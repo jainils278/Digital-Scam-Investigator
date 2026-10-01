@@ -46,7 +46,24 @@ export interface AiContextAnalysis {
   unverifiedInferences: UnverifiedInference[];
 }
 
-export type RiskLevel = 'BENIGN' | 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export interface AnalysisMethod {
+  mode: 'LOCAL_ONLY' | 'EXTERNAL_AI' | 'FALLBACK_LOCAL';
+  deterministicRules: boolean;
+  localHeuristics: boolean;
+  externalModelUsed: boolean;
+  externalAttempted: boolean;
+  externalProvider: string | null;
+  fallbackUsed: boolean;
+}
+
+export type RiskLevel =
+  | 'CRITICAL'
+  | 'HIGH'
+  | 'MEDIUM'
+  | 'LOW'
+  | 'NO_KNOWN_INDICATORS'
+  | 'INSUFFICIENT_EVIDENCE'
+  | 'BENIGN';
 
 export type EvidenceStrength = 'SUBSTANTIAL' | 'MODERATE' | 'LIMITED' | 'MINIMAL';
 
@@ -430,6 +447,9 @@ export interface InvestigationReport {
   counterfactuals?: CounterfactualAnalysis;
   obfuscationAnalysis?: ObfuscationAnalysis;
   institutionVerification?: InstitutionVerificationMatch;
+  analysisMethod: AnalysisMethod;
+  liveInspectionPerformed?: boolean;
+  urlDisclaimer?: string;
 }
 
 export interface ExampleCase {

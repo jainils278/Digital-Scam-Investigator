@@ -232,21 +232,11 @@ export class InvestigationService {
       }
     }
 
-    // 6. Transparent Risk Engine
-    const riskAssessment = calculateRiskAssessment(verifiedIndicators, rawText.length);
-
-    // 7. Contextual Defensive Recommendations
-    const defensiveRecommendations = generateDefensiveRecommendations(
-      verifiedIndicators,
-      riskAssessment.level,
-      messageType
-    );
-
-    // 8. Word & Character Telemetry
+    // 6. Word & Character Telemetry
     const wordCount = rawText.split(/\s+/).filter(Boolean).length;
     const reportId = `INV-${Date.now().toString(36).toUpperCase()}-${randomUUID().slice(0, 4).toUpperCase()}`;
 
-    // 9. URL Analysis & Local Reputation Enrichment
+    // 7. URL Analysis & Local Reputation Enrichment (Executed before risk calculation)
     const extractedUrls = extractUrlsWithRanges(rawText);
     const urlSummaries: UrlAnalysisSummary[] = [];
     for (const item of extractedUrls) {
@@ -269,7 +259,29 @@ export class InvestigationService {
       });
     }
 
-    // 10. Evidence Intelligence (Graph, Timeline, Mitigating Evidence Synthesis)
+    // 8. Safe Out-of-Band Verification Matcher (Executed before risk calculation)
+    const institutionVerification = findInstitutionMatch(
+      normalizedResult.normalizedText,
+      verifiedIndicators,
+      urlSummaries
+    );
+
+    // 9. Centralized Risk Scoring Engine (Incorporates indicators, URLs, and institution mismatch)
+    const riskAssessment = calculateRiskAssessment(
+      verifiedIndicators,
+      rawText.length,
+      urlSummaries,
+      institutionVerification
+    );
+
+    // 10. Contextual Defensive Recommendations
+    const defensiveRecommendations = generateDefensiveRecommendations(
+      verifiedIndicators,
+      riskAssessment.level,
+      messageType
+    );
+
+    // 11. Evidence Intelligence (Graph, Timeline, Mitigating Evidence Synthesis)
     const evidenceIntelligence = analyzeEvidenceIntelligence(
       reportId,
       rawText,
@@ -280,40 +292,33 @@ export class InvestigationService {
       defensiveRecommendations
     );
 
-    // 11. Evidence-Grounded Cybersecurity Education
+    // 12. Evidence-Grounded Cybersecurity Education
     const education = generateEvidenceEducation(verifiedIndicators);
 
-    // 12. V3.0 Deterministic Psychological Tactic Fingerprinting
+    // 13. V3.0 Deterministic Psychological Tactic Fingerprinting
     const tactics = analyzeTactics(verifiedIndicators, urlSummaries);
 
-    // 13. V3.0 Pretext Contradiction Matrix
+    // 14. V3.0 Pretext Contradiction Matrix
     const contradictions = analyzeContradictions(verifiedIndicators, urlSummaries, rawText);
 
-    // 14. V3.0 Evidentiary Completeness & Missing Evidence Advisor
+    // 15. V3.0 Evidentiary Completeness & Missing Evidence Advisor
     const missingEvidence = assessEvidentiaryCompleteness(rawText, verifiedIndicators, urlSummaries);
 
-    // 15. V3.1 Counterfactual Risk Sensitivity Analysis
+    // 16. V3.1 Counterfactual Risk Sensitivity Analysis
     const counterfactuals = generateCounterfactualAnalysis(
       verifiedIndicators,
       riskAssessment,
       rawText.length
     );
 
-    // 16. V3.1 The Attacker's Mask (Obfuscation & Evasion Diff)
+    // 17. V3.1 The Attacker's Mask (Obfuscation & Evasion Diff)
     const obfuscationAnalysis = analyzeObfuscation(
       rawText,
       normalizedResult.obfuscationEvents
     );
 
-    // 17. V3.1 Victim-State Incident Response Engine
+    // 18. V3.1 Victim-State Incident Response Engine
     const victimResponse = generateVictimStateResponse(request.victimState);
-
-    // 18. V3.1 Safe Out-of-Band Verification Matcher
-    const institutionVerification = findInstitutionMatch(
-      normalizedResult.normalizedText,
-      verifiedIndicators,
-      urlSummaries
-    );
 
     // 19. Standard Defensive Cybersecurity Disclaimer
     const disclaimer =
@@ -351,6 +356,11 @@ export class InvestigationService {
       counterfactuals,
       obfuscationAnalysis: obfuscationAnalysis.hasObfuscation ? obfuscationAnalysis : undefined,
       institutionVerification: institutionVerification.matched ? institutionVerification : undefined,
+      analysisMethod: aiContext.analysisMethod,
+      liveInspectionPerformed: false,
+      urlDisclaimer: urlSummaries.length > 0
+        ? 'ScamVera performed passive structural analysis only. The destination page was not loaded or executed. Live page content, ownership history, and sender identity were not verified.'
+        : undefined,
     };
   }
 

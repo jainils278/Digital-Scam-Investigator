@@ -218,9 +218,19 @@ export function createInvestigationRouter(investigationService: InvestigationSer
     res.status(200).json({
       status: 'operational',
       service: 'Digital Scam Investigator Engine',
-      version: '2.0.0',
+      version: '2.1.0',
       timestamp: new Date().toISOString(),
-      ai: aiInfo,
+      analysisEngine: {
+        activeProvider: aiInfo.providerName,
+        isExternalModelAvailable: aiInfo.isRealAi,
+        mode: aiInfo.isRealAi ? 'EXTERNAL_AI' : 'LOCAL_ONLY',
+        deterministicRules: true,
+        localHeuristics: true,
+      },
+      ai: {
+        providerName: aiInfo.providerName,
+        isRealAi: aiInfo.isRealAi,
+      },
     });
   });
 

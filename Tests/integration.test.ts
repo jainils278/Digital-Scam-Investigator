@@ -43,7 +43,7 @@ describe('Integration Tests — /api/investigate', () => {
     // Risk assessment
     expect(report.riskAssessment).toBeDefined();
     expect(report.riskAssessment.score).toBeGreaterThan(0);
-    expect(['BENIGN', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).toContain(report.riskAssessment.level);
+    expect(['NO_KNOWN_INDICATORS', 'INSUFFICIENT_EVIDENCE', 'BENIGN', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).toContain(report.riskAssessment.level);
     expect(report.riskAssessment.scoringRationale).toBeInstanceOf(Array);
     expect(report.riskAssessment.isNonProbabilisticNotice).toBeDefined();
 
@@ -61,7 +61,7 @@ describe('Integration Tests — /api/investigate', () => {
     expect(report.disclaimer.length).toBeGreaterThan(0);
   });
 
-  it('returns BENIGN for a clearly legitimate message', async () => {
+  it('returns NO_KNOWN_INDICATORS for a clearly legitimate message', async () => {
     const response = await request(app)
       .post('/api/investigate')
       .send({
@@ -74,7 +74,7 @@ describe('Integration Tests — /api/investigate', () => {
     const report = response.body.report;
     expect(report.observedIndicators.length).toBe(0);
     expect(report.riskAssessment.score).toBe(0);
-    expect(report.riskAssessment.level).toBe('BENIGN');
+    expect(report.riskAssessment.level).toBe('NO_KNOWN_INDICATORS');
   });
 
   it('detects URL-related indicators when URLs are present', async () => {

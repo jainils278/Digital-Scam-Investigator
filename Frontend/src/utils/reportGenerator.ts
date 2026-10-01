@@ -306,7 +306,8 @@ export function generateInvestigationPdfBytes(report: InvestigationReport): Uint
   writer.checkSpace(52);
   writer.fillRect(40, writer.getY() - 42, 515, 46, 0.07, 0.10, 0.18);
   writer.strokeRect(40, writer.getY() - 42, 515, 46, r, g, b, 1.2);
-  writer.addLine(`[FINAL RISK]  ${summary.riskLevel} RISK  •  ${summary.riskScore} / 100`, 'F2', 13, r, g, b, 15, 12);
+  const levelLabel = summary.riskLevel === 'NO_KNOWN_INDICATORS' ? 'NO KNOWN INDICATORS' : `${summary.riskLevel} RISK`;
+  writer.addLine(`[FINAL RISK]  ${levelLabel}  •  ${summary.riskScore} / 100`, 'F2', 13, r, g, b, 15, 12);
   writer.addParagraph(summary.plainEnglishSummary, 'F1', 8, 0.85, 0.9, 0.95, 11, 12, 490);
 
   // 3. [WHY THIS WAS FLAGGED]
@@ -863,7 +864,7 @@ function generateInvestigationPdfBytes(report) {
   var institutionVerification = report.institutionVerification;
 
   var score = riskAssessment.score || 0;
-  var level = riskAssessment.level || 'BENIGN';
+  var level = riskAssessment.level || 'NO_KNOWN_INDICATORS';
   var evidenceStrength = riskAssessment.evidenceStrength || 'MINIMAL';
   var primaryCategories = riskAssessment.primaryCategories || [];
   var waterfall = riskAssessment.waterfall;
@@ -904,8 +905,8 @@ function generateInvestigationPdfBytes(report) {
 
   writer.checkSpace(52);
   writer.fillRect(40, writer.getY() - 42, 515, 46, 0.07, 0.10, 0.18);
-  writer.strokeRect(40, writer.getY() - 42, 515, 46, r, g, b, 1.2);
-  writer.addLine('[FINAL RISK]  ' + level + ' RISK  •  ' + score + ' / 100', 'F2', 13, r, g, b, 15, 12);
+  var levelLabel = level === 'NO_KNOWN_INDICATORS' ? 'NO KNOWN INDICATORS' : (level + ' RISK');
+  writer.addLine('[FINAL RISK]  ' + levelLabel + '  •  ' + score + ' / 100', 'F2', 13, r, g, b, 15, 12);
   writer.addParagraph(plainSummary, 'F1', 8, 0.85, 0.9, 0.95, 11, 12, 490);
 
   // 3. Why This Was Flagged
@@ -1344,7 +1345,7 @@ export function buildReportHtml(report: InvestigationReport): string {
 
   // Derive plain-language simple conclusion matching on-screen synthesis
   const getSimpleConclusion = () => {
-    if (level === 'BENIGN' || level === 'LOW') {
+    if (level === 'NO_KNOWN_INDICATORS' || level === 'BENIGN' || level === 'LOW') {
       return `The ${isScreenshot ? 'image' : isUrlMode ? 'URL' : 'message'} does not contain recognized scam patterns currently checked by the system. However, this does not verify sender identity or guarantee authenticity.`;
     }
     if (level === 'CRITICAL' || level === 'HIGH') {
@@ -1688,7 +1689,7 @@ export function buildReportHtml(report: InvestigationReport): string {
           <div style="display: flex; align-items: baseline;">
             <span class="score-display">${score}</span>
             <span style="font-size: 20px; color: #94a3b8; margin-left: 4px;">/ 100</span>
-            <span class="score-badge">${level} RISK</span>
+            <span class="score-badge">${level === 'NO_KNOWN_INDICATORS' ? 'NO KNOWN INDICATORS' : `${level} RISK`}</span>
           </div>
           <div style="font-size: 12px; color: #cbd5e1; margin-top: 8px;">
             Evidence Strength: <strong>${evidenceStrength}</strong>
@@ -1696,7 +1697,7 @@ export function buildReportHtml(report: InvestigationReport): string {
         </div>
         <div style="max-width: 480px; font-size: 13px; color: #cbd5e1;">
           ${
-            level === 'BENIGN'
+            level === 'NO_KNOWN_INDICATORS' || level === 'BENIGN'
               ? 'No recognized scam indicators were found in the submitted material. This reflects the absence of checked suspicious patterns and does not guarantee authenticity.'
               : `Verified indicators associated with ${primaryCategories.join(', ') || 'suspicious communications'} were identified during the defensive analysis.`
           }

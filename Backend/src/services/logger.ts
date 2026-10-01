@@ -23,7 +23,8 @@ export interface LogContext {
   [key: string]: any;
 }
 
-const REDACTED_KEYS = /^(text|rawText|raw|message|body|payload|otp|password|pin|secret|key|token|auth|authorization|cookie)$/i;
+const REDACTED_KEYS =
+  /^(text|rawText|raw|message|body|payload|otp|password|pin|secret|key|token|auth|authorization|cookie|imageBase64|image|images|screenshot|screenshots|url|urls)$/i;
 
 function sanitizeValue(key: string, value: any): any {
   if (REDACTED_KEYS.test(key)) {

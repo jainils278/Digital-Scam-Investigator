@@ -26,7 +26,7 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({ onLaunchWorkstatio
             <span className="footer-status-title">DEFENSIVE CYBER FORENSICS // SPECIFICATION v3.1</span>
           </div>
           <div className="footer-status-right">
-            <span className="footer-provenance-tag">ZERO RETENTION // HEAP ISOLATED RUNTIME</span>
+            <span className="footer-provenance-tag">IN-MEMORY PROCESSING // ZERO SERVER PERSISTENCE</span>
           </div>
         </div>
 
@@ -48,8 +48,8 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({ onLaunchWorkstatio
               Deterministic digital forensics instrument designed for dissecting deceptive communications, smishing vectors, fraudulent payment demands, and social-engineering attacks.
             </p>
             <div className="footer-telemetry-tags">
-              <span className="footer-telemetry-badge">OPEN PROTOCOL</span>
-              <span className="footer-telemetry-badge">ZERO SERVER DISK RETENTION</span>
+              <span className="footer-telemetry-badge">IN-MEMORY PROCESSING</span>
+              <span className="footer-telemetry-badge">NO REPORT DATABASE</span>
               <span className="footer-telemetry-badge">LOCKED MATHEMATICAL SCORING</span>
             </div>
           </div>
@@ -84,7 +84,7 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({ onLaunchWorkstatio
               </li>
               <li>
                 <a href="#privacy-architecture" onClick={(e) => scrollTo(e, 'privacy-architecture')}>
-                  <span className="link-arrow">→</span> Zero-Retention Isolation
+                  <span className="link-arrow">→</span> In-Memory Privacy Model
                 </a>
               </li>
             </ul>
@@ -136,7 +136,7 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({ onLaunchWorkstatio
             <span className="footer-copy">
               &copy; {new Date().getFullYear()} Scamvera Investigation Project. Built with React 19, TypeScript, and Native SVG 3D.
             </span>
-            <span className="footer-cipher-hash">SHA-256 // ZERO-LOGGING ASSURANCE SECURED</span>
+            <span className="footer-cipher-hash">SHA-256 IP HASHING // EPHEMERAL APP PROCESSING</span>
           </div>
         </div>
       </div>

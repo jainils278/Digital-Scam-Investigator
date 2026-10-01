@@ -27,7 +27,7 @@ import { createInvestigationRouter } from './routes/investigation.js';
 import { InvestigationService } from './services/investigation.js';
 import { logger } from './services/logger.js';
 
-dotenv.config();
+dotenv.config({ override: true });
 
 // Process-level safety net to protect against unhandled asynchronous worker exceptions
 process.on('uncaughtException', (err: any) => {

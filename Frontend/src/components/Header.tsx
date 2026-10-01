@@ -13,6 +13,8 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
+  activeAiMode,
+  isRealAi,
   historyCount,
   onOpenHistory,
   onOpenReference,
@@ -56,22 +58,22 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Status Telemetry */}
         <div className="header-telemetry">
-          <div className="status-badge" title="Defensive analysis pipeline is ready">
+          <div className="status-badge" title={isRealAi ? `External AI Coordinator connected (${activeAiMode || 'Online'})` : 'Local Heuristic & Rule Engine active'}>
             <span className="status-dot"></span>
-            <span>System Ready</span>
+            <span>{isRealAi ? `External AI (${activeAiMode || 'Ready'})` : 'Deterministic Rules Active'}</span>
           </div>
 
           <div
             className="privacy-badge"
-            title="No investigation data is stored by this application. Input is processed in volatile memory with zero server retention."
+            title="In-memory analysis with zero server persistence. No database storage. Case history is stored locally in your browser's localStorage and can be cleared at any time."
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
               <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
             </svg>
             <div>
-              <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>No Investigation Data Stored</div>
-              <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Zero server retention</div>
+              <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>In-Memory Processing</div>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Zero server persistence · Browser-only storage</div>
             </div>
           </div>
         </div>

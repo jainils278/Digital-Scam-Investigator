@@ -30,7 +30,7 @@ const RULES: RuleDefinition[] = [
     category: 'CREDENTIAL_HARVESTING',
     name: 'Direct One-Time Passcode (OTP) / PIN / Credential Solicitation',
     severity: 'CRITICAL',
-    pattern: /(?:send(?:ing)?|share|sharing|reply\s+with|provide|providing|enter(?:ing)?|confirm(?:ing)?|submit(?:ting)?|input|type)\s+(?:your|the)?\s*(?:(?:upi|login|account|security|secret|portal)\s+)*(?:otp|one[-\s]time[-\s]passcode|one[-\s]time[-\s]password|2fa\s*code|two[-\s]factor\s*code|verification\s*code|security\s*code|pin|secret\s*pin|password|passcode|credentials)/i,
+    pattern: /(?:send(?:ing)?|share|sharing|reply\s+with|provide|providing|enter(?:ing)?|confirm(?:ing)?|submit(?:ting)?|input|type)\s+(?:your|the)?\s*(?:(?:upi|login|account|security|secret|portal|temporary|sms|one[-\s]time|\d+[-\s]digit)\s+)*(?:otp|one[-\s]time[-\s]passcode|one[-\s]time[-\s]password|2fa\s*code|two[-\s]factor\s*code|verification\s*code|security\s*code|pin|secret\s*pin|password|passcode|credentials)/i,
     explanation: 'The message explicitly demands a one-time passcode (OTP), PIN, password, or security credential.',
     whyItMatters: 'Do not disclose a one-time passcode to someone who asks you to provide it. Unexpected OTP requests should be treated as a serious warning sign and independently verified through an official channel.',
   },
@@ -48,7 +48,7 @@ const RULES: RuleDefinition[] = [
     category: 'CREDENTIAL_HARVESTING',
     name: 'Urgent Credential Verification Lure',
     severity: 'HIGH',
-    pattern: /(?:log[-\s]?in|sign[-\s]?in)\s+(?:immediately\s+to\s+verify|here\s+to\s+unlock|to\s+prevent\s+closure|to\s+confirm\s+identity)/i,
+    pattern: /(?:log[-\s]?in|sign[-\s]?in)\s+(?:immediately\s+to\s+verify|here\s+to\s+unlock|to\s+prevent\s+closure|to\s+confirm\s+(?:your\s+)?identity|to\s+verify\s+(?:your\s+)?(?:account|identity))/i,
     explanation: 'The message instructs the recipient to immediately log in via an external trigger to maintain access.',
     whyItMatters: 'Phishing attacks rely on urgent calls to log in, directing victims to spoofed replica portals that harvest credentials.',
   },
@@ -68,7 +68,7 @@ const RULES: RuleDefinition[] = [
     category: 'FINANCIAL_COERCION',
     name: 'Demand for Gift Card Payment',
     severity: 'CRITICAL',
-    pattern: /(?:buy|purchase|send|pay\s+with|payment\s+via)\s+(?:[₹$€£]?\s*\d+[\d,]*\s+(?:in\s+|worth\s+of\s+)?)*(?:apple\s*gift\s*cards?|google\s*play\s*cards?|steam\s*cards?|gift\s*cards?|vanilla\s*visa|target\s*gift\s*card)/i,
+    pattern: /(?:buy|purchase|send|pay\s+(?:immediately\s+)?(?:via|with|using|in)|payment\s+via|settle\s+via)\s+(?:[₹$€£]?\s*\d+[\d,]*\s+(?:in\s+|worth\s+of\s+)?)*(?:apple\s*gift\s*cards?|google\s*play\s*cards?|steam\s*cards?|gift\s*cards?|vanilla\s*visa|target\s*gift\s*card)/i,
     explanation: 'The sender requests payment or verification via retail gift cards.',
     whyItMatters: 'No legitimate government agency, utility, or business accepts gift cards as payment. Gift cards are untraceable and non-refundable, making them a hallmark of advance-fee and extortion scams.',
   },
@@ -118,6 +118,15 @@ const RULES: RuleDefinition[] = [
     whyItMatters: 'Advance-fee scams fabricate small administrative hurdles to extract money from victims before vanishing.',
   },
   {
+    id: 'ind_fin_payment_demand',
+    category: 'FINANCIAL_COERCION',
+    name: 'Payment / Fee Request',
+    severity: 'HIGH',
+    pattern: /(?:pay|send|transfer|remit)\s+[₹$€£]?\s*\d+[\d,]*(?:\.\d{2})?(?:\s+(?:now|immediately|today|online|via|at|to\s+(?:reschedule|release|claim|confirm|verify|receive|avoid|update)))?/i,
+    explanation: 'The message solicits an immediate monetary payment or fee.',
+    whyItMatters: 'Demands for small immediate payments or fees are common vectors in delivery, advance-fee, and imposter scams.',
+  },
+  {
     id: 'ind_fin_investment_fraud',
     category: 'FINANCIAL_COERCION',
     name: 'Guaranteed Investment / High-Yield Return Lure',
@@ -160,7 +169,7 @@ const RULES: RuleDefinition[] = [
     category: 'ACCOUNT_THREAT',
     name: 'Account / Service Suspension or Disconnection Threat',
     severity: 'HIGH',
-    pattern: /(?:(?:account|pan|card|access|service|profile)\s*(?:has\s*been|is|will\s*be)\s*(?:suspended|blocked|frozen|terminated|restricted|locked|deactivated|closed)|access\s*will\s*be\s*revoked|prevent\s+account\s+closure)/i,
+    pattern: /(?:(?:account|pan|card|access|service|profile)\s*(?:has\s*been|is|will\s*be)\s*(?:suspended|blocked|frozen|terminated|restricted|locked|deactivated|closed)|access\s*will\s*be\s*revoked|prevent\s+account\s+closure|unfreeze\s+(?:your\s+)?(?:funds|account|balance)|funds\s+(?:have\s+been|are|will\s+be)\s+frozen)/i,
     explanation: 'The message threatens imminent restriction, suspension, or closure of an account or service.',
     whyItMatters: 'Threatening account access creates an acute sense of anxiety, rushing victims into reacting impulsively before verifying sender authenticity.',
   },
@@ -187,7 +196,7 @@ const RULES: RuleDefinition[] = [
     category: 'ACCOUNT_THREAT',
     name: 'Legal Coercion / Law Enforcement Threat',
     severity: 'CRITICAL',
-    pattern: /(?:arrest\s*warrant|law\s*enforcement|fbi\s*agent|irs\s*penalt|legal\s*action\s*(?:will\s*be\s*taken|pending)|avoid\s+legal\s+action|court\s*summons|police\s*department)/i,
+    pattern: /(?:arrest\s*warrant|warrant\s+(?:has\s+been\s+issued\s+)?for\s+(?:your\s+)?arrest|law\s*enforcement|fbi\s*agent|irs\s*penalt|legal\s*action\s*(?:will\s*be\s*taken|pending)|avoid\s+legal\s+action|court\s*summons|police\s*department)/i,
     explanation: 'The sender leverages the threat of criminal prosecution, arrest, or severe legal penalties.',
     whyItMatters: 'Impersonating law enforcement or tax authorities to threaten immediate arrest is an aggressive coercion tactic used to terrorize victims into submission.',
   },
@@ -263,7 +272,7 @@ const RULES: RuleDefinition[] = [
     category: 'PRIZE_LOTTERY',
     name: 'Unsolicited Work-From-Home / Recruitment Lure',
     severity: 'HIGH',
-    pattern: /(?:selected\s+for\s+(?:a\s+)?(?:work[-\s]from[-\s]home|remote\s*job|online\s*job)|work[-\s]from[-\s]home\s+position\s+paying\s+[₹$€£]?\d)/i,
+    pattern: /(?:selected\s+for\s+(?:a\s+)?(?:work[-\s]from[-\s]home|remote\s*(?:data\s*entry\s*|part[-\s]*time\s*|full[-\s]*time\s*)?(?:job|position|role)|online\s*job)|(?:work[-\s]from[-\s]home|remote)\s+position\s+paying\s+[₹$€£]?\d)/i,
     explanation: 'The message offers an unsolicited, lucrative remote or work-from-home employment opportunity.',
     whyItMatters: 'Work-from-home scams use promises of high, easy income to extract upfront registration fees or recruit victims as money mules.',
   },
@@ -310,7 +319,7 @@ const RULES: RuleDefinition[] = [
     category: 'IMPERSONATION',
     name: 'Courier / Postal Delivery Problem Impersonation',
     severity: 'HIGH',
-    pattern: /(?:usps|ups|fedex|dhl|postal\s*service)[:\s-]+(?:package|tracking|delivery\s*notice|delivery\s*failure|redelivery|customs\s*fee|parcel\s*on\s*hold|address\s*incomplete)/i,
+    pattern: /(?:usps|ups|fedex|dhl|postal\s*service)[:\s-]+(?:package|tracking|delivery\s*notice|delivery\s*failure|redelivery|customs\s*fee|parcel\s*on\s*hold|address\s*incomplete)|(?:your\s+)?(?:package|parcel|shipment|delivery|order)\s+(?:could\s+not\s+be\s+delivered|was\s+not\s+delivered|cannot\s+be\s+delivered|delivery\s+(?:failed|attempt\s+failed)|is\s+on\s+hold|held\s+at\s+(?:terminal|customs|warehouse)|requires?\s+(?:an?\s+)?(?:updated?\s+address|fee|redelivery))/i,
     explanation: 'The communication mimics delivery notifications from parcel couriers claiming delivery failure.',
     whyItMatters: 'Package delivery scams (smishing) take advantage of routine online shopping habits to trick people into clicking phishing links and entering card details.',
   },
@@ -321,7 +330,7 @@ const RULES: RuleDefinition[] = [
     category: 'CHANNEL_DIVERSION',
     name: 'Off-Platform Communication Diversion',
     severity: 'HIGH',
-    pattern: /(?:contact|message|reach)\s+(?:our\s*(?:agent|recruiter|hr|manager|team)|my\s*(?:manager|hr))\s+on\s+(?:whatsapp|telegram|signal|viber)|(?:telegram|whatsapp|signal)\s*(?:username|number|link|group|channel)\s*:\s*[@+\w]/i,
+    pattern: /(?:contact|message|reach)\s+(?:our\s*(?:agent|recruiter|hr|manager|team)|my\s*(?:manager|hr)|us)\s+on\s+(?:whatsapp|telegram|signal|viber)|(?:telegram|whatsapp|signal)\s*(?:username|number|link|group|channel|account)?\s*[:@]\s*[@+\w]|(?:message|dm|contact)\s+(?:me\s+)?on\s+telegram/i,
     explanation: 'The sender insists on shifting communication from the original platform to encrypted messaging apps like Telegram or WhatsApp.',
     whyItMatters: 'Scammers divert victims to private messaging platforms to evade platform fraud monitoring, moderation, and automated account bans.',
   },
@@ -460,7 +469,8 @@ export function detectIndicators(normalizedResult: NormalizedResult): ObservedIn
   const { indicators: urlIndicators } = extractUrlIndicators(rawText);
   for (const urlInd of urlIndicators) {
     const [start, end] = urlInd.characterRange;
-    if (!isOverlapping(start, end)) {
+    const isDuplicate = indicators.some((i) => i.id === urlInd.id);
+    if (!isDuplicate) {
       indicators.push(urlInd);
       matchedRanges.push([start, end]);
     }

@@ -18,10 +18,10 @@ function makeIndicator(overrides: Partial<ObservedIndicator> = {}): ObservedIndi
 }
 
 describe('Risk Engine', () => {
-  it('returns BENIGN with score 0 for empty indicators', () => {
+  it('returns NO_KNOWN_INDICATORS with score 0 for empty indicators', () => {
     const result = calculateRiskAssessment([], 100);
     expect(result.score).toBe(0);
-    expect(result.level).toBe('BENIGN');
+    expect(result.level).toBe('NO_KNOWN_INDICATORS');
     expect(result.evidenceStrength).toBe('MINIMAL');
     expect(result.primaryCategories).toContain('Non-Malicious / Informational');
     expect(result.scoringRationale.length).toBeGreaterThan(0);
@@ -32,7 +32,7 @@ describe('Risk Engine', () => {
     const indicators = [makeIndicator({ severity: 'MEDIUM' })];
     const result = calculateRiskAssessment(indicators, 100);
     expect(result.score).toBe(15);
-    expect(result.level).toBe('BENIGN');
+    expect(result.level).toBe('LOW');
     expect(result.evidenceStrength).toBe('LIMITED');
   });
 

@@ -24,7 +24,7 @@ describe('Adversarial False-Positive & Quality Audit', () => {
     const assessment = calculateRiskAssessment(indicators, text.length);
 
     expect(indicators.length).toBe(0);
-    expect(assessment.level).toBe('BENIGN');
+    expect(assessment.level).toBe('NO_KNOWN_INDICATORS');
     expect(assessment.score).toBe(0);
   });
 
@@ -36,7 +36,7 @@ describe('Adversarial False-Positive & Quality Audit', () => {
     const assessment = calculateRiskAssessment(indicators, text.length);
 
     expect(indicators.length).toBe(0);
-    expect(assessment.level).toBe('BENIGN');
+    expect(assessment.level).toBe('NO_KNOWN_INDICATORS');
   });
 
   // 4. Legitimate Delivery Notification

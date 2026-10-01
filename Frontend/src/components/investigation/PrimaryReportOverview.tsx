@@ -18,7 +18,26 @@ export const PrimaryReportOverview: React.FC<PrimaryReportOverviewProps> = ({
   onDownloadJson,
 }) => {
   const summary = deriveExecutiveSummary(report);
-  const { riskScore, riskLevel, plainEnglishSummary, strongestIndicators, doActions, dontActions, disclaimer } = summary;
+  const {
+    riskScore,
+    riskLevel,
+    verdictTitle,
+    verdictDirectAction,
+    plainEnglishSummary,
+    strongestIndicators,
+    immediateActions,
+    doActions,
+    dontActions,
+    disclaimer,
+    urlDisclaimer,
+  } = summary;
+
+  // Analysis engine method reporting
+  const method = report.analysisMethod;
+  const engineLabel = method?.externalModelUsed
+    ? `AI Model: ${method.externalProvider || 'External AI'} + Deterministic Rules`
+    : 'Analysis Method: Deterministic Rules + Local Heuristics';
+  const fallbackNotice = method?.fallbackUsed ? ' (Local Heuristic Fallback)' : '';
 
   // Level theme colors
   const levelColor =
@@ -51,13 +70,13 @@ export const PrimaryReportOverview: React.FC<PrimaryReportOverviewProps> = ({
   return (
     <div className="primary-overview-root" id="primary-report-overview">
       {/* =========================================================================
-          A. FINAL SCORE / RISK
+          1. VERDICT & DIRECT ACTION
           ========================================================================= */}
       <section className="overview-risk-card" style={{ borderColor: levelBorder }} aria-labelledby="risk-summary-title">
         <div className="overview-risk-header">
           <div className="overview-risk-badge-box" style={{ background: levelBg, borderColor: levelBorder, color: levelColor }}>
             <span className="overview-risk-pulse-dot" style={{ background: levelColor }} />
-            <span className="overview-risk-tier-label">{riskLevel} RISK</span>
+            <span className="overview-risk-tier-label">{riskLevel.replace(/_/g, ' ')}</span>
           </div>
           <div className="overview-risk-score-display">
             <span className="overview-score-num" style={{ color: levelColor }}>{riskScore}</span>
@@ -73,14 +92,80 @@ export const PrimaryReportOverview: React.FC<PrimaryReportOverviewProps> = ({
           />
         </div>
 
-        {/* One short plain-English explanation under the final score */}
+        {/* Verdict Title & Immediate Direct Action */}
+        <div className="overview-verdict-banner" style={{ borderLeftColor: levelColor }}>
+          <h2 className="overview-verdict-title">{verdictTitle}</h2>
+          <p className="overview-verdict-action">{verdictDirectAction}</p>
+        </div>
+
+        {/* Plain-English explanation */}
         <p className="overview-plain-summary" id="risk-summary-title">
           {plainEnglishSummary}
         </p>
+
+        {/* Analysis Engine Transparency Metadata */}
+        <div className="overview-engine-meta-row">
+          <span className="overview-engine-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+            </svg>
+            <span>{engineLabel}{fallbackNotice}</span>
+          </span>
+          <span className="overview-retention-pill">
+            🔒 In-Memory Processing · No Report Persistence on Server
+          </span>
+        </div>
+
+        {/* Non-Guarantee Notice if NO_KNOWN_INDICATORS or score 0 */}
+        {(riskScore === 0 || riskLevel === 'NO_KNOWN_INDICATORS') && (
+          <div className="overview-safety-notice">
+            <span className="notice-icon">ℹ️</span>
+            <span>
+              <strong>Non-Guarantee Advisory:</strong> Absence of known indicators does not guarantee safety. ScamVera evaluates recognized fraud patterns; unexpected communications should always be verified independently through trusted official channels. The sender identity has not been independently verified.
+            </span>
+          </div>
+        )}
+
+        {/* Passive URL inspection notice if applicable */}
+        {(urlDisclaimer || (report.urlAnalysis && report.urlAnalysis.length > 0)) && (
+          <div className="overview-url-disclaimer-notice">
+            <span className="notice-icon">🌐</span>
+            <span>
+              {urlDisclaimer || 'ScamVera performed passive structural analysis only. The destination web page was not loaded or executed.'}
+            </span>
+          </div>
+        )}
       </section>
 
       {/* =========================================================================
-          B. WHY WAS THIS FLAGGED? (3–5 Strongest Verified Indicators)
+          2. IMMEDIATE ACTIONS (Top 3 Directives Before Deep Dive)
+          ========================================================================= */}
+      {immediateActions && immediateActions.length > 0 && (
+        <section className="overview-card-panel immediate-actions-panel" aria-labelledby="immediate-actions-title">
+          <div className="overview-card-title-row">
+            <div className="overview-card-icon icon-emerald">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <h2 className="overview-card-title" id="immediate-actions-title">What You Should Do Right Now</h2>
+          </div>
+          <p className="overview-panel-intro">
+            Immediate protective actions to minimize risk before reviewing detailed forensics:
+          </p>
+          <div className="overview-immediate-actions-list">
+            {immediateActions.map((action, idx) => (
+              <div key={idx} className="overview-immediate-action-item">
+                <span className="immediate-step-num">{idx + 1}</span>
+                <span className="immediate-step-text">{action}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* =========================================================================
+          3. WHY WAS THIS FLAGGED? (3–5 Strongest Verified Indicators)
           ========================================================================= */}
       <section className="overview-card-panel why-flagged-panel" aria-labelledby="why-flagged-title">
         <div className="overview-card-title-row">

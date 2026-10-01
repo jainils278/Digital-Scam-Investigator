@@ -60,6 +60,8 @@ const LEGIT_BRAND_DOMAINS: Record<string, string[]> = {
   microsoft: ['microsoft.com', 'live.com', 'office.com', 'outlook.com'],
   google: ['google.com', 'gmail.com', 'youtube.com'],
   irs: ['irs.gov'],
+  telegram: ['t.me', 'telegram.org'],
+  whatsapp: ['whatsapp.com'],
 };
 
 // Known URL shorteners
@@ -123,8 +125,10 @@ export function extractUrlsWithRanges(text: string): Array<{ rawMatch: string; r
   // Match:
   // 1. Explicit protocol: https?://...
   // 2. www prefix: www.[a-z0-9-]+...
-  // 3. Bare domains with known high-risk TLDs or common TLDs: [a-z0-9-]+\.(?:com|org|net|top|xyz|...)/...
-  const urlRegex = /(?:https?:\/\/|www\.)[^\s<>"'{}|\\^`]+|(?:[a-zA-Z0-9-]+\.)+(?:com|org|net|edu|gov|io|co|top|xyz|click|buzz|fit|tk|info|biz|me|online|site|app|live)\b(?:\/[^\s<>"'{}|\\^`]*)?/gi;
+  // 3. Bare IP address: 192.168.1.1
+  // 4. Bare domains with known TLDs
+  const urlRegex =
+    /(?:https?:\/\/|www\.)[^\s<>"'{}|\\^`]+|\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?::\d+)?(?:\/[^\s<>"'{}|\\^`]*)?|\b(?:[a-zA-Z0-9-]+\.)+(?:com|org|net|edu|gov|io|co|top|xyz|click|buzz|fit|tk|info|biz|me|online|site|app|live|ru|cn|in|uk|de|jp|br|ca|au|mil|tv|cc)\b(?:\/[^\s<>"'{}|\\^`]*)?/gi;
 
   let match: RegExpExecArray | null;
   while ((match = urlRegex.exec(text)) !== null) {

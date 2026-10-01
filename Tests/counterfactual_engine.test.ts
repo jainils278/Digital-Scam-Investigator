@@ -40,7 +40,7 @@ describe('V3.1 Counterfactual Risk Analysis Engine', () => {
     expect(indScenario).toBeDefined();
     expect(indScenario?.counterfactualScore).toBe(0);
     expect(indScenario?.scoreDelta).toBe(15);
-    expect(indScenario?.counterfactualLevel).toBe('BENIGN');
+    expect(indScenario?.counterfactualLevel).toBe('NO_KNOWN_INDICATORS');
     expect(indScenario?.brokenSynergies).toHaveLength(0);
     expect(indScenario?.explanation).toContain('reduces risk score by 15 pts');
 

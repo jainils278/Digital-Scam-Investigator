@@ -15,16 +15,44 @@ export function generateDefensiveRecommendations(
   const actions: DefensiveAction[] = [];
   const categories = new Set(verifiedIndicators.map((i) => i.category));
 
-  if (riskLevel === 'BENIGN') {
+  if (riskLevel === 'NO_KNOWN_INDICATORS' || riskLevel === 'BENIGN') {
     actions.push({
-      id: 'rec_benign_hygiene',
+      id: 'rec_no_indicators_hygiene',
       priority: 'RECOMMENDED',
-      action: 'Standard Defensive Vigilance',
+      action: 'Routine Vigilance (No Known Indicators Detected)',
       detail:
-        'No known suspicious indicators were detected in this message. Continue routine vigilance; never disclose passcodes or make unexpected payments without verifying through official channels.',
+        'No known suspicious indicators were detected in this content. This does not verify that the sender, website, or message is legitimate. Always exercise routine caution; never disclose passcodes or make unexpected payments without verifying through official channels.',
       category: 'General Hygiene',
     });
     return actions;
+  }
+
+  // URL / Link Defense
+  if (categories.has('SUSPICIOUS_LINK')) {
+    actions.push({
+      id: 'rec_link_do_not_click',
+      priority: 'IMMEDIATE',
+      action: 'Do NOT Click Links or Enter Details',
+      detail:
+        'Do not click the link, submit payment, or enter credentials. The destination URL does not match verified authentic channels.',
+      category: 'URL Defense',
+    });
+  }
+
+  // Delivery & Courier Specific Defense
+  if (
+    verifiedIndicators.some(
+      (i) => i.id.includes('delivery') || /delivery|package|parcel|postal|courier/i.test(i.name)
+    )
+  ) {
+    actions.push({
+      id: 'rec_delivery_do_not_pay',
+      priority: 'IMMEDIATE',
+      action: 'Do NOT Pay Reschedule Fees or Click Tracking Links',
+      detail:
+        'Postal and courier services do not demand payment or personal card details via unsolicited SMS to release packages. Verify tracking only inside official apps or manually typed websites.',
+      category: 'Delivery Security',
+    });
   }
 
   // 1. Credential Harvesting Mitigations

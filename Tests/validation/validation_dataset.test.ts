@@ -241,7 +241,7 @@ describe('Validation Dataset & Assessment Panel Test Suite', () => {
 
       // Must be benign with 0 indicators detected due to negation guard
       expect(indicators).toHaveLength(0);
-      expect(risk.level).toBe('BENIGN');
+      expect(risk.level).toBe('NO_KNOWN_INDICATORS');
       expect(risk.score).toBe(0);
       expect(risk.evidenceStrength).toBe('MINIMAL');
     });

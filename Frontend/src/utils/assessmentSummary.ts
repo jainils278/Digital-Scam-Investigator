@@ -394,7 +394,7 @@ function isAmbiguousText(text: string): boolean {
  */
 export function deriveInvestigationAssessment(report: InvestigationReport): AssessmentPanelData {
   const score = report?.riskAssessment?.score ?? 0;
-  const level = report?.riskAssessment?.level ?? 'BENIGN';
+  const level = report?.riskAssessment?.level ?? 'NO_KNOWN_INDICATORS';
   const evidenceStrength = report?.riskAssessment?.evidenceStrength ?? 'MINIMAL';
   const indicators = report?.observedIndicators || [];
   const rawText = report?.rawText || '';
@@ -424,7 +424,7 @@ export function deriveInvestigationAssessment(report: InvestigationReport): Asse
 
   // Check if text exhibits ambiguous characteristics
   const isAmbiguous =
-    (indicators.length > 0 && (level === 'LOW' || level === 'BENIGN' || score <= 40 || evidenceStrength === 'LIMITED')) ||
+    (indicators.length > 0 && (level === 'LOW' || level === 'NO_KNOWN_INDICATORS' || level === 'BENIGN' || score <= 40 || evidenceStrength === 'LIMITED')) ||
     isAmbiguousText(rawText);
 
   if (isAmbiguous) {

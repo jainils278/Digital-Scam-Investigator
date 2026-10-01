@@ -95,7 +95,7 @@ export const InvestigationReportView: React.FC<InvestigationReportViewProps> = (
 
   // Derive plain-language simple conclusion
   const getSimpleConclusion = () => {
-    if (level === 'BENIGN' || level === 'LOW') {
+    if (level === 'NO_KNOWN_INDICATORS' || level === 'BENIGN' || level === 'LOW') {
       return `The ${isScreenshot ? 'image' : 'message'} does not contain recognized scam patterns currently checked by the system. However, this does not verify the sender or guarantee authenticity.`;
     }
     if (level === 'CRITICAL' || level === 'HIGH') {

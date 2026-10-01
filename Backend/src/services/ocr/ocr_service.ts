@@ -91,11 +91,44 @@ export function validateImageBuffer(buffer: Buffer): ImageValidationResult {
     buffer[6] === 0x1a &&
     buffer[7] === 0x0a
   ) {
+    if (buffer.length >= 24 && buffer.toString('ascii', 12, 16) === 'IHDR') {
+      const width = buffer.readUInt32BE(16);
+      const height = buffer.readUInt32BE(20);
+      if (width > 8000 || height > 8000 || (width > 0 && height > 0 && width * height > 32_000_000)) {
+        return {
+          isValid: false,
+          byteSize,
+          error: `DECOMPRESSION_BOMB: Image dimensions (${width}x${height}) exceed safe limits.`,
+          errorCode: 'INVALID_IMAGE',
+        };
+      }
+    }
     return { isValid: true, mimeType: 'image/png', byteSize };
   }
 
   // 2. JPEG / JPG: FF D8 FF
   if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+    // Check for extreme dimensions via SOF marker search
+    let offset = 2;
+    while (offset < buffer.length - 8) {
+      if (buffer[offset] === 0xff && (buffer[offset + 1] === 0xc0 || buffer[offset + 1] === 0xc2)) {
+        const height = buffer.readUInt16BE(offset + 5);
+        const width = buffer.readUInt16BE(offset + 7);
+        if (width > 8000 || height > 8000 || (width > 0 && height > 0 && width * height > 32_000_000)) {
+          return {
+            isValid: false,
+            byteSize,
+            error: `DECOMPRESSION_BOMB: Image dimensions (${width}x${height}) exceed safe limits.`,
+            errorCode: 'INVALID_IMAGE',
+          };
+        }
+        break;
+      }
+      if (buffer[offset] === 0xff && buffer[offset + 1] === 0xda) {
+        break; // SOS marker reached, compressed scan data begins
+      }
+      offset++;
+    }
     return { isValid: true, mimeType: 'image/jpeg', byteSize };
   }
 
@@ -112,6 +145,18 @@ export function validateImageBuffer(buffer: Buffer): ImageValidationResult {
   if (buffer.length >= 6) {
     const gifHeader = buffer.toString('ascii', 0, 6);
     if (gifHeader === 'GIF87a' || gifHeader === 'GIF89a') {
+      if (buffer.length >= 10) {
+        const width = buffer.readUInt16LE(6);
+        const height = buffer.readUInt16LE(8);
+        if (width > 8000 || height > 8000 || width * height > 32_000_000) {
+          return {
+            isValid: false,
+            byteSize,
+            error: `DECOMPRESSION_BOMB: Image dimensions (${width}x${height}) exceed safe limits.`,
+            errorCode: 'INVALID_IMAGE',
+          };
+        }
+      }
       return { isValid: true, mimeType: 'image/gif', byteSize };
     }
   }
