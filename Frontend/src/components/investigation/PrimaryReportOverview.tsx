@@ -6,16 +6,14 @@ interface PrimaryReportOverviewProps {
   report: InvestigationReport;
   onViewAdditionalInfo: () => void;
   onDownloadPdf?: () => void;
-  onDownloadHtml?: () => void;
-  onDownloadJson?: () => void;
+  onOpenFeedback?: () => void;
 }
 
 export const PrimaryReportOverview: React.FC<PrimaryReportOverviewProps> = ({
   report,
   onViewAdditionalInfo,
   onDownloadPdf,
-  onDownloadHtml,
-  onDownloadJson,
+  onOpenFeedback,
 }) => {
   const summary = deriveExecutiveSummary(report);
   const {
@@ -118,7 +116,7 @@ export const PrimaryReportOverview: React.FC<PrimaryReportOverviewProps> = ({
         {/* Analysis Engine Transparency Metadata */}
         <div className="overview-engine-meta-row">
           <span className="overview-engine-badge">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true" focusable="false">
               <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
             </svg>
             <span>{engineLabel}{fallbackNotice}</span>
@@ -156,7 +154,7 @@ export const PrimaryReportOverview: React.FC<PrimaryReportOverviewProps> = ({
         <section className="overview-card-panel immediate-actions-panel" aria-labelledby="immediate-actions-title">
           <div className="overview-card-title-row">
             <div className="overview-card-icon icon-emerald">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true" focusable="false">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
@@ -182,7 +180,7 @@ export const PrimaryReportOverview: React.FC<PrimaryReportOverviewProps> = ({
       <section className="overview-card-panel why-flagged-panel" aria-labelledby="why-flagged-title">
         <div className="overview-card-title-row">
           <div className="overview-card-icon icon-amber">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true" focusable="false">
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
             </svg>
           </div>
@@ -229,7 +227,7 @@ export const PrimaryReportOverview: React.FC<PrimaryReportOverviewProps> = ({
         <section className="overview-card-panel do-card-panel" aria-labelledby="what-to-do-title">
           <div className="overview-card-title-row">
             <div className="overview-card-icon icon-emerald">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true" focusable="false">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
@@ -250,7 +248,7 @@ export const PrimaryReportOverview: React.FC<PrimaryReportOverviewProps> = ({
         <section className="overview-card-panel dont-card-panel" aria-labelledby="what-not-to-do-title">
           <div className="overview-card-title-row">
             <div className="overview-card-icon icon-rose">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true" focusable="false">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
@@ -274,7 +272,7 @@ export const PrimaryReportOverview: React.FC<PrimaryReportOverviewProps> = ({
           ========================================================================= */}
       <aside className="overview-disclaimer-card" aria-label="Assessment Disclaimer">
         <div className="overview-disclaimer-header">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" focusable="false">
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="16" x2="12" y2="12" />
             <line x1="12" y1="8" x2="12.01" y2="8" />
@@ -296,7 +294,7 @@ export const PrimaryReportOverview: React.FC<PrimaryReportOverviewProps> = ({
         >
           <span className="view-more-plus">+</span>
           <span className="view-more-text">VIEW ADDITIONAL INFORMATION</span>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true" focusable="false">
             <line x1="5" y1="12" x2="19" y2="12" />
             <polyline points="12 5 19 12 12 19" />
           </svg>
@@ -305,7 +303,7 @@ export const PrimaryReportOverview: React.FC<PrimaryReportOverviewProps> = ({
           Access complete evidence matching, scam tactics, timeline, network graph, and sensitivity models.
         </span>
 
-        {/* Quick Report Download Actions */}
+        {/* Report Download & Feedback Actions */}
         <div className="overview-download-row">
           {onDownloadPdf && (
             <button
@@ -313,8 +311,9 @@ export const PrimaryReportOverview: React.FC<PrimaryReportOverviewProps> = ({
               className="overview-download-btn"
               onClick={onDownloadPdf}
               id="overview-download-pdf-btn"
+              title="Download Official PDF Report"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" focusable="false">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
@@ -323,33 +322,15 @@ export const PrimaryReportOverview: React.FC<PrimaryReportOverviewProps> = ({
             </button>
           )}
 
-          {onDownloadHtml && (
+          {onOpenFeedback && (
             <button
               type="button"
-              className="overview-download-btn"
-              onClick={onDownloadHtml}
-              id="overview-download-html-btn"
+              className="overview-download-btn overview-feedback-btn"
+              onClick={onOpenFeedback}
+              id="overview-feedback-btn"
+              title="Share quick feedback on this investigation"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-              </svg>
-              <span>Download HTML</span>
-            </button>
-          )}
-
-          {onDownloadJson && (
-            <button
-              type="button"
-              className="overview-download-btn"
-              onClick={onDownloadJson}
-              id="overview-download-json-btn"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                <polyline points="22,6 12,13 2,6" />
-              </svg>
-              <span>Export JSON</span>
+              💬 <span>Share Feedback</span>
             </button>
           )}
         </div>

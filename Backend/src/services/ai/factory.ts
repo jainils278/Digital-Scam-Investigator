@@ -5,7 +5,15 @@
  * with zero-downtime fallback to the local Heuristic provider.
  */
 
-import { AiContextAnalysis, AiFallbackReason, AiLastAnalysisMode, AnalysisMethod, ObservedIndicator } from '../../types.js';
+import {
+  AiContextAnalysis,
+  AiFallbackReason,
+  AiLastAnalysisMode,
+  AnalysisMethod,
+  ExternalAiFailureCategory,
+  ObservedIndicator,
+} from '../../types.js';
+import { logger } from '../logger.js';
 import { HeuristicAiProvider } from './heuristic_provider.js';
 import { OpenAiProvider } from './openai_provider.js';
 import { AiProvider } from './provider.js';
@@ -34,11 +42,93 @@ export function classifyAiFallbackReason(error: unknown): AiFallbackReason {
   return 'UNKNOWN';
 }
 
+/**
+ * Safe error diagnostic categorization.
+ * Extracts ONLY a coarse category: 'auth' | 'quota' | 'model' | 'timeout' | 'network' | 'unknown'.
+ * NEVER logs or exposes API keys, raw provider response bodies, or user-submitted text.
+ */
+export function categorizeExternalAiError(err: any): ExternalAiFailureCategory {
+  if (!err) return 'unknown';
+
+  const status = typeof err.status === 'number' ? err.status : 0;
+  const code = String(err.code || '').toLowerCase();
+  const type = String(err.type || '').toLowerCase();
+  const name = String(err.name || '').toLowerCase();
+  const msg = String(err.message || '').toLowerCase();
+
+  // 1. Quota / Rate limit (e.g. HTTP 429, credit_balance_exhausted, insufficient_quota, RateLimitError)
+  if (
+    status === 429 ||
+    type === 'insufficient_quota' ||
+    code === 'credit_balance_exhausted' ||
+    code.includes('quota') ||
+    code.includes('rate_limit') ||
+    name.includes('ratelimit') ||
+    msg.includes('quota') ||
+    msg.includes('credits remaining') ||
+    msg.includes('rate limit')
+  ) {
+    return 'quota';
+  }
+
+  // 2. Authentication (e.g. HTTP 401, 403, AuthenticationError, invalid_api_key)
+  if (
+    status === 401 ||
+    status === 403 ||
+    (type === 'invalid_request_error' && code.includes('key')) ||
+    code === 'invalid_api_key' ||
+    name.includes('auth') ||
+    msg.includes('api key') ||
+    msg.includes('unauthorized') ||
+    msg.includes('authentication')
+  ) {
+    return 'auth';
+  }
+
+  // 3. Model availability (e.g. HTTP 404, model_not_found)
+  if (
+    status === 404 ||
+    code === 'model_not_found' ||
+    (msg.includes('model') && (msg.includes('not found') || msg.includes('does not exist') || msg.includes('unsupported')))
+  ) {
+    return 'model';
+  }
+
+  // 4. Timeout (e.g. AbortError, APIUserAbortError, ETIMEDOUT)
+  if (
+    code === 'etimedout' ||
+    code === 'esockettimedout' ||
+    name.includes('timeout') ||
+    name.includes('abort') ||
+    msg.includes('timeout') ||
+    msg.includes('timed out') ||
+    msg.includes('aborted')
+  ) {
+    return 'timeout';
+  }
+
+  // 5. Network / connection (e.g. ECONNREFUSED, ENOTFOUND, fetch failed)
+  if (
+    code === 'econnrefused' ||
+    code === 'enotfound' ||
+    code === 'econnreset' ||
+    code === 'eai_again' ||
+    name.includes('connection') ||
+    msg.includes('connection') ||
+    msg.includes('fetch failed') ||
+    msg.includes('network')
+  ) {
+    return 'network';
+  }
+
+  return 'unknown';
+}
+
 export class AiProviderCoordinator {
   private primaryProvider: AiProvider | null = null;
   private fallbackProvider: HeuristicAiProvider;
   private lastAnalysisMode: AiLastAnalysisMode = 'NOT_TESTED';
-  private lastFallbackReason: AiFallbackReason | null = null;
+  private lastFallbackReason: AiFallbackReason | ExternalAiFailureCategory | null = null;
 
   constructor(primaryProvider?: AiProvider | null) {
     this.fallbackProvider = new HeuristicAiProvider();
@@ -68,7 +158,7 @@ export class AiProviderCoordinator {
     return this.lastAnalysisMode;
   }
 
-  public getLastFallbackReason(): AiFallbackReason | null {
+  public getLastFallbackReason(): AiFallbackReason | ExternalAiFailureCategory | null {
     return this.lastFallbackReason;
   }
 
@@ -94,11 +184,20 @@ export class AiProviderCoordinator {
             fallbackUsed: false,
           },
         };
-      } catch (err) {
-        // Classify locally; never include the raw provider error in responses or logs.
+      } catch (err: any) {
+        // Safe diagnostics: classify error into category (auth, quota, model, timeout, network, unknown)
+        // Never log the raw provider response, user text, or API key
+        const failureCategory = categorizeExternalAiError(err);
         const fallbackReason = classifyAiFallbackReason(err);
         this.lastAnalysisMode = 'FALLBACK_LOCAL';
         this.lastFallbackReason = fallbackReason;
+
+        logger.warn('External AI provider failed, executing deterministic fallback', {
+          provider: this.primaryProvider?.name || 'EXTERNAL_AI',
+          failureCategory,
+        });
+
+        // Safe fallback without exposing stack traces or API errors
         const fallbackResult = await this.fallbackProvider.analyzeContext(rawText, messageType, observedIndicators);
         return {
           ...fallbackResult,

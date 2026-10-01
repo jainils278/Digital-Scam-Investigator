@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from 'react';
 interface SpatialParticlesProps {
   particleCount?: number;
   className?: string;
+  isActive?: boolean;
 }
 
 interface Particle {
@@ -19,6 +20,7 @@ interface Particle {
 export const SpatialParticles: React.FC<SpatialParticlesProps> = ({
   particleCount = 55,
   className = '',
+  isActive = true,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -28,6 +30,12 @@ export const SpatialParticles: React.FC<SpatialParticlesProps> = ({
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    // If particles are not active (e.g. report is displayed), clear and do not start RAF
+    if (!isActive) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      return;
+    }
 
     // Check prefers-reduced-motion
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -87,8 +95,18 @@ export const SpatialParticles: React.FC<SpatialParticlesProps> = ({
       targetMouseY = (e.clientY - rect.top - height / 2) * 0.05;
     };
 
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        cancelAnimationFrame(animationFrameId);
+      } else {
+        lastTime = performance.now();
+        animationFrameId = requestAnimationFrame(render);
+      }
+    };
+
     window.addEventListener('resize', resize);
     window.addEventListener('mousemove', handlePointerMove, { passive: true });
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     resize();
 
     let lastTime = performance.now();
@@ -159,8 +177,9 @@ export const SpatialParticles: React.FC<SpatialParticlesProps> = ({
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', handlePointerMove);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [particleCount]);
+  }, [particleCount, isActive]);
 
   return (
     <canvas

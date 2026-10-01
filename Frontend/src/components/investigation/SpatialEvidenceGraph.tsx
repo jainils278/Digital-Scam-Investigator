@@ -161,10 +161,6 @@ export const SpatialEvidenceGraph: React.FC<SpatialEvidenceGraphProps> = ({
               <stop offset="0%" stopColor="var(--scamvera-cyan, #06b6d4)" stopOpacity="0.8" />
               <stop offset="100%" stopColor="var(--scamvera-danger, #ef4444)" stopOpacity="0.8" />
             </linearGradient>
-            <filter id="nodeGlow" x="-30%" y="-30%" width="160%" height="160%">
-              <feGaussianBlur stdDeviation="4" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
           </defs>
 
           {/* Background Ambient Grid Rings */}
@@ -246,13 +242,24 @@ export const SpatialEvidenceGraph: React.FC<SpatialEvidenceGraphProps> = ({
                   />
                 )}
 
+                {/* Outer Glow Halo (Lightweight SVG halo for selected/hovered node) */}
+                {(isHovered || isSelected) && (
+                  <circle
+                    r={20}
+                    fill="none"
+                    stroke={node.color}
+                    strokeWidth="3"
+                    opacity="0.3"
+                    className="spatial-node-halo"
+                  />
+                )}
+
                 {/* Main Node Disc */}
                 <circle
                   r={isHovered || isSelected ? 16 : 12}
                   fill="var(--scamvera-surface, #080d16)"
                   stroke={node.color}
                   strokeWidth={isHovered || isSelected ? 2.5 : 1.5}
-                  filter={isHovered || isSelected ? 'url(#nodeGlow)' : undefined}
                   style={{ transition: 'r 0.2s ease, stroke-width 0.2s ease' }}
                 />
 

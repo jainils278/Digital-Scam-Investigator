@@ -55,6 +55,10 @@ export type AiFallbackReason =
   | 'PROVIDER_ERROR'
   | 'UNKNOWN';
 
+export type AiLastAnalysisMode = 'NOT_TESTED' | 'LOCAL_ONLY' | 'EXTERNAL_AI' | 'FALLBACK_LOCAL';
+
+export type ExternalAiFailureCategory = 'auth' | 'quota' | 'model' | 'timeout' | 'network' | 'unknown';
+
 export interface AnalysisMethod {
   mode: 'LOCAL_ONLY' | 'EXTERNAL_AI' | 'FALLBACK_LOCAL';
   deterministicRules: boolean;

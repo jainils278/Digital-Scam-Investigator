@@ -65,7 +65,7 @@ export const SpatialRiskInstrument: React.FC<SpatialRiskInstrumentProps> = ({
         <div className="spatial-risk-caliper-pod">
           <div className="spatial-caliper-ring-wrap">
             {/* Outer mechanical tick ring */}
-            <svg className="spatial-caliper-svg" width="220" height="220" viewBox="0 0 220 220">
+            <svg className="spatial-caliper-svg" width="220" height="220" viewBox="0 0 220 220" aria-hidden="true" focusable="false">
               <defs>
                 <linearGradient id="caliperGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="var(--scamvera-cyan, #06b6d4)" />

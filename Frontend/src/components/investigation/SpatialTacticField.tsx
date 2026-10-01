@@ -115,7 +115,7 @@ export const SpatialTacticField: React.FC<SpatialTacticFieldProps> = ({
 
                   {/* Procedural Visual Signature Waveform / Geometry */}
                   <div className="spatial-tactic-waveform-box">
-                    <svg className="spatial-waveform-svg" viewBox="0 0 240 60" preserveAspectRatio="none">
+                    <svg className="spatial-waveform-svg" viewBox="0 0 240 60" preserveAspectRatio="none" aria-hidden="true" focusable="false">
                       {tac.category === 'URGENCY_PRESSURE' ? (
                         // Accelerating frequency sine wave
                         <path

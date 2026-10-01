@@ -96,7 +96,7 @@ export const SpatialAttackChain: React.FC<SpatialAttackChainProps> = ({
       {/* Stepped 3D Isometric Progression Path */}
       <div className="attack-path-3d-stage">
         {/* SVG Laser Guide Rail */}
-        <svg className="attack-path-laser-svg" viewBox="0 0 1000 160" preserveAspectRatio="none">
+        <svg className="attack-path-laser-svg" viewBox="0 0 1000 160" preserveAspectRatio="none" aria-hidden="true" focusable="false">
           <defs>
             <linearGradient id="pathLaserGrad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="var(--scamvera-cyan, #06b6d4)" />

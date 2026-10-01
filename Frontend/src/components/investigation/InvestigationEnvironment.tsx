@@ -6,13 +6,13 @@ import { SpatialEvidenceIntake } from './SpatialEvidenceIntake';
 import { SpatialRiskInstrument } from './SpatialRiskInstrument';
 import { SpatialEvidenceField } from './SpatialEvidenceField';
 import { SpatialEvidenceGraph } from './SpatialEvidenceGraph';
-import { SpatialAttackChain } from './SpatialAttackChain';
 import { SpatialTacticField } from './SpatialTacticField';
 import { SpatialCounterfactualDiff } from './SpatialCounterfactualDiff';
 import { SpatialResponseDirective } from './SpatialResponseDirective';
 import { PrimaryReportOverview } from './PrimaryReportOverview';
 import { InvestigationReportView } from '../InvestigationReportView';
-import { downloadInvestigationPdf, generateFullInvestigationReport, downloadCaseJson } from '../../utils/reportGenerator';
+import { downloadInvestigationPdf } from '../../utils/reportGenerator';
+import { FeedbackModal } from '../FeedbackModal';
 
 interface InvestigationEnvironmentProps {
   // Input State
@@ -66,6 +66,7 @@ export const InvestigationEnvironment: React.FC<InvestigationEnvironmentProps> =
   const [activeViewMode, setActiveViewMode] = useState<'SPATIAL' | 'REPORT'>('SPATIAL');
   const [activeReportTab, setActiveReportTab] = useState<'OVERVIEW' | 'ADDITIONAL_INFO'>('OVERVIEW');
   const [isLocallyTriggered, setIsLocallyTriggered] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   // Synchronize forensic scanner with real investigation lifecycle
   const isScanning = (isLocallyTriggered || isLoading) && !errorMessage;
@@ -99,7 +100,8 @@ export const InvestigationEnvironment: React.FC<InvestigationEnvironmentProps> =
       return;
     }
 
-    let rafId: number;
+    let rafId: number | null = null;
+    let isRunning = false;
     let targetTiltX = 0;
     let targetTiltY = 0;
     let targetPanX = 0;
@@ -108,6 +110,58 @@ export const InvestigationEnvironment: React.FC<InvestigationEnvironmentProps> =
     let currentTiltY = 0;
     let currentPanX = 0;
     let currentPanY = 0;
+
+    const smoothingFactor = 0.06; // Luxurious physical camera inertia
+    const REST_THRESHOLD_ANGLE = 0.002; // deg
+    const REST_THRESHOLD_POS = 0.01; // px
+
+    const tick = () => {
+      const dTiltX = targetTiltX - currentTiltX;
+      const dTiltY = targetTiltY - currentTiltY;
+      const dPanX = targetPanX - currentPanX;
+      const dPanY = targetPanY - currentPanY;
+
+      const isAtRest =
+        Math.abs(dTiltX) < REST_THRESHOLD_ANGLE &&
+        Math.abs(dTiltY) < REST_THRESHOLD_ANGLE &&
+        Math.abs(dPanX) < REST_THRESHOLD_POS &&
+        Math.abs(dPanY) < REST_THRESHOLD_POS;
+
+      if (isAtRest) {
+        currentTiltX = targetTiltX;
+        currentTiltY = targetTiltY;
+        currentPanX = targetPanX;
+        currentPanY = targetPanY;
+
+        el.style.setProperty('--cam-tilt-x', `${currentTiltX.toFixed(3)}deg`);
+        el.style.setProperty('--cam-tilt-y', `${currentTiltY.toFixed(3)}deg`);
+        el.style.setProperty('--cam-pan-x', `${currentPanX.toFixed(3)}px`);
+        el.style.setProperty('--cam-pan-y', `${currentPanY.toFixed(3)}px`);
+
+        isRunning = false;
+        rafId = null;
+        return;
+      }
+
+      currentTiltX += dTiltX * smoothingFactor;
+      currentTiltY += dTiltY * smoothingFactor;
+      currentPanX += dPanX * smoothingFactor;
+      currentPanY += dPanY * smoothingFactor;
+
+      el.style.setProperty('--cam-tilt-x', `${currentTiltX.toFixed(3)}deg`);
+      el.style.setProperty('--cam-tilt-y', `${currentTiltY.toFixed(3)}deg`);
+      el.style.setProperty('--cam-pan-x', `${currentPanX.toFixed(3)}px`);
+      el.style.setProperty('--cam-pan-y', `${currentPanY.toFixed(3)}px`);
+
+      rafId = requestAnimationFrame(tick);
+    };
+
+    const startLoop = () => {
+      if (!isRunning) {
+        isRunning = true;
+        rafId = requestAnimationFrame(tick);
+      }
+    };
 
     const handlePointerMove = (e: MouseEvent) => {
       const rect = el.getBoundingClientRect();
@@ -121,6 +175,8 @@ export const InvestigationEnvironment: React.FC<InvestigationEnvironmentProps> =
       targetTiltY = x * 3.5;
       targetPanX = x * 10;
       targetPanY = y * 8;
+
+      startLoop();
     };
 
     const handlePointerLeave = () => {
@@ -129,32 +185,25 @@ export const InvestigationEnvironment: React.FC<InvestigationEnvironmentProps> =
       targetTiltY = 0;
       targetPanX = 0;
       targetPanY = 0;
-    };
 
-    const smoothingFactor = 0.06; // Luxurious physical camera inertia
-
-    const tick = () => {
-      currentTiltX += (targetTiltX - currentTiltX) * smoothingFactor;
-      currentTiltY += (targetTiltY - currentTiltY) * smoothingFactor;
-      currentPanX += (targetPanX - currentPanX) * smoothingFactor;
-      currentPanY += (targetPanY - currentPanY) * smoothingFactor;
-
-      el.style.setProperty('--cam-tilt-x', `${currentTiltX.toFixed(3)}deg`);
-      el.style.setProperty('--cam-tilt-y', `${currentTiltY.toFixed(3)}deg`);
-      el.style.setProperty('--cam-pan-x', `${currentPanX.toFixed(3)}px`);
-      el.style.setProperty('--cam-pan-y', `${currentPanY.toFixed(3)}px`);
-
-      rafId = requestAnimationFrame(tick);
+      startLoop();
     };
 
     window.addEventListener('mousemove', handlePointerMove, { passive: true });
     window.addEventListener('mouseleave', handlePointerLeave, { passive: true });
-    rafId = requestAnimationFrame(tick);
+
+    // Initialize resting styles once
+    el.style.setProperty('--cam-tilt-x', '0.000deg');
+    el.style.setProperty('--cam-tilt-y', '0.000deg');
+    el.style.setProperty('--cam-pan-x', '0.000px');
+    el.style.setProperty('--cam-pan-y', '0.000px');
 
     return () => {
       window.removeEventListener('mousemove', handlePointerMove);
       window.removeEventListener('mouseleave', handlePointerLeave);
-      cancelAnimationFrame(rafId);
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
     };
   }, []);
 
@@ -204,15 +253,15 @@ export const InvestigationEnvironment: React.FC<InvestigationEnvironmentProps> =
             <button
               type="button"
               className="hud-export-action-btn"
-              onClick={onDownloadReport}
-              title="Generate certified forensic report file (PDF/HTML/JSON)"
+              onClick={onDownloadReport || (() => downloadInvestigationPdf(report))}
+              title="Download certified forensic PDF report"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true" focusable="false">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
-              <span>EXPORT CASE FILE</span>
+              <span>DOWNLOAD PDF</span>
             </button>
           )}
         </div>
@@ -221,10 +270,10 @@ export const InvestigationEnvironment: React.FC<InvestigationEnvironmentProps> =
       {/* =========================================================================
           PLANE: 3D FORENSIC WORLD (PERSPECTIVE + MULTIPLE DEPTH PLANES)
           ========================================================================= */}
-      <div className="forensic-3d-world">
+      <div className={`forensic-3d-world ${report ? 'has-active-report' : ''}`}>
         {/* Plane A: Deep Background Space (translateZ(-250px)) */}
         <div className="world-spatial-plane deep-background-plane">
-          <SpatialParticles particleCount={45} className="world-particles" />
+          {!report && <SpatialParticles particleCount={45} className="world-particles" isActive={!report} />}
           <div className="world-coordinate-ticks" />
           <div className="world-distant-contours" />
           <div className="world-ambient-light" />
@@ -329,40 +378,12 @@ export const InvestigationEnvironment: React.FC<InvestigationEnvironmentProps> =
                     id="nav-download-pdf-btn"
                     title="Download Official PDF Report"
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" focusable="false">
                       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                       <polyline points="7 10 12 15 17 10" />
                       <line x1="12" y1="15" x2="12" y2="3" />
                     </svg>
                     <span>Download PDF</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    className="report-nav-action-btn"
-                    onClick={() => generateFullInvestigationReport(report)}
-                    id="nav-download-html-btn"
-                    title="Download Standalone HTML Report"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                      <polyline points="14 2 14 8 20 8" />
-                    </svg>
-                    <span>Download HTML</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    className="report-nav-action-btn"
-                    onClick={() => downloadCaseJson(report)}
-                    id="nav-export-json-btn"
-                    title="Export Structured Case JSON"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                      <polyline points="22,6 12,13 2,6" />
-                    </svg>
-                    <span>Export JSON</span>
                   </button>
 
                   <button
@@ -387,8 +408,7 @@ export const InvestigationEnvironment: React.FC<InvestigationEnvironmentProps> =
                     if (nav) nav.scrollIntoView({ behavior: 'smooth' });
                   }}
                   onDownloadPdf={() => downloadInvestigationPdf(report)}
-                  onDownloadHtml={() => generateFullInvestigationReport(report)}
-                  onDownloadJson={() => downloadCaseJson(report)}
+                  onOpenFeedback={() => setIsFeedbackOpen(true)}
                 />
               )}
 
@@ -411,9 +431,6 @@ export const InvestigationEnvironment: React.FC<InvestigationEnvironmentProps> =
                       </button>
                       <button type="button" onClick={() => scrollToModule('mod-risk')} className="jump-link-btn">
                         Why this score?
-                      </button>
-                      <button type="button" onClick={() => scrollToModule('mod-chain')} className="jump-link-btn">
-                        How the scam works
                       </button>
                       <button type="button" onClick={() => scrollToModule('mod-topology')} className="jump-link-btn">
                         Evidence connections
@@ -461,22 +478,10 @@ export const InvestigationEnvironment: React.FC<InvestigationEnvironmentProps> =
                     />
                   </section>
 
-                  {/* 03: How the scam works */}
-                  <section id="mod-chain" className="spatial-module-section">
-                    <div className="module-section-header-row">
-                      <span className="module-section-number">03</span>
-                      <h3 className="module-section-title">How The Scam Works</h3>
-                    </div>
-                    <SpatialAttackChain
-                      timeline={report.evidenceIntelligence?.timeline}
-                      observedIndicators={report.observedIndicators}
-                    />
-                  </section>
-
-                  {/* 04: Evidence connections */}
+                  {/* 03: Evidence connections */}
                   <section id="mod-topology" className="spatial-module-section">
                     <div className="module-section-header-row">
-                      <span className="module-section-number">04</span>
+                      <span className="module-section-number">03</span>
                       <h3 className="module-section-title">Evidence Connections</h3>
                     </div>
                     <SpatialEvidenceGraph
@@ -487,10 +492,10 @@ export const InvestigationEnvironment: React.FC<InvestigationEnvironmentProps> =
                     />
                   </section>
 
-                  {/* 05: Scam tactics detected */}
+                  {/* 04: Scam tactics detected */}
                   <section id="mod-tactics" className="spatial-module-section">
                     <div className="module-section-header-row">
-                      <span className="module-section-number">05</span>
+                      <span className="module-section-number">04</span>
                       <h3 className="module-section-title">Scam Tactics Detected</h3>
                     </div>
                     <SpatialTacticField
@@ -499,10 +504,10 @@ export const InvestigationEnvironment: React.FC<InvestigationEnvironmentProps> =
                     />
                   </section>
 
-                  {/* 06: Things that don't add up & Sensitivity */}
+                  {/* 05: Things that don't add up & Sensitivity */}
                   <section id="mod-counterfactual" className="spatial-module-section">
                     <div className="module-section-header-row">
-                      <span className="module-section-number">06</span>
+                      <span className="module-section-number">05</span>
                       <h3 className="module-section-title">Things That Don't Add Up &amp; Sensitivity</h3>
                     </div>
                     <SpatialCounterfactualDiff
@@ -512,10 +517,10 @@ export const InvestigationEnvironment: React.FC<InvestigationEnvironmentProps> =
                     />
                   </section>
 
-                  {/* 07: What you should do now & Containment */}
+                  {/* 06: What you should do now & Containment */}
                   <section id="mod-containment" className="spatial-module-section">
                     <div className="module-section-header-row">
-                      <span className="module-section-number">07</span>
+                      <span className="module-section-number">06</span>
                       <h3 className="module-section-title">What You Should Do Now &amp; Containment</h3>
                     </div>
                     <SpatialResponseDirective
@@ -549,17 +554,12 @@ export const InvestigationEnvironment: React.FC<InvestigationEnvironmentProps> =
                       </button>
                       <button
                         type="button"
-                        className="btn-download-report-subtle"
-                        onClick={() => generateFullInvestigationReport(report)}
+                        className="btn-share-feedback-subtle"
+                        onClick={() => setIsFeedbackOpen(true)}
+                        id="additional-info-feedback-btn"
+                        title="Share quick feedback on this investigation"
                       >
-                        Download HTML
-                      </button>
-                      <button
-                        type="button"
-                        className="btn-download-report-subtle"
-                        onClick={() => downloadCaseJson(report)}
-                      >
-                        Export JSON
+                        💬 Share Feedback
                       </button>
                     </div>
                   </div>
@@ -592,10 +592,17 @@ export const InvestigationEnvironment: React.FC<InvestigationEnvironmentProps> =
                 report={report}
                 selectedIndicatorId={selectedIndicatorId}
                 onSelectIndicator={onSelectIndicator}
-                onDownloadReport={onDownloadReport}
+                onOpenFeedback={() => setIsFeedbackOpen(true)}
               />
             </div>
           )}
+
+          {/* User Feedback Modal */}
+          <FeedbackModal
+            isOpen={isFeedbackOpen}
+            onClose={() => setIsFeedbackOpen(false)}
+            caseId={report?.id}
+          />
         </div>
       </div>
     </div>

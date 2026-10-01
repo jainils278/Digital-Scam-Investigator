@@ -63,6 +63,8 @@ export type AiFallbackReason =
 
 export type AiLastAnalysisMode = 'NOT_TESTED' | 'LOCAL_ONLY' | 'EXTERNAL_AI' | 'FALLBACK_LOCAL';
 
+export type ExternalAiFailureCategory = 'auth' | 'quota' | 'model' | 'timeout' | 'network' | 'unknown';
+
 export interface AnalysisMethod {
   mode: 'LOCAL_ONLY' | 'EXTERNAL_AI' | 'FALLBACK_LOCAL';
   deterministicRules: boolean;
@@ -71,7 +73,7 @@ export interface AnalysisMethod {
   externalAttempted: boolean;
   externalProvider: string | null;
   fallbackUsed: boolean;
-  fallbackReason?: AiFallbackReason;
+  fallbackReason?: AiFallbackReason | ExternalAiFailureCategory;
 }
 
 export type RiskLevel =

@@ -244,6 +244,7 @@ export function createInvestigationRouter(investigationService: InvestigationSer
           : aiInfo.lastAnalysisMode,
         deterministicRules: true,
         localHeuristics: true,
+        lastFallbackReason: aiInfo.lastFallbackReason,
       },
       ai: {
         providerName: aiInfo.providerName,

@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
 import type { InvestigationReport, VictimState } from '../types';
 import { getClientVictimStateResponse } from '../utils/incidentResponse';
-import { downloadInvestigationPdf, downloadCaseJson } from '../utils/reportGenerator';
+import { downloadInvestigationPdf } from '../utils/reportGenerator';
 
 interface InvestigationReportViewProps {
   report: InvestigationReport;
   selectedIndicatorId?: string | null;
   onSelectIndicator?: (id: string | null) => void;
-  onDownloadReport?: () => void;
   onBackToNewInvestigation?: () => void;
+  onOpenFeedback?: () => void;
 }
 
 export const InvestigationReportView: React.FC<InvestigationReportViewProps> = ({
   report,
-  onDownloadReport,
   onBackToNewInvestigation,
+  onOpenFeedback,
 }) => {
   const { observedIndicators, aiContext, riskAssessment, defensiveRecommendations, screenshotMeta, id, timestamp } = report;
   const { score, level, primaryCategories } = riskAssessment;
@@ -1526,24 +1526,7 @@ export const InvestigationReportView: React.FC<InvestigationReportViewProps> = (
       </div>
 
       {/* 10. Advanced Investigation Case File & Report Exports */}
-      <div className="report-download-footer-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center' }}>
-        {onDownloadReport && (
-          <button
-            type="button"
-            className="btn-download-report"
-            onClick={onDownloadReport}
-            id="download-investigation-report-btn"
-            title="Download complete standalone offline HTML investigation audit report"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-            <span>Download HTML Report</span>
-          </button>
-        )}
-
+      <div className="report-download-footer-container" style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
         <button
           type="button"
           className="btn-download-report"
@@ -1552,7 +1535,7 @@ export const InvestigationReportView: React.FC<InvestigationReportViewProps> = (
           id="download-investigation-pdf-btn"
           title="Download client-side generated PDF 1.4 report"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" aria-hidden="true" focusable="false">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
             <polyline points="14 2 14 8 20 8"></polyline>
             <line x1="12" y1="18" x2="12" y2="12"></line>
@@ -1560,21 +1543,18 @@ export const InvestigationReportView: React.FC<InvestigationReportViewProps> = (
           </svg>
           <span>Download PDF</span>
         </button>
-
-        <button
-          type="button"
-          className="btn-download-report"
-          style={{ background: '#334155' }}
-          onClick={() => downloadCaseJson(report)}
-          id="download-case-json-btn"
-          title="Export structured Case JSON file for local archival and manual review"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
-            <polyline points="16 18 22 12 16 6"></polyline>
-            <polyline points="8 6 2 12 8 18"></polyline>
-          </svg>
-          <span>Export Case JSON</span>
-        </button>
+        {onOpenFeedback && (
+          <button
+            type="button"
+            className="btn-download-report"
+            style={{ background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.3)', color: '#38bdf8' }}
+            onClick={onOpenFeedback}
+            id="editorial-share-feedback-btn"
+            title="Share quick feedback on this investigation"
+          >
+            <span>💬 Share Feedback</span>
+          </button>
+        )}
       </div>
     </div>
   );

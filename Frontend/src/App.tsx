@@ -6,7 +6,7 @@ import type { AttachedEvidenceImage } from './components/WorkstationInput';
 import { InvestigationEnvironment } from './components/investigation/InvestigationEnvironment';
 import { CinematicLanding } from './components/landing/CinematicLanding';
 import type { EvidenceImageInput, ExampleCase, InvestigationReport, LocalHistoryItem, MessageType, VictimState } from './types';
-import { generateFullInvestigationReport } from './utils/reportGenerator';
+import { downloadInvestigationPdf } from './utils/reportGenerator';
 
 const STORAGE_KEY = 'scam_investigator_history';
 
@@ -373,7 +373,7 @@ export const App: React.FC = () => {
   // 6. Unified Report Download Action
   const handleDownloadReport = () => {
     if (!currentReport) return;
-    generateFullInvestigationReport(currentReport);
+    downloadInvestigationPdf(currentReport);
   };
 
   if (currentView === 'landing') {
