@@ -236,6 +236,12 @@ export function createInvestigationRouter(investigationService: InvestigationSer
         lastUsedProvider,
         lastExternalCallSucceeded,
         lastFallbackReason: aiInfo.lastFallbackReason,
+        // Compatibility aliases reflect the last-known outcome, not configuration alone.
+        activeProvider: lastUsedProvider ?? (aiInfo.providerConfigured ? 'Not yet tested' : 'Defensive Heuristic Engine'),
+        isExternalModelAvailable: lastExternalCallSucceeded,
+        mode: !aiInfo.providerConfigured && aiInfo.lastAnalysisMode === 'NOT_TESTED'
+          ? 'LOCAL_ONLY'
+          : aiInfo.lastAnalysisMode,
         deterministicRules: true,
         localHeuristics: true,
       },

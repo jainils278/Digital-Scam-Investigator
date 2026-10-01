@@ -195,6 +195,13 @@ describe('ScamVera V2.1 Core Regression Test Suite', () => {
     expect(res.body.analysisEngine).toBeDefined();
     expect(res.body.analysisEngine.deterministicRules).toBe(true);
     expect(res.body.analysisEngine.localHeuristics).toBe(true);
-    expect(['EXTERNAL_AI', 'LOCAL_ONLY']).toContain(res.body.analysisEngine.mode);
+    expect(typeof res.body.analysisEngine.providerConfigured).toBe('boolean');
+    expect(['NOT_TESTED', 'EXTERNAL_AI', 'LOCAL_ONLY', 'FALLBACK_LOCAL']).toContain(
+      res.body.analysisEngine.lastAnalysisMode
+    );
+    expect([null, true, false]).toContain(res.body.analysisEngine.lastExternalCallSucceeded);
+    expect(['NOT_TESTED', 'EXTERNAL_AI', 'LOCAL_ONLY', 'FALLBACK_LOCAL']).toContain(
+      res.body.analysisEngine.mode
+    );
   });
 });

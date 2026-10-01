@@ -5,14 +5,20 @@ import { InvestigationService } from '../Backend/src/services/investigation.js';
 import { deriveExecutiveSummary } from '../Frontend/src/utils/executiveSummary.js';
 
 describe('Manual Scenarios & Analysis Method Verification', () => {
-  it('Public Health Endpoint (GET /api/health) reports operational and LOCAL_ONLY mode', async () => {
+  it('Public Health Endpoint distinguishes configured provider from the last scan result', async () => {
     const res = await request(app).get('/api/health').expect(200);
     console.log('--- GET /api/health Output ---');
     console.log(JSON.stringify(res.body, null, 2));
 
     expect(res.body.status).toBe('operational');
     expect(res.body.version).toBe('2.1.0');
-    expect(res.body.analysisEngine.mode).toBe('LOCAL_ONLY');
+    expect(typeof res.body.analysisEngine.providerConfigured).toBe('boolean');
+    expect(res.body.analysisEngine.lastAnalysisMode).toBe('NOT_TESTED');
+    expect(res.body.analysisEngine.lastFallbackReason).toBeNull();
+    expect(res.body.analysisEngine.lastExternalCallSucceeded).toBeNull();
+    expect(res.body.analysisEngine.mode).toBe(
+      res.body.analysisEngine.providerConfigured ? 'NOT_TESTED' : 'LOCAL_ONLY'
+    );
     expect(res.body.analysisEngine.deterministicRules).toBe(true);
     expect(res.body.analysisEngine.localHeuristics).toBe(true);
   });
