@@ -46,6 +46,15 @@ export interface AiContextAnalysis {
   unverifiedInferences: UnverifiedInference[];
 }
 
+export type AiFallbackReason =
+  | 'QUOTA_EXCEEDED'
+  | 'RATE_LIMITED'
+  | 'AUTHENTICATION_FAILED'
+  | 'TIMEOUT'
+  | 'NETWORK_ERROR'
+  | 'PROVIDER_ERROR'
+  | 'UNKNOWN';
+
 export interface AnalysisMethod {
   mode: 'LOCAL_ONLY' | 'EXTERNAL_AI' | 'FALLBACK_LOCAL';
   deterministicRules: boolean;
@@ -54,6 +63,7 @@ export interface AnalysisMethod {
   externalAttempted: boolean;
   externalProvider: string | null;
   fallbackUsed: boolean;
+  fallbackReason?: AiFallbackReason;
 }
 
 export type RiskLevel =

@@ -135,7 +135,7 @@ export const App: React.FC = () => {
   // External / System Telemetry
   const [examples, setExamples] = useState<ExampleCase[]>([]);
   const [activeAiMode, setActiveAiMode] = useState('Local Heuristic');
-  const [isRealAi, setIsRealAi] = useState(false);
+  const [isExternalAiConfigured, setIsExternalAiConfigured] = useState(false);
 
   // Modals & History
   const [history, setHistory] = useState<LocalHistoryItem[]>([]);
@@ -150,12 +150,12 @@ export const App: React.FC = () => {
       .then((data) => {
         if (data.ai) {
           setActiveAiMode(data.ai.providerName);
-          setIsRealAi(data.ai.isRealAi);
+          setIsExternalAiConfigured(data.ai.providerConfigured === true);
         }
       })
       .catch(() => {
         setActiveAiMode('Local Heuristic Engine');
-        setIsRealAi(false);
+        setIsExternalAiConfigured(false);
       });
 
     // Fetch educational presets
@@ -385,7 +385,7 @@ export const App: React.FC = () => {
       {/* Workstation Header */}
       <Header
         activeAiMode={activeAiMode}
-        isRealAi={isRealAi}
+        isExternalAiConfigured={isExternalAiConfigured}
         historyCount={history.length}
         onOpenHistory={() => setIsHistoryOpen(true)}
         onOpenReference={() => setIsReferenceOpen(true)}

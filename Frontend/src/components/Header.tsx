@@ -2,7 +2,7 @@ import React from 'react';
 
 interface HeaderProps {
   activeAiMode?: string;
-  isRealAi?: boolean;
+  isExternalAiConfigured?: boolean;
   historyCount: number;
   onOpenHistory: () => void;
   onOpenReference: () => void;
@@ -14,7 +14,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   activeAiMode,
-  isRealAi,
+  isExternalAiConfigured,
   historyCount,
   onOpenHistory,
   onOpenReference,
@@ -58,9 +58,14 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Status Telemetry */}
         <div className="header-telemetry">
-          <div className="status-badge" title={isRealAi ? `External AI Coordinator connected (${activeAiMode || 'Online'})` : 'Local Heuristic & Rule Engine active'}>
+          <div
+            className="status-badge"
+            title={isExternalAiConfigured
+              ? `${activeAiMode || 'External AI'} is configured; each report shows whether it handled that scan.`
+              : 'Local deterministic rules and heuristic analysis are active.'}
+          >
             <span className="status-dot"></span>
-            <span>{isRealAi ? `External AI (${activeAiMode || 'Ready'})` : 'Deterministic Rules Active'}</span>
+            <span>{isExternalAiConfigured ? 'External AI Configured · Per-Scan Method in Report' : 'Deterministic Rules Active'}</span>
           </div>
 
           <div

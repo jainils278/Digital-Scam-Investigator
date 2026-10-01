@@ -211,24 +211,39 @@ export function createInvestigationRouter(investigationService: InvestigationSer
 
   /**
    * GET /api/health
-   * System status and active AI provider state
+   * Provider configuration and most recent per-scan result (process-local, not persisted)
    */
   router.get('/health', (_req: Request, res: Response): void => {
     const aiInfo = investigationService.getActiveAiProviderInfo();
+    const lastUsedProvider = aiInfo.lastAnalysisMode === 'EXTERNAL_AI'
+      ? aiInfo.providerName
+      : aiInfo.lastAnalysisMode === 'NOT_TESTED'
+        ? null
+        : 'Defensive Heuristic Engine';
+    const lastExternalCallSucceeded = aiInfo.lastAnalysisMode === 'NOT_TESTED'
+      ? null
+      : aiInfo.lastAnalysisMode === 'EXTERNAL_AI';
+
     res.status(200).json({
       status: 'operational',
       service: 'Digital Scam Investigator Engine',
       version: '2.1.0',
       timestamp: new Date().toISOString(),
       analysisEngine: {
-        activeProvider: aiInfo.providerName,
-        isExternalModelAvailable: aiInfo.isRealAi,
-        mode: aiInfo.isRealAi ? 'EXTERNAL_AI' : 'LOCAL_ONLY',
+        providerConfigured: aiInfo.providerConfigured,
+        configuredProvider: aiInfo.providerConfigured ? aiInfo.providerName : null,
+        lastAnalysisMode: aiInfo.lastAnalysisMode,
+        lastUsedProvider,
+        lastExternalCallSucceeded,
+        lastFallbackReason: aiInfo.lastFallbackReason,
         deterministicRules: true,
         localHeuristics: true,
       },
       ai: {
         providerName: aiInfo.providerName,
+        providerConfigured: aiInfo.providerConfigured,
+        lastAnalysisMode: aiInfo.lastAnalysisMode,
+        lastFallbackReason: aiInfo.lastFallbackReason,
         isRealAi: aiInfo.isRealAi,
       },
     });

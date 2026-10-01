@@ -1,5 +1,5 @@
 import React from 'react';
-import type { InvestigationReport } from '../../types';
+import type { AiFallbackReason, InvestigationReport } from '../../types';
 import { deriveExecutiveSummary } from '../../utils/executiveSummary';
 
 interface PrimaryReportOverviewProps {
@@ -37,7 +37,19 @@ export const PrimaryReportOverview: React.FC<PrimaryReportOverviewProps> = ({
   const engineLabel = method?.externalModelUsed
     ? `AI Model: ${method.externalProvider || 'External AI'} + Deterministic Rules`
     : 'Analysis Method: Deterministic Rules + Local Heuristics';
-  const fallbackNotice = method?.fallbackUsed ? ' (Local Heuristic Fallback)' : '';
+  const fallbackReasonLabels: Record<AiFallbackReason, string> = {
+    QUOTA_EXCEEDED: 'quota exhausted',
+    RATE_LIMITED: 'rate limited',
+    AUTHENTICATION_FAILED: 'authentication failed',
+    TIMEOUT: 'timed out',
+    NETWORK_ERROR: 'network error',
+    PROVIDER_ERROR: 'provider error',
+    UNKNOWN: 'unclassified provider error',
+  };
+  const fallbackReason = method?.fallbackReason ? fallbackReasonLabels[method.fallbackReason] : null;
+  const fallbackNotice = method?.fallbackUsed
+    ? ` (Local Heuristic Fallback${fallbackReason ? ` · ${fallbackReason}` : ''})`
+    : '';
 
   // Level theme colors
   const levelColor =

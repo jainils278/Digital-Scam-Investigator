@@ -46,9 +46,15 @@ export class InvestigationService {
   }
 
   public getActiveAiProviderInfo() {
+    const providerConfigured = this.aiCoordinator.isUsingRealAi();
+    const lastAnalysisMode = this.aiCoordinator.getLastAnalysisMode();
     return {
       providerName: this.aiCoordinator.getActiveProviderName(),
-      isRealAi: this.aiCoordinator.isUsingRealAi(),
+      providerConfigured,
+      lastAnalysisMode,
+      lastFallbackReason: this.aiCoordinator.getLastFallbackReason(),
+      // Backward-compatible field now means the last analysis actually used the external model.
+      isRealAi: lastAnalysisMode === 'EXTERNAL_AI',
     };
   }
 
